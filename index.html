@@ -1,0 +1,279 @@
+<!doctype html>
+<html lang="pt-PT">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Protocolo — Línguas &amp; Forma</title>
+<meta name="description" content="O teu plano de inglês (Rota para B1) e de judo, tiros e emagrecimento, num único app com trackers.">
+
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#F7F5EE" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#171511" media="(prefers-color-scheme: dark)">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Protocolo">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<link rel="icon" href="icons/favicon.svg" type="image/svg+xml">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+
+<div class="topbar">
+  <div class="topbar-inner">
+    <div class="brand">
+      <span class="mark">P</span>
+      <span class="name">Protocolo</span>
+    </div>
+    <span class="page-title" id="pageTitle">Início</span>
+    <button class="iconbtn" id="btnSettings" aria-label="Definições" type="button">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+    </button>
+  </div>
+</div>
+
+<main class="wrap">
+
+  <!-- ===================== INÍCIO ===================== -->
+  <section class="view active" id="view-inicio">
+    <div class="hero">
+      <span class="greet" id="dashDate">—</span>
+      <h1>Bom trabalho a manter o rumo.</h1>
+      <div class="streak-row">
+        <span class="streak-chip"><span class="dot" style="background:var(--cat-lang)"></span>Línguas <span class="n" id="streakLang">0</span> dias</span>
+        <span class="streak-chip"><span class="dot" style="background:var(--cat-fit)"></span>Forma <span class="n" id="streakFit">0</span> dias</span>
+      </div>
+
+      <div class="ring-grid">
+        <button class="ring-card lang" data-goto="linguas" type="button">
+          <div class="rc-top">
+            <span class="rc-label">Línguas</span>
+            <svg viewBox="0 0 36 36"><circle cx="18" cy="18" r="15.5" fill="none" stroke="var(--cat-lang-soft)" stroke-width="4"></circle><circle id="ringLang" cx="18" cy="18" r="15.5" fill="none" stroke="var(--cat-lang)" stroke-width="4" stroke-linecap="round" stroke-dasharray="97.4" stroke-dashoffset="97.4" transform="rotate(-90 18 18)"></circle></svg>
+          </div>
+          <span class="rc-sub" id="langSummary">0% do vocabulário</span>
+        </button>
+        <button class="ring-card fit" data-goto="forma" type="button">
+          <div class="rc-top">
+            <span class="rc-label">Forma</span>
+            <svg viewBox="0 0 36 36"><circle cx="18" cy="18" r="15.5" fill="none" stroke="var(--cat-fit-soft)" stroke-width="4"></circle><circle id="ringFit" cx="18" cy="18" r="15.5" fill="none" stroke="var(--cat-fit)" stroke-width="4" stroke-linecap="round" stroke-dasharray="97.4" stroke-dashoffset="97.4" transform="rotate(-90 18 18)"></circle></svg>
+          </div>
+          <span class="rc-sub" id="fitSummary">0/7 treinos esta semana</span>
+        </button>
+      </div>
+    </div>
+
+    <section class="blk">
+      <div class="blk-head">
+        <div><span class="kicker">Hoje</span><h2>Marca o que fizeste</h2></div>
+      </div>
+      <div class="today-list" id="todayList"></div>
+    </section>
+
+    <section class="blk">
+      <div class="blk-head"><div><span class="kicker">Peso</span><h2>Tendência</h2></div></div>
+      <div class="card pad">
+        <div class="weight-top">
+          <div class="weight-now">
+            <div class="lbl">Peso atual</div>
+            <div class="val" id="dashWeightNow">— <span>kg</span></div>
+          </div>
+          <span class="weight-trend flat" id="dashWeightTrend">sem dados</span>
+        </div>
+        <svg class="weight-chart" id="dashWeightChart" viewBox="0 0 300 120" preserveAspectRatio="none"></svg>
+      </div>
+    </section>
+
+    <div class="quote-card">
+      <span class="qk">Regra de ouro</span>
+      <p id="quoteText">A carregar…</p>
+    </div>
+
+    <footer class="page-footer">Protocolo — feito por medida para o teu inglês e a tua forma física.</footer>
+  </section>
+
+  <!-- ===================== LÍNGUAS ===================== -->
+  <section class="view" id="view-linguas">
+    <section class="blk" style="padding-top:20px;">
+      <span class="kicker" id="langEyebrow">—</span>
+      <h1 style="font-size:24px;">Rota para <em style="font-style:normal;color:var(--accent-strong);">B1</em></h1>
+      <p class="lead" style="margin-top:8px;" id="langSub">—</p>
+      <div class="stats" id="langStats"></div>
+    </section>
+
+    <section class="blk">
+      <div class="subtabs-wrap"><div class="subtabs">
+        <button data-anchor="#lg-rotina">Rotina</button>
+        <button data-anchor="#lg-mes1">Mês 1</button>
+        <button data-anchor="#lg-mes2">Mês 2</button>
+        <button data-anchor="#lg-mes3">Mês 3</button>
+        <button data-anchor="#lg-recursos">Recursos</button>
+      </div></div>
+    </section>
+
+    <section class="blk" id="lg-rotina">
+      <div class="blk-head">
+        <div><span class="kicker">Sem mexer na agenda</span><h2>Rotina semanal</h2></div>
+        <span class="progress-chip" id="vocabChip">0/0 vocab</span>
+      </div>
+      <div class="sched-grid" id="langRoutine"></div>
+    </section>
+
+    <div id="langMonths"></div>
+
+    <section class="blk" id="lg-recursos">
+      <div class="blk-head"><div><span class="kicker">Onde praticar</span><h2>Recursos</h2></div></div>
+      <div class="res-grid" id="langResources"></div>
+
+      <div class="gold">
+        <span class="g-icon">🎯</span>
+        <div>
+          <h4>Regra de ouro</h4>
+          <p>Nunca estudes uma palavra ou regra isolada — cria sempre 2-3 frases tuas, sobre a tua vida real. É isso que transforma "saber inglês" em "usar inglês".</p>
+        </div>
+      </div>
+
+      <details class="collapse">
+        <summary>Fontes usadas para este plano</summary>
+        <ol id="langSources"></ol>
+      </details>
+    </section>
+
+    <footer class="page-footer">Rota para B1 — revisão do plano original de @itsteacherlais.</footer>
+  </section>
+
+  <!-- ===================== FORMA ===================== -->
+  <section class="view" id="view-forma">
+    <section class="blk" style="padding-top:20px;">
+      <span class="kicker">Plano pessoal · treino e alimentação</span>
+      <h1 style="font-size:24px;">Judo, Tiros e Emagrecimento</h1>
+      <p class="lead" style="margin-top:8px;">Meta: <b style="color:var(--ink)">−1 kg/semana</b> · tigela de 450 ml como medida padrão</p>
+      <div class="stats" id="fitStats"></div>
+    </section>
+
+    <section class="blk">
+      <div class="subtabs-wrap"><div class="subtabs">
+        <button data-anchor="#ft-peso">Peso</button>
+        <button data-anchor="#ft-treino">Treino</button>
+        <button data-anchor="#ft-alimentacao">Alimentação</button>
+        <button data-anchor="#ft-regras">Regras</button>
+        <button data-anchor="#ft-alimentos">Alimentos</button>
+      </div></div>
+    </section>
+
+    <section class="blk" id="ft-peso">
+      <div class="blk-head"><div><span class="kicker">Tracker</span><h2>Registo de peso</h2></div></div>
+      <div class="card pad weight-card">
+        <div class="weight-top">
+          <div class="weight-now">
+            <div class="lbl">Peso atual</div>
+            <div class="val" id="fitWeightNow">— <span>kg</span></div>
+          </div>
+          <span class="weight-trend flat" id="fitWeightTrend">sem dados</span>
+        </div>
+        <svg class="weight-chart" id="fitWeightChart" viewBox="0 0 300 120" preserveAspectRatio="none"></svg>
+        <form class="weight-form" id="weightForm">
+          <input type="number" step="0.1" min="30" max="300" inputmode="decimal" placeholder="ex.: 98.5" id="weightInput" required>
+          <button class="btn" type="submit">Registar</button>
+        </form>
+        <div class="weight-log" id="weightLog"></div>
+      </div>
+    </section>
+
+    <section class="blk" id="ft-treino">
+      <div class="blk-head">
+        <div><span class="kicker">Treino semanal</span><h2>Marca os treinos feitos</h2></div>
+        <span class="progress-chip" id="trainChip">0/5 esta semana</span>
+      </div>
+      <div class="tbl-scroll">
+        <table class="week">
+          <thead><tr><th>Feito</th><th>Dia</th><th>Hora</th><th>Treino</th><th>Foco</th></tr></thead>
+          <tbody id="fitTraining"></tbody>
+        </table>
+      </div>
+      <div class="protocols" id="fitProtocols"></div>
+    </section>
+
+    <section class="blk" id="ft-alimentacao">
+      <div class="blk-head"><div><span class="kicker">Alimentação</span><h2>3 padrões de dia</h2></div></div>
+      <p class="lead">Almoço = tigela cheia · Jantar = tigela 3/4 · Pequeno-almoço e merenda = tigela a metade. Escolhe sempre 1 carboidrato por refeição.</p>
+      <div id="fitMeals"></div>
+    </section>
+
+    <section class="blk" id="ft-regras">
+      <div class="blk-head"><div><span class="kicker">Consistência</span><h2>Regras de ouro</h2></div></div>
+      <div class="rules" id="fitRules"></div>
+    </section>
+
+    <section class="blk" id="ft-alimentos">
+      <div class="blk-head"><div><span class="kicker">Base</span><h2>Alimentos</h2></div></div>
+      <div class="foods">
+        <div class="foodbox base"><h3>Sempre disponíveis</h3><ul id="foodsBase"></ul></div>
+        <div class="foodbox extra"><h3>Envolvem custo</h3><ul id="foodsExtra"></ul></div>
+      </div>
+    </section>
+
+    <footer class="page-footer">Pesa-te a cada 2 semanas — a fórmula é ponto de partida, a balança manda. Consulta um profissional de saúde para acompanhamento personalizado.</footer>
+  </section>
+
+</main>
+
+<div class="tabbar">
+  <div class="tabbar-inner">
+    <button class="tabbtn active" data-tab="inicio" type="button">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9.5 12 3l9 6.5"></path><path d="M5 10v10a1 1 0 0 0 1 1h4v-6h4v6h4a1 1 0 0 0 1-1V10"></path></svg>
+      <span>Início</span>
+    </button>
+    <button class="tabbtn" data-tab="linguas" type="button">
+      <span class="tabdot"></span>
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path></svg>
+      <span>Línguas</span>
+    </button>
+    <button class="tabbtn" data-tab="forma" type="button">
+      <span class="tabdot"></span>
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6.5 6.5 3 10l4 4"></path><path d="M17.5 6.5 21 10l-4 4"></path><path d="m9 9 6 6"></path><path d="m7 15 2-2"></path><path d="m15 9 2-2"></path></svg>
+      <span>Forma</span>
+    </button>
+  </div>
+</div>
+
+<div class="sheet-backdrop" id="sheetBackdrop"></div>
+<div class="sheet" id="settingsSheet" role="dialog" aria-label="Definições">
+  <div class="grabber"></div>
+  <div style="display:flex;align-items:center;justify-content:space-between;">
+    <h3>Definições</h3>
+    <button class="iconbtn" id="btnCloseSheet" aria-label="Fechar" type="button">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+    </button>
+  </div>
+  <div class="sheet-row">
+    <div><div class="sl">Tema</div><div class="ss">Segue o sistema por omissão</div></div>
+    <div class="seg" id="themeSeg">
+      <button data-theme="light">Claro</button>
+      <button data-theme="system">Auto</button>
+      <button data-theme="dark">Escuro</button>
+    </div>
+  </div>
+  <div class="sheet-row">
+    <div><div class="sl">Exportar dados</div><div class="ss">Guarda uma cópia de segurança (.json)</div></div>
+    <button class="btn ghost" id="btnExport" type="button">Exportar</button>
+  </div>
+  <div class="sheet-row">
+    <div><div class="sl">Importar dados</div><div class="ss">Repõe a partir de uma cópia de segurança</div></div>
+    <label class="btn ghost" for="importFile" style="cursor:pointer;">Importar</label>
+    <input type="file" id="importFile" accept="application/json" hidden>
+  </div>
+  <div class="sheet-row">
+    <div><div class="sl">Repor tudo</div><div class="ss">Apaga todo o progresso guardado neste aparelho</div></div>
+    <button class="btn ghost" id="btnReset" type="button">Repor</button>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script src="js/data.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>
