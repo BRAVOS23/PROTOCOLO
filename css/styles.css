@@ -124,6 +124,7 @@
 }
 
 *{ box-sizing:border-box; }
+[hidden]{ display:none !important; }
 html{ -webkit-text-size-adjust:100%; }
 body{
   margin:0; background:var(--paper); color:var(--ink);
@@ -248,6 +249,100 @@ p.lead{ color:var(--ink-soft); font-size:14px; margin:0 0 16px; }
 }
 .quote-card .qk{ font-family:var(--font-mono); font-size:11px; text-transform:uppercase; letter-spacing:.06em; color:var(--accent-strong); font-weight:700; margin-bottom:7px; display:block; }
 .quote-card p{ font-size:13.5px; color:var(--ink-soft); line-height:1.55; }
+
+/* ---------------- protocolo card (manifesto + metas) ----------------
+   Cores fixas (não seguem o tema): é um cartão de identidade, sempre "escuro". */
+.protocolo-card{
+  margin-top:4px; padding:20px 22px; border-radius:var(--radius-l);
+  background:linear-gradient(155deg, #23211c 0%, #0c0a07 140%);
+  color:#f5f1e8; position:relative; overflow:hidden;
+}
+.protocolo-card .pc-top{ display:flex; align-items:flex-start; justify-content:space-between; gap:12px; }
+.protocolo-card .pc-eyebrow{ font-family:var(--font-mono); font-size:11px; text-transform:uppercase; letter-spacing:.08em; color:var(--accent-strong); font-weight:700; }
+.protocolo-card .pc-manifesto{
+  font-family:var(--font-display); font-size:16.5px; line-height:1.45; margin-top:10px;
+  color:rgba(245,241,232,.94);
+}
+.protocolo-card textarea.pc-edit{
+  width:100%; margin-top:10px; font-family:var(--font-display); font-size:15px; line-height:1.5;
+  background:rgba(255,255,255,.08); border:1px solid rgba(255,255,255,.22); border-radius:var(--radius-s);
+  color:#f5f1e8; padding:10px 12px; resize:vertical; min-height:76px;
+}
+.pc-metas{ display:flex; flex-wrap:wrap; gap:8px; margin-top:16px; }
+.meta-chip{
+  display:flex; align-items:baseline; gap:6px; padding:7px 12px; border-radius:999px;
+  background:rgba(255,255,255,.1); border:1px solid rgba(255,255,255,.16); font-size:12.5px;
+}
+.meta-chip .ml{ color:rgba(245,241,232,.65); font-weight:500; }
+.meta-chip .mv{ font-family:var(--font-mono); font-weight:700; color:#f5f1e8; }
+.meta-chip .mx{ cursor:pointer; color:rgba(245,241,232,.55); margin-left:2px; }
+.meta-edit-row{ display:flex; gap:6px; margin-top:8px; flex-wrap:wrap; }
+.meta-edit-row input{
+  background:rgba(255,255,255,.08); border:1px solid rgba(255,255,255,.22); border-radius:var(--radius-s);
+  color:#f5f1e8; padding:7px 10px; font-size:12.5px; font-family:var(--font-mono);
+}
+.meta-edit-row input.ml-in{ width:90px; font-family:var(--font-body); }
+.meta-edit-row input.mv-in{ width:76px; }
+.pc-add-meta{ font-size:12px; background:none; border:1px dashed rgba(255,255,255,.3); color:#f5f1e8; padding:6px 12px; border-radius:999px; cursor:pointer; }
+
+/* ---------------- área tags ---------------- */
+.area-dot{ width:8px; height:8px; border-radius:50%; flex-shrink:0; display:inline-block; }
+.area-tag{
+  display:inline-flex; align-items:center; gap:5px; font-size:11px; font-weight:600;
+  padding:2px 8px 2px 6px; border-radius:999px; background:var(--surface-2); color:var(--ink-soft); white-space:nowrap;
+}
+
+/* ---------------- hoje: header com editar ---------------- */
+.hoje-head{ display:flex; align-items:center; justify-content:space-between; gap:10px; }
+.daytype-badge{
+  font-family:var(--font-mono); font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:.04em;
+  padding:4px 10px; border-radius:999px;
+}
+.daytype-badge.foco{ background:var(--accent-soft); color:var(--accent-strong); }
+.daytype-badge.restauracao{ background:var(--cat-lang-soft); color:var(--cat-lang); }
+.today-item .ts{ display:flex; align-items:center; gap:6px; flex-wrap:wrap; margin-top:3px; }
+
+/* ---------------- editor de atividades (sheet) ---------------- */
+.day-picker{ display:flex; gap:6px; overflow-x:auto; margin-bottom:14px; scrollbar-width:none; }
+.day-picker::-webkit-scrollbar{ display:none; }
+.day-picker button{
+  flex-shrink:0; border:1px solid var(--line); background:var(--surface-2); color:var(--ink-soft);
+  padding:7px 13px; border-radius:999px; font-size:12.5px; font-weight:600; cursor:pointer;
+}
+.day-picker button.active{ background:var(--ink); color:var(--paper); border-color:var(--ink); }
+.day-picker button .dtdot{ width:6px; height:6px; border-radius:50%; display:inline-block; margin-right:5px; }
+
+.activity-row{
+  display:flex; align-items:flex-start; gap:10px; padding:12px 4px; border-top:1px solid var(--line);
+}
+.activity-row:first-child{ border-top:none; }
+.activity-row .ar-body{ flex:1; min-width:0; }
+.activity-row .ar-title{ font-size:14px; font-weight:600; }
+.activity-row .ar-detail{ font-size:12.5px; color:var(--ink-faint); margin-top:2px; }
+.activity-row .ar-actions{ display:flex; gap:4px; flex-shrink:0; }
+.ar-icon-btn{
+  width:28px; height:28px; border-radius:8px; border:1px solid var(--line); background:var(--surface);
+  display:flex; align-items:center; justify-content:center; cursor:pointer; color:var(--ink-faint);
+}
+.ar-icon-btn svg{ width:14px; height:14px; }
+.ar-icon-btn:hover{ color:var(--ink); }
+.ar-icon-btn.danger:hover{ color:var(--bad); border-color:var(--bad); }
+
+.activity-edit-form{ display:flex; flex-direction:column; gap:8px; padding:12px 4px; border-top:1px solid var(--line); }
+.activity-edit-form:first-child{ border-top:none; }
+.activity-edit-form input, .activity-edit-form select, .activity-edit-form textarea{
+  border:1px solid var(--line); background:var(--surface-2); border-radius:var(--radius-s);
+  padding:9px 11px; font-size:13.5px; color:var(--ink); font-family:var(--font-body); width:100%;
+}
+.activity-edit-form textarea{ resize:vertical; min-height:44px; }
+.activity-edit-form .row2{ display:grid; grid-template-columns:1fr 90px; gap:8px; }
+.activity-edit-form .form-actions{ display:flex; justify-content:flex-end; gap:8px; margin-top:2px; }
+
+.btn-add-activity{
+  width:100%; margin-top:12px; padding:11px; border-radius:var(--radius-m); border:1.5px dashed var(--line-strong);
+  background:none; color:var(--ink-soft); font-size:13px; font-weight:600; cursor:pointer;
+}
+.btn-add-activity:hover{ border-color:var(--accent); color:var(--accent-strong); }
 
 /* ---------------- sub tabs (dentro de Línguas/Forma) ---------------- */
 .subtabs-wrap{ position:relative; }

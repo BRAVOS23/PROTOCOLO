@@ -42,6 +42,20 @@
     <div class="hero">
       <span class="greet" id="dashDate">—</span>
       <h1>Bom trabalho a manter o rumo.</h1>
+
+      <div class="protocolo-card" id="protocoloCard">
+        <div class="pc-top">
+          <span class="pc-eyebrow">O Protocolo</span>
+          <button class="iconbtn" id="btnEditProtocolo" aria-label="Editar protocolo" type="button" style="background:rgba(255,255,255,.08); border-color:rgba(255,255,255,.2); color:#fff;">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"></path></svg>
+          </button>
+        </div>
+        <p class="pc-manifesto" id="pcManifestoText"></p>
+        <textarea class="pc-edit" id="pcManifestoEdit" hidden></textarea>
+        <div class="pc-metas" id="pcMetas"></div>
+        <div class="meta-edit-row" id="pcMetaEdit" hidden></div>
+      </div>
+
       <div class="streak-row">
         <span class="streak-chip"><span class="dot" style="background:var(--cat-lang)"></span>Línguas <span class="n" id="streakLang">0</span> dias</span>
         <span class="streak-chip"><span class="dot" style="background:var(--cat-fit)"></span>Forma <span class="n" id="streakFit">0</span> dias</span>
@@ -66,8 +80,14 @@
     </div>
 
     <section class="blk">
-      <div class="blk-head">
-        <div><span class="kicker">Hoje</span><h2>Marca o que fizeste</h2></div>
+      <div class="blk-head hoje-head">
+        <div><span class="kicker">Hoje</span><h2 id="hojeTitle">Marca o que fizeste</h2></div>
+        <div style="display:flex; align-items:center; gap:8px;">
+          <span class="daytype-badge" id="daytypeBadge">—</span>
+          <button class="iconbtn" id="btnEditDay" aria-label="Editar atividades" type="button">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"></path></svg>
+          </button>
+        </div>
       </div>
       <div class="today-list" id="todayList"></div>
     </section>
@@ -85,11 +105,6 @@
         <svg class="weight-chart" id="dashWeightChart" viewBox="0 0 300 120" preserveAspectRatio="none"></svg>
       </div>
     </section>
-
-    <div class="quote-card">
-      <span class="qk">Regra de ouro</span>
-      <p id="quoteText">A carregar…</p>
-    </div>
 
     <footer class="page-footer">Protocolo — feito por medida para o teu inglês e a tua forma física.</footer>
   </section>
@@ -269,6 +284,19 @@
     <div><div class="sl">Repor tudo</div><div class="ss">Apaga todo o progresso guardado neste aparelho</div></div>
     <button class="btn ghost" id="btnReset" type="button">Repor</button>
   </div>
+</div>
+
+<div class="sheet" id="activitySheet" role="dialog" aria-label="Editar atividades">
+  <div class="grabber"></div>
+  <div style="display:flex;align-items:center;justify-content:space-between;">
+    <h3>Editar atividades</h3>
+    <button class="iconbtn" id="btnCloseActivitySheet" aria-label="Fechar" type="button">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+    </button>
+  </div>
+  <div class="day-picker" id="dayPicker"></div>
+  <div id="activityList"></div>
+  <button class="btn-add-activity" id="btnAddActivity" type="button">+ Nova atividade</button>
 </div>
 
 <div class="toast" id="toast"></div>

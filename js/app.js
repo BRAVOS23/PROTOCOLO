@@ -3,15 +3,22 @@
 
   /* ---------------- storage ---------------- */
   var STORE_KEY = 'protocolo:v1:state';
-  var DEFAULT_STATE = { vocab:{}, langDone:{}, workouts:{}, weight:[], theme:'system' };
+  function freshDefaultState(){
+    return {
+      vocab:{}, langDone:{}, workouts:{}, weight:[], theme:'system',
+      activities: seedActivitiesWithIds(),
+      activityDone: {},
+      protocolo: clone(DEFAULT_PROTOCOLO),
+    };
+  }
 
   function loadState(){
     try{
       var raw = localStorage.getItem(STORE_KEY);
-      if(!raw) return clone(DEFAULT_STATE);
+      if(!raw) return freshDefaultState();
       var parsed = JSON.parse(raw);
-      return Object.assign(clone(DEFAULT_STATE), parsed);
-    }catch(e){ return clone(DEFAULT_STATE); }
+      return Object.assign(freshDefaultState(), parsed);
+    }catch(e){ return freshDefaultState(); }
   }
   function saveState(){
     try{ localStorage.setItem(STORE_KEY, JSON.stringify(state)); }catch(e){}
@@ -64,6 +71,7 @@
   /* ---------------- icons ---------------- */
   var CHECK_SVG = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>';
   var TRASH_SVG = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px;"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"></path><path d="M10 11v6M14 11v6"></path></svg>';
+  var PENCIL_SVG = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"></path></svg>';
 
   /* ---------------- tabs ---------------- */
   var views = { inicio:'view-inicio', linguas:'view-linguas', forma:'view-forma' };
@@ -179,9 +187,10 @@
       var d = weekdaysThisWeek[i];
       var dISO = iso(d);
       var isToday = dISO === TODAY_ISO;
-      var checkbox = t.tag !== 'rest'
-        ? '<span class="done-check" data-date="'+dISO+'" data-kind="train">'+CHECK_SVG+'</span>'
-        : '<span class="done-check" data-date="'+dISO+'" data-kind="train" style="opacity:.55">'+CHECK_SVG+'</span>';
+      var act = fitnessActivityForDay(t.day);
+      var checkbox = act
+        ? '<span class="done-check" data-date="'+dISO+'" data-day="'+t.day+'" data-act="'+act.id+'"'+(t.tag==='rest'?' style="opacity:.55"':'')+'>'+CHECK_SVG+'</span>'
+        : '';
       return '<tr'+(isToday?' class="today"':'')+'>' +
         '<td>'+checkbox+'</td>' +
         '<td class="day">'+t.day+'</td>' +
@@ -227,13 +236,14 @@
   }
 
   function bindTrainHandlers(){
-    document.querySelectorAll('.done-check[data-kind="train"]').forEach(function(el){
+    document.querySelectorAll('.done-check[data-act]').forEach(function(el){
       var d = el.getAttribute('data-date');
-      el.classList.toggle('on', !!state.workouts[d]);
+      var day = el.getAttribute('data-day');
+      var actId = el.getAttribute('data-act');
+      el.classList.toggle('on', isActDone(d, actId));
       el.addEventListener('click', function(){
-        state.workouts[d] = !state.workouts[d];
-        el.classList.toggle('on', state.workouts[d]);
-        saveState();
+        toggleActivityDone(d, day, actId);
+        el.classList.toggle('on', isActDone(d, actId));
         renderTrainProgress();
         renderDashboard();
       });
@@ -241,14 +251,9 @@
     renderTrainProgress();
   }
 
-  function trackableDatesThisWeek(){
-    var wd = weekDates(TODAY);
-    return FIT_TRAINING.map(function(t,i){ return {date:iso(wd[i]), tag:t.tag}; }).filter(function(x){ return x.tag!=='rest'; });
-  }
-
   function renderTrainProgress(){
     var dates = trackableDatesThisWeek();
-    var done = dates.filter(function(x){ return state.workouts[x.date]; }).length;
+    var done = dates.filter(function(x){ return isActDone(x.date, x.id); }).length;
     document.getElementById('trainChip').textContent = done + '/' + dates.length + ' esta semana';
     setRing('ringFit', dates.length ? done/dates.length : 0);
     document.getElementById('fitSummary').textContent = done + '/' + dates.length + ' treinos esta semana';
@@ -365,53 +370,269 @@
       entries.map(function(e){ return '<circle cx="'+px(new Date(e.date).getTime())+'" cy="'+py(e.kg)+'" r="2.6" fill="var(--surface)" stroke="var(--cat-fit)" stroke-width="2"></circle>'; }).join('');
   }
 
-  /* ================= DASHBOARD ================= */
-  var QUOTES = [
-    'Nunca estudes uma palavra isolada — cria sempre 2-3 frases tuas, sobre a tua vida real.',
-    'Água, sono e consistência valem mais do que qualquer truque de última hora.',
-    'B1 funcional em 3 meses é um objetivo esticado mas realista — se precisares de mais tempo, não é falhar.',
-    'A balança manda: ajusta as porções pelo que vês a cada 2 semanas, não pela fórmula.',
-    'Fala com pessoas reais, não só contigo mesmo — é isso que treina reagir em tempo real.',
-    'Grelhado ou cozido em vez de frito: o óleo soma calorias sem encher mais.',
-  ];
-  function dayOfYear(d){ var start=new Date(d.getFullYear(),0,0); return Math.floor((d-start)/86400000); }
+  /* ================= ATIVIDADES (editável) ================= */
+  function dayActivities(day){ return state.activities[day] || []; }
+  function fitnessActivityForDay(day){ return dayActivities(day).find(function(a){ return a.area==='fitness'; }); }
+  function doneKey(dateISO, actId){ return dateISO + '|' + actId; }
+  function isActDone(dateISO, actId){ return !!state.activityDone[doneKey(dateISO, actId)]; }
 
+  function recomputeDerived(dateISO, day){
+    var acts = dayActivities(day);
+    var fitAny = acts.some(function(a){ return a.area==='fitness' && isActDone(dateISO, a.id); });
+    var langAny = acts.some(function(a){ return a.area==='linguas' && isActDone(dateISO, a.id); });
+    if(fitAny) state.workouts[dateISO] = true; else delete state.workouts[dateISO];
+    if(langAny) state.langDone[dateISO] = true; else delete state.langDone[dateISO];
+  }
+
+  function toggleActivityDone(dateISO, day, actId){
+    var key = doneKey(dateISO, actId);
+    if(state.activityDone[key]) delete state.activityDone[key];
+    else state.activityDone[key] = true;
+    recomputeDerived(dateISO, day);
+    saveState();
+  }
+
+  function addActivity(day, obj){
+    var id = day + '-' + Date.now().toString(36) + Math.random().toString(36).slice(2,6);
+    var act = { id:id, area:obj.area||'outro', title:obj.title||'Nova atividade', detail:obj.detail||'', time:obj.time||'' };
+    if(!state.activities[day]) state.activities[day] = [];
+    state.activities[day].push(act);
+    saveState();
+    return act;
+  }
+  function updateActivity(day, id, patch){
+    var act = dayActivities(day).find(function(a){ return a.id===id; });
+    if(!act) return;
+    Object.assign(act, patch);
+    saveState();
+  }
+  function removeActivity(day, id){
+    state.activities[day] = dayActivities(day).filter(function(a){ return a.id!==id; });
+    saveState();
+  }
+
+  function trackableDatesThisWeek(){
+    var wd = weekDates(TODAY);
+    return WEEKDAYS.map(function(day, i){
+      var act = fitnessActivityForDay(day);
+      return act ? { date: iso(wd[i]), id: act.id } : null;
+    }).filter(Boolean);
+  }
+
+  /* ---- editor sheet ---- */
+  var editingDay = TODAY_WEEKDAY;
+  function renderDayPicker(){
+    document.getElementById('dayPicker').innerHTML = WEEKDAYS.map(function(day){
+      var type = DAY_TYPE[day];
+      var color = type==='foco' ? 'var(--accent)' : 'var(--cat-lang)';
+      return '<button data-day="'+day+'" class="'+(day===editingDay?'active':'')+'">' +
+        '<span class="dtdot" style="background:'+color+'"></span>' + day.slice(0,3) + '</button>';
+    }).join('');
+    document.querySelectorAll('#dayPicker button').forEach(function(b){
+      b.addEventListener('click', function(){ editingDay = b.getAttribute('data-day'); renderDayPicker(); renderActivityList(); });
+    });
+  }
+
+  function activityRowView(day, act){
+    var area = AREAS[act.area] || AREAS.outro;
+    return '<div class="activity-row" data-id="'+act.id+'">' +
+      '<span class="area-dot" style="background:'+area.color+'; margin-top:6px;"></span>' +
+      '<div class="ar-body">' +
+        '<div class="ar-title">'+act.title+(act.time?' <span class="mono" style="color:var(--ink-faint);font-weight:500;font-size:11.5px;">· '+act.time+'</span>':'')+'</div>' +
+        (act.detail ? '<div class="ar-detail">'+act.detail+'</div>' : '') +
+      '</div>' +
+      '<div class="ar-actions">' +
+        '<button class="ar-icon-btn" data-act="edit" type="button">'+PENCIL_SVG+'</button>' +
+        '<button class="ar-icon-btn danger" data-act="del" type="button">'+TRASH_SVG+'</button>' +
+      '</div></div>';
+  }
+
+  function activityRowEdit(day, act){
+    return '<div class="activity-edit-form" data-id="'+act.id+'">' +
+      '<select data-f="area">' + Object.keys(AREAS).map(function(k){ return '<option value="'+k+'"'+(k===act.area?' selected':'')+'>'+AREAS[k].label+'</option>'; }).join('') + '</select>' +
+      '<div class="row2">' +
+        '<input data-f="title" type="text" placeholder="Título" value="'+escAttr(act.title)+'">' +
+        '<input data-f="time" type="text" placeholder="Hora" value="'+escAttr(act.time||'')+'">' +
+      '</div>' +
+      '<textarea data-f="detail" placeholder="Detalhe (opcional)">'+escHtml(act.detail||'')+'</textarea>' +
+      '<div class="form-actions">' +
+        '<button class="btn ghost" data-act="cancel" type="button">Cancelar</button>' +
+        '<button class="btn" data-act="save" type="button">Guardar</button>' +
+      '</div></div>';
+  }
+
+  var openEditId = null;
+  function renderActivityList(){
+    var acts = dayActivities(editingDay);
+    var list = document.getElementById('activityList');
+    if(!acts.length){
+      list.innerHTML = '<p style="color:var(--ink-faint); font-size:13px; padding:14px 4px;">Sem atividades para '+editingDay+' ainda.</p>';
+      return;
+    }
+    list.innerHTML = acts.map(function(act){
+      return act.id === openEditId ? activityRowEdit(editingDay, act) : activityRowView(editingDay, act);
+    }).join('');
+
+    list.querySelectorAll('.activity-row [data-act="edit"]').forEach(function(btn){
+      btn.addEventListener('click', function(){
+        openEditId = btn.closest('.activity-row').getAttribute('data-id');
+        renderActivityList();
+      });
+    });
+    list.querySelectorAll('.activity-row [data-act="del"]').forEach(function(btn){
+      btn.addEventListener('click', function(){
+        var id = btn.closest('.activity-row').getAttribute('data-id');
+        if(!confirm('Remover esta atividade?')) return;
+        removeActivity(editingDay, id);
+        renderActivityList();
+        renderDashboard();
+        renderFitStatic();
+      });
+    });
+    list.querySelectorAll('.activity-edit-form [data-act="cancel"]').forEach(function(btn){
+      btn.addEventListener('click', function(){ openEditId = null; renderActivityList(); });
+    });
+    list.querySelectorAll('.activity-edit-form [data-act="save"]').forEach(function(btn){
+      btn.addEventListener('click', function(){
+        var form = btn.closest('.activity-edit-form');
+        var id = form.getAttribute('data-id');
+        var patch = {
+          area: form.querySelector('[data-f="area"]').value,
+          title: form.querySelector('[data-f="title"]').value.trim() || 'Sem título',
+          time: form.querySelector('[data-f="time"]').value.trim(),
+          detail: form.querySelector('[data-f="detail"]').value.trim(),
+        };
+        updateActivity(editingDay, id, patch);
+        openEditId = null;
+        renderActivityList();
+        renderDashboard();
+        renderFitStatic();
+      });
+    });
+  }
+
+  function escAttr(s){ return String(s).replace(/"/g,'&quot;'); }
+  function escHtml(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+  document.getElementById('btnAddActivity').addEventListener('click', function(){
+    var act = addActivity(editingDay, { area:'outro', title:'Nova atividade' });
+    openEditId = act.id;
+    renderActivityList();
+    renderDashboard();
+    renderFitStatic();
+  });
+
+  document.getElementById('btnEditDay').addEventListener('click', function(){
+    editingDay = TODAY_WEEKDAY;
+    openEditId = null;
+    renderDayPicker();
+    renderActivityList();
+    openSheet(activitySheet);
+  });
+
+  /* ================= PROTOCOLO (identidade + metas) ================= */
+  var protocoloEditing = false;
+  var editMetas = [];
+
+  function renderProtocolo(){
+    if(!protocoloEditing){
+      document.getElementById('pcManifestoText').textContent = state.protocolo.manifesto;
+      document.getElementById('pcManifestoText').hidden = false;
+      document.getElementById('pcManifestoEdit').hidden = true;
+      document.getElementById('pcMetas').hidden = false;
+      document.getElementById('pcMetaEdit').hidden = true;
+      document.getElementById('pcMetas').innerHTML = state.protocolo.metas.map(function(m){
+        return '<span class="meta-chip"><span class="ml">'+m.label+'</span><span class="mv">'+m.value+'</span></span>';
+      }).join('');
+    } else {
+      document.getElementById('pcManifestoText').hidden = true;
+      var edit = document.getElementById('pcManifestoEdit');
+      edit.hidden = false; edit.value = state.protocolo.manifesto;
+      document.getElementById('pcMetas').hidden = true;
+      document.getElementById('pcMetaEdit').hidden = false;
+      renderMetaEdit();
+    }
+  }
+
+  function renderMetaEdit(){
+    var box = document.getElementById('pcMetaEdit');
+    box.innerHTML = editMetas.map(function(m, i){
+      return '<span style="display:flex;gap:4px;align-items:center;">' +
+        '<input class="ml-in" data-i="'+i+'" data-f="label" value="'+escAttr(m.label)+'" placeholder="Meta">' +
+        '<input class="mv-in" data-i="'+i+'" data-f="value" value="'+escAttr(m.value)+'" placeholder="Valor">' +
+        '<span class="mx" data-i="'+i+'">✕</span></span>';
+    }).join('') + '<button type="button" class="pc-add-meta" id="pcAddMeta">+ meta</button>';
+
+    box.querySelectorAll('input').forEach(function(inp){
+      inp.addEventListener('input', function(){
+        var i = +inp.getAttribute('data-i'), f = inp.getAttribute('data-f');
+        editMetas[i][f] = inp.value;
+      });
+    });
+    box.querySelectorAll('.mx').forEach(function(x){
+      x.addEventListener('click', function(){
+        editMetas.splice(+x.getAttribute('data-i'), 1);
+        renderMetaEdit();
+      });
+    });
+    document.getElementById('pcAddMeta').addEventListener('click', function(){
+      editMetas.push({label:'', value:''});
+      renderMetaEdit();
+    });
+  }
+
+  document.getElementById('btnEditProtocolo').addEventListener('click', function(){
+    if(!protocoloEditing){
+      editMetas = clone(state.protocolo.metas);
+      protocoloEditing = true;
+      document.getElementById('btnEditProtocolo').innerHTML = CHECK_SVG;
+    } else {
+      state.protocolo.manifesto = document.getElementById('pcManifestoEdit').value.trim() || state.protocolo.manifesto;
+      state.protocolo.metas = editMetas.filter(function(m){ return m.label.trim() || m.value.trim(); });
+      saveState();
+      protocoloEditing = false;
+      document.getElementById('btnEditProtocolo').innerHTML = PENCIL_SVG;
+    }
+    renderProtocolo();
+  });
+
+  /* ================= DASHBOARD ================= */
   function renderDashboard(){
     document.getElementById('dashDate').textContent = TODAY.toLocaleDateString('pt-PT',{ weekday:'long', day:'numeric', month:'long' });
     document.getElementById('streakLang').textContent = computeStreak(state.langDone);
     document.getElementById('streakFit').textContent = computeStreak(state.workouts);
-    document.getElementById('quoteText').textContent = QUOTES[dayOfYear(TODAY) % QUOTES.length];
 
-    var isSessionA = ['Segunda','Quarta','Sexta'].indexOf(TODAY_WEEKDAY) >= 0;
-    var langLabel = isSessionA ? 'Anki + gramática (30 min)' : 'Vocabulário + escrita + listening + speaking (1h)';
-    var fitEntry = FIT_TRAINING.find(function(t){ return t.day === TODAY_WEEKDAY; });
-    var fitLabel = fitEntry ? (fitEntry.tag==='rest' ? 'Descanso ativo — caminhada 30–45min' : fitEntry.label + ' · ' + fitEntry.time) : '—';
+    var dayType = DAY_TYPE[TODAY_WEEKDAY];
+    var badge = document.getElementById('daytypeBadge');
+    badge.textContent = DAY_TYPE_LABEL[dayType] || '—';
+    badge.className = 'daytype-badge ' + dayType;
+    document.getElementById('hojeTitle').textContent = TODAY_WEEKDAY + ' — marca o que fizeste';
 
-    var items = [
-      { key:'lang', title:'Sessão de línguas', sub:langLabel, done: !!state.langDone[TODAY_ISO] },
-      { key:'fit', title:'Treino / forma', sub:fitLabel, done: !!state.workouts[TODAY_ISO] },
-    ];
-    document.getElementById('todayList').innerHTML = items.map(function(it){
-      return '<div class="today-item'+(it.done?' done':'')+'" data-key="'+it.key+'">' +
-        '<span class="today-check'+(it.done?' on':'')+'">'+CHECK_SVG+'</span>' +
-        '<div class="today-txt"><div class="tt">'+it.title+'</div><div class="ts">'+it.sub+'</div></div>' +
+    var acts = dayActivities(TODAY_WEEKDAY);
+    document.getElementById('todayList').innerHTML = acts.length ? acts.map(function(act){
+      var area = AREAS[act.area] || AREAS.outro;
+      var done = isActDone(TODAY_ISO, act.id);
+      var sub = [act.time, act.detail].filter(Boolean).join(' · ');
+      return '<div class="today-item'+(done?' done':'')+'" data-act="'+act.id+'">' +
+        '<span class="today-check'+(done?' on':'')+'">'+CHECK_SVG+'</span>' +
+        '<div class="today-txt"><div class="tt">'+act.title+'</div>' +
+        '<div class="ts"><span class="area-tag"><span class="area-dot" style="background:'+area.color+'"></span>'+area.label+'</span>'+(sub?'<span>'+sub+'</span>':'')+'</div></div>' +
         '</div>';
-    }).join('');
+    }).join('') : '<p style="color:var(--ink-faint); font-size:13px;">Sem atividades para hoje — toca no lápis para adicionar.</p>';
+
     document.querySelectorAll('#todayList .today-item').forEach(function(el){
       el.addEventListener('click', function(){
-        var key = el.getAttribute('data-key');
-        if(key==='lang'){ state.langDone[TODAY_ISO] = !state.langDone[TODAY_ISO]; }
-        else { state.workouts[TODAY_ISO] = !state.workouts[TODAY_ISO]; }
-        saveState();
+        var actId = el.getAttribute('data-act');
+        toggleActivityDone(TODAY_ISO, TODAY_WEEKDAY, actId);
         renderDashboard();
         renderVocabProgress();
         renderTrainProgress();
-        // keep training table checkbox in sync
-        var box = document.querySelector('.done-check[data-date="'+TODAY_ISO+'"][data-kind="train"]');
-        if(box) box.classList.toggle('on', !!state.workouts[TODAY_ISO]);
+        var box = document.querySelector('.done-check[data-date="'+TODAY_ISO+'"][data-act="'+actId+'"]');
+        if(box) box.classList.toggle('on', isActDone(TODAY_ISO, actId));
       });
     });
 
+    renderProtocolo();
     renderVocabProgress();
     renderTrainProgress();
     renderWeightAll();
@@ -438,13 +659,16 @@
     el.setAttribute('stroke-dashoffset', (RING_C*(1-pct)).toFixed(1));
   }
 
-  /* ---------------- settings sheet ---------------- */
-  var sheet = document.getElementById('settingsSheet');
+  /* ---------------- sheets (definições + editor de atividades) ---------------- */
+  var settingsSheet = document.getElementById('settingsSheet');
+  var activitySheet = document.getElementById('activitySheet');
   var backdrop = document.getElementById('sheetBackdrop');
-  function openSheet(){ sheet.classList.add('open'); backdrop.classList.add('open'); }
-  function closeSheet(){ sheet.classList.remove('open'); backdrop.classList.remove('open'); }
-  document.getElementById('btnSettings').addEventListener('click', openSheet);
+  var currentSheet = null;
+  function openSheet(el){ currentSheet = el; el.classList.add('open'); backdrop.classList.add('open'); }
+  function closeSheet(){ if(currentSheet) currentSheet.classList.remove('open'); backdrop.classList.remove('open'); currentSheet=null; }
+  document.getElementById('btnSettings').addEventListener('click', function(){ openSheet(settingsSheet); });
   document.getElementById('btnCloseSheet').addEventListener('click', closeSheet);
+  document.getElementById('btnCloseActivitySheet').addEventListener('click', closeSheet);
   backdrop.addEventListener('click', closeSheet);
 
   function applyTheme(t){
@@ -480,7 +704,7 @@
     reader.onload = function(){
       try{
         var data = JSON.parse(reader.result);
-        state = Object.assign(clone(DEFAULT_STATE), data);
+        state = Object.assign(freshDefaultState(), data);
         saveState();
         applyTheme(state.theme);
         renderAll();
@@ -494,7 +718,7 @@
 
   document.getElementById('btnReset').addEventListener('click', function(){
     if(!confirm('Apagar todo o progresso guardado neste aparelho? Esta ação não pode ser desfeita.')) return;
-    state = clone(DEFAULT_STATE);
+    state = freshDefaultState();
     saveState();
     applyTheme(state.theme);
     renderAll();

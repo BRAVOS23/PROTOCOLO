@@ -252,3 +252,103 @@ const FIT_FOODS = {
   base: ['Arroz branco', 'Xima', 'Batata', 'Massa', 'Pão de trigo', 'Manteiga', 'Aveia', 'Rhale', 'Trigo', 'Banana', 'Frango', 'Salada', 'Cove', 'Matapa', 'Feijão'],
   extra: ['Ovo', 'Leite', 'Maçã', 'Pera maçã', 'Laranja / tangerina', 'Batata doce', 'Mandioca', 'Moela'],
 };
+
+/* ---------------- Protocolo: identidade + rotina diária editável ---------------- */
+
+const WEEKDAYS = ['Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado', 'Domingo'];
+
+const DAY_TYPE = {
+  Segunda: 'foco', Terça: 'restauracao', Quarta: 'foco', Quinta: 'restauracao',
+  Sexta: 'foco', Sábado: 'restauracao', Domingo: 'restauracao',
+};
+
+const DAY_TYPE_LABEL = {
+  foco: 'Dia de foco',
+  restauracao: 'Dia de restauração',
+};
+
+/* áreas disponíveis para uma atividade — cor + rótulo */
+const AREAS = {
+  trabalho: { label: 'Trabalho', color: 'var(--slate, #3F6472)' },
+  fitness: { label: 'Judo & Tiros', color: 'var(--cat-fit)' },
+  linguas: { label: 'Línguas', color: 'var(--cat-lang)' },
+  leitura: { label: 'Leitura', color: 'var(--warn)' },
+  revisao: { label: 'Revisão', color: 'var(--warn)' },
+  pessoal: { label: 'Cuidados pessoais', color: 'var(--accent)' },
+  domestico: { label: 'Doméstico', color: 'var(--accent)' },
+  outro: { label: 'Outro', color: 'var(--ink-faint)' },
+};
+
+/* Estado inicial (seed) — o utilizador pode editar/apagar/adicionar tudo isto dentro do app. */
+function seedActivities() {
+  var mk = function (area, title, detail, time) { return { area: area, title: title, detail: detail || '', time: time || '' }; };
+  return {
+    Segunda: [
+      mk('trabalho', 'DROP — Espionagem', 'Ofertas vencedoras, produtos com potencial, levar criativos · importar produtos (remodelar fotos, copy, achar comentários)'),
+      mk('fitness', 'Judo técnico', 'Kuzushi → tsukuri → kake, sem pressão de combate — foco na forma', '15h30'),
+      mk('linguas', 'Inglês — Anki + gramática', 'Revisão dos cards + explicação curta e exercícios', '14h00'),
+      mk('leitura', 'Leitura', ''),
+    ],
+    Terça: [
+      mk('trabalho', 'DROP — Loja', 'Melhorar a credibilidade, aprimorar landpages para converter mais, trabalhar nas seções e abas'),
+      mk('fitness', 'Tiros na areia', '6–10 tiros de 15–30m a 100%, descanso de 1–2min a caminhar', '18h00'),
+      mk('linguas', 'Inglês — vocabulário, escrita, listening, speaking', ''),
+      mk('linguas', 'Mandarim', ''),
+      mk('revisao', 'Revisão da matéria', ''),
+      mk('pessoal', 'Cuidados pessoais', ''),
+      mk('domestico', 'Trabalhos domésticos', ''),
+    ],
+    Quarta: [
+      mk('trabalho', 'DROP — Criativos', 'Criar novos ADS'),
+      mk('fitness', 'Judo combate', 'Treino explosivo, com carga e luta de pegas', '15h30'),
+      mk('linguas', 'Inglês — Anki + gramática', '', '14h00'),
+      mk('leitura', 'Leitura', ''),
+    ],
+    Quinta: [
+      mk('trabalho', 'DROP — Campanhas', 'Como estão as métricas, levantar teste de ADS, produto ou landingpage'),
+      mk('fitness', 'Tiros na areia', '6–10 tiros de 15–30m a 100%', '18h00'),
+      mk('linguas', 'Inglês — vocabulário, escrita, listening, speaking', ''),
+      mk('linguas', 'Mandarim', ''),
+      mk('revisao', 'Revisão da matéria', ''),
+      mk('pessoal', 'Cuidados pessoais', ''),
+      mk('domestico', 'Trabalhos domésticos', ''),
+    ],
+    Sexta: [
+      mk('trabalho', 'DROP — Minerar & Aprender', 'Minerar e aprender coisas novas'),
+      mk('fitness', 'Judo randori', 'Randori a 100%, sem hesitação', '15h00'),
+      mk('linguas', 'Inglês — Anki + gramática', '', '14h00'),
+      mk('leitura', 'Leitura', ''),
+    ],
+    Sábado: [
+      mk('trabalho', 'DROP — Remarketing', 'Remarketing e pausar ADS'),
+      mk('fitness', 'Descanso ativo', 'Caminhada de 30–45min, sem barra, 7–8h de sono'),
+    ],
+    Domingo: [
+      mk('trabalho', 'DROP — Campanhas', 'Como estão as métricas, levantar teste de ADS, produto ou landingpage'),
+      mk('linguas', 'Inglês — vocabulário, escrita, listening, speaking', ''),
+      mk('linguas', 'Mandarim', ''),
+      mk('revisao', 'Revisão da matéria', ''),
+      mk('pessoal', 'Cuidados pessoais', ''),
+      mk('fitness', 'Descanso ativo', 'Caminhada de 30–45min, sem barra, 7–8h de sono'),
+    ],
+  };
+}
+
+function seedActivitiesWithIds() {
+  var data = seedActivities();
+  WEEKDAYS.forEach(function (day) {
+    (data[day] || []).forEach(function (act, i) {
+      act.id = day + '-' + i;
+    });
+  });
+  return data;
+}
+
+const DEFAULT_PROTOCOLO = {
+  manifesto: 'Antes dos 22, ponho as bases em ordem para expandir o negócio e mudar de país. Os meus objetivos não são negociáveis — cada dia de foco e cada dia de restauração serve esse rumo.',
+  metas: [
+    { label: 'Vendas', value: '2/dia' },
+    { label: 'Peso', value: '85 kg' },
+    { label: 'Inglês', value: 'Imersão B1' },
+  ],
+};
