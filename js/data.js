@@ -346,6 +346,73 @@ function seedActivitiesWithIds() {
 
 const FINANCE_CATEGORIES = ['Negócio', 'Alimentação', 'Transporte', 'Casa', 'Saúde', 'Lazer', 'Estudo', 'Outro'];
 
+/* ---------------- seeds para conteúdo editável (notas) ----------------
+   Convertem o conteúdo original em notas título+texto simples, para que
+   o utilizador possa editar tudo dentro do app. Só correm uma vez, na
+   primeira utilização — depois disso o que manda é o que está guardado. */
+
+function stripHtml(html){
+  return String(html)
+    .replace(/<li>/gi, '\n- ')
+    .replace(/<\/(p|li|ol|ul)>/gi, '\n')
+    .replace(/<br\s*\/?>/gi, '\n')
+    .replace(/<[^>]+>/g, '')
+    .replace(/&ndash;/g, '–').replace(/&mdash;/g, '—').replace(/&nbsp;/g, ' ').replace(/&amp;/g, '&').replace(/&minus;/g,'−')
+    .split('\n').map(function(l){ return l.trim(); }).filter(Boolean).join('\n')
+    .trim();
+}
+
+function makeNote(title, body){
+  return { id: 'n' + Math.random().toString(36).slice(2, 9), title: title, body: body };
+}
+
+function seedFitNotes(){
+  var protocolos = FIT_PROTOCOLS.map(function(p){ return makeNote(p.title, p.text); });
+  var refeicoes = ['judo', 'tiros', 'rest'].map(function(key){
+    var m = FIT_MEALS[key];
+    var body = m.rows.map(function(r){ return r.time + ' — ' + r.name + ': ' + r.desc + (r.note ? ' (' + r.note + ')' : ''); }).join('\n');
+    return makeNote(m.label + ' (' + m.days + ')', body);
+  });
+  var regras = FIT_RULES.map(function(r){ return makeNote(r.k, r.v); });
+  var alimentos = [
+    makeNote('Sempre disponíveis', FIT_FOODS.base.join(', ')),
+    makeNote('Envolvem custo', FIT_FOODS.extra.join(', ')),
+  ];
+  return { protocolos: protocolos, refeicoes: refeicoes, regras: regras, alimentos: alimentos };
+}
+
+function seedLangNotes(){
+  var rotina = LANG_ROUTINE.map(function(r){
+    var body = r.items.map(function(it){ return it.t + ' — ' + it.d; }).join('\n');
+    return makeNote(r.days + ' · ' + r.time, body);
+  });
+  var recursos = LANG_RESOURCES.map(function(r){ return makeNote(r.name + ' (' + r.badge + ')', r.desc); });
+  return { rotina: rotina, recursos: recursos };
+}
+
+function seedLangWeeks(){
+  var weeks = [];
+  LANG_MONTHS.forEach(function(m){
+    m.weeks.forEach(function(w){
+      var grammarLines = w.grammar.map(function(g){
+        if(typeof g === 'string') return g;
+        return (g.novo ? 'NOVO: ' : '') + g.text;
+      }).join('\n');
+      var milestoneText = w.milestone ? (w.milestone.tag + '\n' + stripHtml(w.milestone.html)) : '';
+      weeks.push({
+        id: 'w' + w.num,
+        num: w.num,
+        monthTitle: m.title,
+        monthId: m.id,
+        grammarNote: grammarLines,
+        milestoneNote: milestoneText,
+        vocab: w.vocab.map(function(v){ return { key: v.k, label: v.label }; }),
+      });
+    });
+  });
+  return weeks;
+}
+
 const DEFAULT_PROTOCOLO = {
   manifesto: 'Antes dos 22, ponho as bases em ordem para expandir o negócio e mudar de país. Os meus objetivos não são negociáveis — cada dia de foco e cada dia de restauração serve esse rumo.',
   metas: [

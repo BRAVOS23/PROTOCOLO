@@ -92,6 +92,11 @@
       <div class="today-list" id="todayList"></div>
     </section>
 
+    <section class="blk" id="dashAgendaBlk" hidden>
+      <div class="blk-head"><div><span class="kicker">Agenda</span><h2>A caminho</h2></div></div>
+      <div id="dashAgenda"></div>
+    </section>
+
     <section class="blk">
       <div class="blk-head"><div><span class="kicker">Peso</span><h2>Tendência</h2></div></div>
       <div class="card pad">
@@ -133,14 +138,20 @@
         <div><span class="kicker">Sem mexer na agenda</span><h2>Rotina semanal</h2></div>
         <span class="progress-chip" id="vocabChip">0/0 vocab</span>
       </div>
-      <div class="sched-grid" id="langRoutine"></div>
+      <div id="langRotinaNotes"></div>
+      <button class="btn-add-activity" id="btnAddRotina" type="button">+ Nova sessão</button>
     </section>
 
     <div id="langMonths"></div>
 
     <section class="blk" id="lg-recursos">
-      <div class="blk-head"><div><span class="kicker">Onde praticar</span><h2>Recursos</h2></div></div>
-      <div class="res-grid" id="langResources"></div>
+      <div class="blk-head">
+        <div><span class="kicker">Onde praticar</span><h2>Recursos</h2></div>
+        <button class="iconbtn" id="btnAddRecurso" aria-label="Novo recurso" type="button">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+        </button>
+      </div>
+      <div id="langResourcesNotes"></div>
 
       <div class="gold">
         <span class="g-icon">🎯</span>
@@ -200,7 +211,12 @@
     <section class="blk" id="ft-treino">
       <div class="blk-head">
         <div><span class="kicker">Treino semanal</span><h2>Marca os treinos feitos</h2></div>
-        <span class="progress-chip" id="trainChip">0/5 esta semana</span>
+        <div style="display:flex;align-items:center;gap:8px;">
+          <span class="progress-chip" id="trainChip">0/5 esta semana</span>
+          <button class="iconbtn" id="btnEditFitWeek" aria-label="Editar treino" type="button">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"></path></svg>
+          </button>
+        </div>
       </div>
       <div class="tbl-scroll">
         <table class="week">
@@ -208,26 +224,44 @@
           <tbody id="fitTraining"></tbody>
         </table>
       </div>
-      <div class="protocols" id="fitProtocols"></div>
+      <div class="blk-head" style="margin-top:22px;">
+        <div><span class="kicker">Como treinar</span><h2>Protocolos</h2></div>
+        <button class="iconbtn" id="btnAddProtocolo" aria-label="Novo protocolo" type="button">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+        </button>
+      </div>
+      <div id="fitProtocolosNotes"></div>
     </section>
 
     <section class="blk" id="ft-alimentacao">
-      <div class="blk-head"><div><span class="kicker">Alimentação</span><h2>3 padrões de dia</h2></div></div>
+      <div class="blk-head">
+        <div><span class="kicker">Alimentação</span><h2>Padrões de dia</h2></div>
+        <button class="iconbtn" id="btnAddRefeicao" aria-label="Nova refeição" type="button">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+        </button>
+      </div>
       <p class="lead">Almoço = tigela cheia · Jantar = tigela 3/4 · Pequeno-almoço e merenda = tigela a metade. Escolhe sempre 1 carboidrato por refeição.</p>
-      <div id="fitMeals"></div>
+      <div id="fitRefeicoesNotes"></div>
     </section>
 
     <section class="blk" id="ft-regras">
-      <div class="blk-head"><div><span class="kicker">Consistência</span><h2>Regras de ouro</h2></div></div>
-      <div class="rules" id="fitRules"></div>
+      <div class="blk-head">
+        <div><span class="kicker">Consistência</span><h2>Regras de ouro</h2></div>
+        <button class="iconbtn" id="btnAddRegra" aria-label="Nova regra" type="button">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+        </button>
+      </div>
+      <div id="fitRegrasNotes"></div>
     </section>
 
     <section class="blk" id="ft-alimentos">
-      <div class="blk-head"><div><span class="kicker">Base</span><h2>Alimentos</h2></div></div>
-      <div class="foods">
-        <div class="foodbox base"><h3>Sempre disponíveis</h3><ul id="foodsBase"></ul></div>
-        <div class="foodbox extra"><h3>Envolvem custo</h3><ul id="foodsExtra"></ul></div>
+      <div class="blk-head">
+        <div><span class="kicker">Base</span><h2>Alimentos</h2></div>
+        <button class="iconbtn" id="btnAddAlimento" aria-label="Novo grupo de alimentos" type="button">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+        </button>
       </div>
+      <div id="fitAlimentosNotes"></div>
     </section>
 
     <footer class="page-footer">Pesa-te a cada 2 semanas — a fórmula é ponto de partida, a balança manda. Consulta um profissional de saúde para acompanhamento personalizado.</footer>
@@ -287,7 +321,12 @@
     </section>
 
     <section class="blk" id="vd-compras">
-      <div class="blk-head"><div><span class="kicker">Precisas de</span><h2>Lista de compras</h2></div></div>
+      <div class="blk-head"><div><span class="kicker">Precisas de</span><h2>Listas de compras</h2></div></div>
+      <div class="day-picker" id="shoppingListPicker" style="margin-bottom:12px;"></div>
+      <form class="mini-form" id="shoppingListForm" style="margin-bottom:6px;">
+        <input id="shoppingListNameInput" type="text" placeholder="Nova lista (ex.: Farmácia)…" style="flex:2;" required>
+        <button class="btn ghost" type="submit">Criar lista</button>
+      </form>
       <form class="mini-form" id="shoppingForm">
         <input id="shoppingInput" type="text" placeholder="Adicionar item…" style="flex:3;" required>
         <button class="btn" type="submit">Adicionar</button>
@@ -299,6 +338,7 @@
       <div class="blk-head"><div><span class="kicker">Datas importantes</span><h2>Agenda</h2></div></div>
       <form class="mini-form" id="agendaForm">
         <input id="agendaDate" type="date" required>
+        <input id="agendaTime" type="time">
         <input id="agendaTitle" type="text" placeholder="O quê?" style="flex:2;" required>
         <button class="btn" type="submit">Adicionar</button>
       </form>
@@ -352,6 +392,7 @@
       <span>Trabalho</span>
     </button>
     <button class="tabbtn" data-tab="vida" type="button">
+      <span class="tabdot"></span>
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s-7-4.5-9.5-9A5.5 5.5 0 0 1 12 6a5.5 5.5 0 0 1 9.5 6c-2.5 4.5-9.5 9-9.5 9Z"></path></svg>
       <span>Vida</span>
     </button>
@@ -374,6 +415,11 @@
       <button data-theme="system">Auto</button>
       <button data-theme="dark">Escuro</button>
     </div>
+  </div>
+  <div class="sheet-row" style="display:block;">
+    <div class="sl">Nomes das abas</div>
+    <div class="ss" style="margin-bottom:10px;">Chama-lhes o que quiseres</div>
+    <div id="tabNameInputs" style="display:flex; flex-direction:column; gap:8px;"></div>
   </div>
   <div class="sheet-row">
     <div><div class="sl">Exportar dados</div><div class="ss">Guarda uma cópia de segurança (.json)</div></div>
