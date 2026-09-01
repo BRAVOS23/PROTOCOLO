@@ -386,6 +386,24 @@ p.lead{ color:var(--ink-soft); font-size:14px; margin:0 0 16px; }
 }
 .plano-edit textarea{ min-height:70px; resize:vertical; }
 
+/* contas (finanças) */
+.account-row{
+  display:flex; align-items:center; justify-content:space-between; gap:10px;
+  padding:12px 14px; border-radius:var(--radius-m); background:var(--surface); border:1px solid var(--line);
+  margin-top:10px; box-shadow:var(--shadow-1);
+}
+.account-row .ar-name{ font-weight:600; font-size:14px; }
+.account-row .ar-detail{ font-size:12px; color:var(--ink-faint); margin-top:2px; }
+.account-row .ar-balance{ font-family:var(--font-mono); font-weight:700; font-size:15px; white-space:nowrap; }
+.account-edit{
+  display:flex; flex-direction:column; gap:8px; padding:14px; border-radius:var(--radius-m);
+  background:var(--surface); border:1px solid var(--line); margin-top:10px;
+}
+.account-edit input{
+  border:1px solid var(--line); background:var(--surface-2); border-radius:var(--radius-s);
+  padding:9px 11px; font-size:13.5px; color:var(--ink); font-family:var(--font-body);
+}
+
 /* ---------------- sub tabs (dentro de Línguas/Forma) ---------------- */
 .subtabs-wrap{ position:relative; }
 .subtabs-wrap::after{

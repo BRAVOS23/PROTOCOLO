@@ -10,6 +10,7 @@
       activityDone: {},
       protocolo: clone(DEFAULT_PROTOCOLO),
       finance: [],
+      financeAccounts: [],
       shoppingLists: [ { id:'default', name:'Compras', items: [] } ],
       pendentes: [],
       agenda: [],
@@ -21,10 +22,43 @@
     };
   }
 
+  /* Dados reais puxados do Notion (BORN TO MAKE HISTORY!) — entram uma única vez,
+     tanto para quem começa de novo como para quem já tinha o app instalado. */
+  function migrateNotionImports(s){
+    if(!s.financeAccounts.length){
+      s.financeAccounts = [
+        { id:'acc-broto', name:'BROTO SAÚDE', detail:'Emola · 869908668', balance:0 },
+        { id:'acc-achaki-mpesa', name:'ACHAKI', detail:'Mpesa · 852211552', balance:0 },
+        { id:'acc-achaki-cash', name:'ACHAKI · Numerário', detail:'Dinheiro em caixa', balance:2000 },
+        { id:'acc-ads', name:'Conta ADS', detail:'BIM · 974590429', balance:0 },
+      ];
+    }
+    if(!s.fitNotes.protocolos.some(function(p){ return /hiperlordose/i.test(p.title); })){
+      s.fitNotes.protocolos.push({
+        id:'n-hiperlordose',
+        title:'Hiperlordose',
+        body:'Alongamento de flexores — 30s cada lado\nAbdominal infra — 15x, 2 séries\nPrancha — 15s\nFortalecimento — 15r cada lado',
+      });
+    }
+    if(!s.shoppingLists.some(function(l){ return l.name === 'Necessário'; })){
+      s.shoppingLists.push({
+        id:'sl-necessario', name:'Necessário',
+        items: [
+          { id:'ni-1', text:'Protetor (Aliexpress / Cidade)', done:false },
+          { id:'ni-2', text:'Zip pasta Nike', done:false },
+          { id:'ni-3', text:'Lesinho + esfregão — 150 MT (na Pepe)', done:false },
+          { id:'ni-4', text:'Protetor + capa com espaço de caneta (e a caneta original)', done:false },
+          { id:'ni-5', text:"3 Month's Challenge", done:false },
+        ],
+      });
+    }
+    return s;
+  }
+
   function loadState(){
     try{
       var raw = localStorage.getItem(STORE_KEY);
-      if(!raw) return freshDefaultState();
+      if(!raw) return migrateNotionImports(freshDefaultState());
       var parsed = JSON.parse(raw);
       var merged = Object.assign(freshDefaultState(), parsed);
       // migração: versões antigas guardavam "shopping" como lista simples
@@ -32,8 +66,8 @@
         merged.shoppingLists = [{ id:'default', name:'Compras', items: parsed.shopping }];
       }
       delete merged.shopping;
-      return merged;
-    }catch(e){ return freshDefaultState(); }
+      return migrateNotionImports(merged);
+    }catch(e){ return migrateNotionImports(freshDefaultState()); }
   }
   function saveState(){
     try{ localStorage.setItem(STORE_KEY, JSON.stringify(state)); }catch(e){}
@@ -706,6 +740,63 @@
   /* ================= VIDA (finanças / compras / agenda / pendentes / planos) ================= */
   function fmtMT(n){ return (n<0?'−':'') + Math.abs(n).toLocaleString('pt-PT',{minimumFractionDigits:0, maximumFractionDigits:2}) + ' MT'; }
 
+  var openAccountEditId = null;
+  function renderAccounts(){
+    var box = document.getElementById('financeAccounts');
+    if(!state.financeAccounts.length){
+      box.innerHTML = '<p style="color:var(--ink-faint); font-size:13px; padding:8px 0;">Sem contas ainda — toca no + para criar.</p>';
+      return;
+    }
+    box.innerHTML = state.financeAccounts.map(function(a){
+      if(a.id === openAccountEditId){
+        return '<div class="account-edit" data-id="'+a.id+'">' +
+          '<input data-f="name" type="text" placeholder="Nome da conta" value="'+escAttr(a.name)+'">' +
+          '<input data-f="detail" type="text" placeholder="Método / número" value="'+escAttr(a.detail)+'">' +
+          '<input data-f="balance" type="number" step="0.01" placeholder="Saldo (MT)" value="'+a.balance+'">' +
+          '<div class="form-actions"><button class="btn ghost" data-act="cancelacc" type="button">Cancelar</button><button class="btn" data-act="saveacc" type="button">Guardar</button></div></div>';
+      }
+      return '<div class="account-row" data-id="'+a.id+'">' +
+        '<div><div class="ar-name">'+escHtml(a.name)+'</div><div class="ar-detail">'+escHtml(a.detail||'')+'</div></div>' +
+        '<div style="display:flex; align-items:center; gap:8px;">' +
+        '<span class="ar-balance" style="color:'+(a.balance>=0?'var(--ink)':'var(--bad)')+'">'+fmtMT(a.balance)+'</span>' +
+        '<button class="ar-icon-btn" data-act="editacc" type="button">'+PENCIL_SVG+'</button>' +
+        '<button class="ar-icon-btn danger" data-act="delacc" type="button">'+TRASH_SVG+'</button></div></div>';
+    }).join('');
+
+    box.querySelectorAll('[data-act="editacc"]').forEach(function(btn){
+      btn.addEventListener('click', function(){ openAccountEditId = btn.closest('[data-id]').getAttribute('data-id'); renderAccounts(); });
+    });
+    box.querySelectorAll('[data-act="delacc"]').forEach(function(btn){
+      btn.addEventListener('click', function(){
+        if(!confirm('Apagar esta conta?')) return;
+        var id = btn.closest('[data-id]').getAttribute('data-id');
+        state.financeAccounts = state.financeAccounts.filter(function(a){ return a.id!==id; });
+        saveState(); renderAccounts();
+      });
+    });
+    box.querySelectorAll('[data-act="cancelacc"]').forEach(function(btn){
+      btn.addEventListener('click', function(){ openAccountEditId=null; renderAccounts(); });
+    });
+    box.querySelectorAll('[data-act="saveacc"]').forEach(function(btn){
+      btn.addEventListener('click', function(){
+        var card = btn.closest('.account-edit');
+        var id = card.getAttribute('data-id');
+        var a = state.financeAccounts.find(function(x){ return x.id===id; });
+        a.name = card.querySelector('[data-f="name"]').value.trim() || 'Sem nome';
+        a.detail = card.querySelector('[data-f="detail"]').value.trim();
+        a.balance = parseFloat(card.querySelector('[data-f="balance"]').value) || 0;
+        saveState(); openAccountEditId=null; renderAccounts();
+      });
+    });
+  }
+  document.getElementById('btnAddAccount').addEventListener('click', function(){
+    var a = { id:'acc'+Date.now().toString(36)+Math.random().toString(36).slice(2,5), name:'Nova conta', detail:'', balance:0 };
+    state.financeAccounts.push(a);
+    saveState();
+    openAccountEditId = a.id;
+    renderAccounts();
+  });
+
   function renderFinance(){
     var mk = TODAY_ISO.slice(0,7);
     var monthTx = state.finance.filter(function(t){ return t.date.slice(0,7)===mk; });
@@ -981,6 +1072,7 @@
   });
 
   function renderVida(){
+    renderAccounts();
     renderFinance();
     renderShopping();
     renderChecklist('pendentes', 'pendentesList');

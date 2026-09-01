@@ -305,7 +305,15 @@
     </section>
 
     <section class="blk" id="vd-financas">
-      <div class="blk-head"><div><span class="kicker">Este mês</span><h2>Finanças</h2></div></div>
+      <div class="blk-head">
+        <div><span class="kicker">Carteiras</span><h2>Contas</h2></div>
+        <button class="iconbtn" id="btnAddAccount" aria-label="Nova conta" type="button">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+        </button>
+      </div>
+      <div id="financeAccounts"></div>
+
+      <div class="blk-head" style="margin-top:22px;"><div><span class="kicker">Este mês</span><h2>Fluxo</h2></div></div>
       <div class="stats" id="financeStats"></div>
       <form class="mini-form" id="financeForm">
         <select id="financeType">
