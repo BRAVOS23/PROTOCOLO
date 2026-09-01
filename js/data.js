@@ -344,6 +344,8 @@ function seedActivitiesWithIds() {
   return data;
 }
 
+const FINANCE_CATEGORIES = ['Negócio', 'Alimentação', 'Transporte', 'Casa', 'Saúde', 'Lazer', 'Estudo', 'Outro'];
+
 const DEFAULT_PROTOCOLO = {
   manifesto: 'Antes dos 22, ponho as bases em ordem para expandir o negócio e mudar de país. Os meus objetivos não são negociáveis — cada dia de foco e cada dia de restauração serve esse rumo.',
   metas: [

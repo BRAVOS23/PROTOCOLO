@@ -233,6 +233,101 @@
     <footer class="page-footer">Pesa-te a cada 2 semanas — a fórmula é ponto de partida, a balança manda. Consulta um profissional de saúde para acompanhamento personalizado.</footer>
   </section>
 
+  <!-- ===================== TRABALHO ===================== -->
+  <section class="view" id="view-trabalho">
+    <section class="blk" style="padding-top:20px;">
+      <span class="kicker">Negócio</span>
+      <h1 style="font-size:24px;">Tarefas centrais <em style="font-style:normal;color:var(--accent-strong);">DROP</em></h1>
+      <p class="lead" style="margin-top:8px;">A rotina semanal do e-commerce — marca aqui ou no Início, é o mesmo registo.</p>
+    </section>
+    <section class="blk">
+      <div class="blk-head">
+        <div><span class="kicker">Semana</span><h2>Foco por dia</h2></div>
+        <button class="iconbtn" id="btnEditWork" aria-label="Editar tarefas" type="button">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"></path></svg>
+        </button>
+      </div>
+      <div id="workList"></div>
+    </section>
+    <footer class="page-footer">Protocolo — DROP, o negócio que financia o rumo.</footer>
+  </section>
+
+  <!-- ===================== VIDA ===================== -->
+  <section class="view" id="view-vida">
+    <section class="blk" style="padding-top:20px;">
+      <span class="kicker">Organização</span>
+      <h1 style="font-size:24px;">Vida <em style="font-style:normal;color:var(--accent-strong);">fora da rotina</em></h1>
+      <p class="lead" style="margin-top:8px;">Finanças, compras, agenda, pendentes e planos futuros.</p>
+    </section>
+
+    <section class="blk">
+      <div class="subtabs-wrap"><div class="subtabs">
+        <button data-anchor="#vd-financas">Finanças</button>
+        <button data-anchor="#vd-compras">Compras</button>
+        <button data-anchor="#vd-agenda">Agenda</button>
+        <button data-anchor="#vd-pendentes">Pendentes</button>
+        <button data-anchor="#vd-planos">Planos</button>
+      </div></div>
+    </section>
+
+    <section class="blk" id="vd-financas">
+      <div class="blk-head"><div><span class="kicker">Este mês</span><h2>Finanças</h2></div></div>
+      <div class="stats" id="financeStats"></div>
+      <form class="mini-form" id="financeForm">
+        <select id="financeType">
+          <option value="entrada">Entrada</option>
+          <option value="saida">Saída</option>
+        </select>
+        <input id="financeDesc" type="text" placeholder="Descrição" required>
+        <input id="financeAmount" type="number" step="0.01" min="0" placeholder="Valor (MT)" required>
+        <select id="financeCategory"></select>
+        <button class="btn" type="submit">Registar</button>
+      </form>
+      <div id="financeLog"></div>
+    </section>
+
+    <section class="blk" id="vd-compras">
+      <div class="blk-head"><div><span class="kicker">Precisas de</span><h2>Lista de compras</h2></div></div>
+      <form class="mini-form" id="shoppingForm">
+        <input id="shoppingInput" type="text" placeholder="Adicionar item…" style="flex:3;" required>
+        <button class="btn" type="submit">Adicionar</button>
+      </form>
+      <div class="today-list" id="shoppingList" style="margin-top:14px;"></div>
+    </section>
+
+    <section class="blk" id="vd-agenda">
+      <div class="blk-head"><div><span class="kicker">Datas importantes</span><h2>Agenda</h2></div></div>
+      <form class="mini-form" id="agendaForm">
+        <input id="agendaDate" type="date" required>
+        <input id="agendaTitle" type="text" placeholder="O quê?" style="flex:2;" required>
+        <button class="btn" type="submit">Adicionar</button>
+      </form>
+      <div id="agendaList" style="margin-top:6px;"></div>
+    </section>
+
+    <section class="blk" id="vd-pendentes">
+      <div class="blk-head"><div><span class="kicker">Soltos</span><h2>Pendentes</h2></div></div>
+      <p class="lead">Tarefas que não pertencem à rotina diária.</p>
+      <form class="mini-form" id="pendentesForm">
+        <input id="pendentesInput" type="text" placeholder="Adicionar pendente…" style="flex:3;" required>
+        <button class="btn" type="submit">Adicionar</button>
+      </form>
+      <div class="today-list" id="pendentesList" style="margin-top:14px;"></div>
+    </section>
+
+    <section class="blk" id="vd-planos">
+      <div class="blk-head">
+        <div><span class="kicker">Longo prazo</span><h2>Planos futuros</h2></div>
+        <button class="iconbtn" id="btnAddPlano" aria-label="Novo plano" type="button">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+        </button>
+      </div>
+      <div id="planosList"></div>
+    </section>
+
+    <footer class="page-footer">Protocolo — o resto da vida que sustenta a rotina.</footer>
+  </section>
+
 </main>
 
 <div class="tabbar">
@@ -250,6 +345,15 @@
       <span class="tabdot"></span>
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6.5 6.5 3 10l4 4"></path><path d="M17.5 6.5 21 10l-4 4"></path><path d="m9 9 6 6"></path><path d="m7 15 2-2"></path><path d="m15 9 2-2"></path></svg>
       <span>Forma</span>
+    </button>
+    <button class="tabbtn" data-tab="trabalho" type="button">
+      <span class="tabdot"></span>
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="7" width="18" height="13" rx="2"></rect><path d="M8 7V5a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+      <span>Trabalho</span>
+    </button>
+    <button class="tabbtn" data-tab="vida" type="button">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s-7-4.5-9.5-9A5.5 5.5 0 0 1 12 6a5.5 5.5 0 0 1 9.5 6c-2.5 4.5-9.5 9-9.5 9Z"></path></svg>
+      <span>Vida</span>
     </button>
   </div>
 </div>

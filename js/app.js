@@ -9,6 +9,11 @@
       activities: seedActivitiesWithIds(),
       activityDone: {},
       protocolo: clone(DEFAULT_PROTOCOLO),
+      finance: [],
+      shopping: [],
+      pendentes: [],
+      agenda: [],
+      planos: [],
     };
   }
 
@@ -74,8 +79,8 @@
   var PENCIL_SVG = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"></path></svg>';
 
   /* ---------------- tabs ---------------- */
-  var views = { inicio:'view-inicio', linguas:'view-linguas', forma:'view-forma' };
-  var titles = { inicio:'Início', linguas:'Rota para B1', forma:'Judo & Forma' };
+  var views = { inicio:'view-inicio', linguas:'view-linguas', forma:'view-forma', trabalho:'view-trabalho', vida:'view-vida' };
+  var titles = { inicio:'Início', linguas:'Rota para B1', forma:'Judo & Forma', trabalho:'DROP', vida:'Vida' };
   function goTab(tab){
     Object.keys(views).forEach(function(k){
       document.getElementById(views[k]).classList.toggle('active', k===tab);
@@ -419,6 +424,40 @@
     }).filter(Boolean);
   }
 
+  /* ---- aba Trabalho (DROP) ---- */
+  function renderWorkStatic(){
+    var weekdaysThisWeek = weekDates(TODAY);
+    document.getElementById('workList').innerHTML =
+      '<div class="tbl-scroll"><table class="week"><thead><tr><th>Feito</th><th>Dia</th><th>Tarefa</th><th>Detalhe</th></tr></thead><tbody>' +
+      WEEKDAYS.map(function(day, i){
+        var act = dayActivities(day).find(function(a){ return a.area==='trabalho'; });
+        if(!act) return '';
+        var dISO = iso(weekdaysThisWeek[i]);
+        var isToday = dISO === TODAY_ISO;
+        var checkbox = '<span class="done-check" data-date="'+dISO+'" data-day="'+day+'" data-act="'+act.id+'">'+CHECK_SVG+'</span>';
+        return '<tr'+(isToday?' class="today"':'')+'>' +
+          '<td>'+checkbox+'</td><td class="day">'+day+'</td><td>'+act.title.replace(/^DROP\s*—\s*/,'')+'</td>' +
+          '<td style="color:var(--ink-soft);font-size:12.5px;">'+(act.detail||'')+'</td></tr>';
+      }).join('') + '</tbody></table></div>';
+
+    document.querySelectorAll('#workList .done-check').forEach(function(el){
+      var d = el.getAttribute('data-date'), day = el.getAttribute('data-day'), actId = el.getAttribute('data-act');
+      el.classList.toggle('on', isActDone(d, actId));
+      el.addEventListener('click', function(){
+        toggleActivityDone(d, day, actId);
+        el.classList.toggle('on', isActDone(d, actId));
+        renderDashboard();
+      });
+    });
+  }
+  document.getElementById('btnEditWork').addEventListener('click', function(){
+    editingDay = TODAY_WEEKDAY;
+    openEditId = null;
+    renderDayPicker();
+    renderActivityList();
+    openSheet(activitySheet);
+  });
+
   /* ---- editor sheet ---- */
   var editingDay = TODAY_WEEKDAY;
   function renderDayPicker(){
@@ -596,6 +635,190 @@
     renderProtocolo();
   });
 
+  /* ================= VIDA (finanças / compras / agenda / pendentes / planos) ================= */
+  function fmtMT(n){ return (n<0?'−':'') + Math.abs(n).toLocaleString('pt-PT',{minimumFractionDigits:0, maximumFractionDigits:2}) + ' MT'; }
+
+  function renderFinance(){
+    var mk = TODAY_ISO.slice(0,7);
+    var monthTx = state.finance.filter(function(t){ return t.date.slice(0,7)===mk; });
+    var totalIn = monthTx.filter(function(t){ return t.type==='entrada'; }).reduce(function(s,t){ return s+t.amount; },0);
+    var totalOut = monthTx.filter(function(t){ return t.type==='saida'; }).reduce(function(s,t){ return s+t.amount; },0);
+    document.getElementById('financeStats').innerHTML =
+      stat('Entradas', fmtMT(totalIn)) +
+      stat('Saídas', fmtMT(totalOut)) +
+      stat('Saldo do mês', fmtMT(totalIn-totalOut), totalIn-totalOut>=0);
+
+    var log = document.getElementById('financeLog');
+    var list = state.finance.slice().sort(function(a,b){ return a.date<b.date?1:-1; });
+    log.innerHTML = list.length ? list.map(function(t){
+      var d = new Date(t.date+'T00:00:00');
+      return '<div class="list-row"><div class="lr-main"><div class="lr-title">'+escHtml(t.desc)+'</div>' +
+        '<div class="lr-sub">'+fmtDateShort(d)+' · '+t.category+'</div></div>' +
+        '<div class="lr-right"><span class="lr-amount '+(t.type==='entrada'?'in':'out')+'">'+(t.type==='entrada'?'+':'−')+fmtMT(t.amount)+'</span>' +
+        '<span class="del" data-id="'+t.id+'">'+TRASH_SVG+'</span></div></div>';
+    }).join('') : '<div class="list-row" style="color:var(--ink-faint)">Sem registos ainda.</div>';
+    log.querySelectorAll('.del').forEach(function(el){
+      el.addEventListener('click', function(){
+        state.finance = state.finance.filter(function(t){ return t.id!==el.getAttribute('data-id'); });
+        saveState(); renderFinance();
+      });
+    });
+  }
+  document.getElementById('financeCategory').innerHTML = FINANCE_CATEGORIES.map(function(c){ return '<option>'+c+'</option>'; }).join('');
+  document.getElementById('financeForm').addEventListener('submit', function(e){
+    e.preventDefault();
+    var amount = parseFloat(document.getElementById('financeAmount').value);
+    if(!amount || amount<=0) return;
+    state.finance.push({
+      id:'f'+Date.now().toString(36)+Math.random().toString(36).slice(2,5),
+      date: TODAY_ISO,
+      type: document.getElementById('financeType').value,
+      desc: document.getElementById('financeDesc').value.trim() || 'Sem descrição',
+      amount: amount,
+      category: document.getElementById('financeCategory').value,
+    });
+    saveState();
+    document.getElementById('financeForm').reset();
+    renderFinance();
+    toast('Registado');
+  });
+
+  function renderChecklist(stateKey, containerId){
+    var arr = state[stateKey];
+    var el = document.getElementById(containerId);
+    el.innerHTML = arr.length ? arr.map(function(it){
+      return '<div class="today-item'+(it.done?' done':'')+'" data-id="'+it.id+'">' +
+        '<span class="today-check'+(it.done?' on':'')+'">'+CHECK_SVG+'</span>' +
+        '<div class="today-txt"><div class="tt">'+escHtml(it.text)+'</div></div>' +
+        '<span class="del" data-id="'+it.id+'">'+TRASH_SVG+'</span></div>';
+    }).join('') : '<p style="color:var(--ink-faint); font-size:13px;">Nada por aqui ainda.</p>';
+
+    el.querySelectorAll('.today-item').forEach(function(row){
+      row.addEventListener('click', function(ev){
+        if(ev.target.closest('.del')) return;
+        var it = arr.find(function(x){ return x.id===row.getAttribute('data-id'); });
+        it.done = !it.done;
+        saveState();
+        renderChecklist(stateKey, containerId);
+      });
+    });
+    el.querySelectorAll('.del').forEach(function(btn){
+      btn.addEventListener('click', function(ev){
+        ev.stopPropagation();
+        state[stateKey] = state[stateKey].filter(function(x){ return x.id!==btn.getAttribute('data-id'); });
+        saveState();
+        renderChecklist(stateKey, containerId);
+      });
+    });
+  }
+  document.getElementById('shoppingForm').addEventListener('submit', function(e){
+    e.preventDefault();
+    var input = document.getElementById('shoppingInput');
+    var v = input.value.trim(); if(!v) return;
+    state.shopping.push({ id:'s'+Date.now().toString(36)+Math.random().toString(36).slice(2,5), text:v, done:false });
+    saveState(); input.value=''; renderChecklist('shopping','shoppingList');
+  });
+  document.getElementById('pendentesForm').addEventListener('submit', function(e){
+    e.preventDefault();
+    var input = document.getElementById('pendentesInput');
+    var v = input.value.trim(); if(!v) return;
+    state.pendentes.push({ id:'p'+Date.now().toString(36)+Math.random().toString(36).slice(2,5), text:v, done:false });
+    saveState(); input.value=''; renderChecklist('pendentes','pendentesList');
+  });
+
+  function renderAgenda(){
+    var list = document.getElementById('agendaList');
+    var arr = state.agenda.slice().sort(function(a,b){
+      var pa = a.date<TODAY_ISO ? 1:0, pb = b.date<TODAY_ISO ? 1:0;
+      if(pa!==pb) return pa-pb;
+      return a.date<b.date ? -1 : 1;
+    });
+    list.innerHTML = arr.length ? arr.map(function(ev){
+      var d = new Date(ev.date+'T00:00:00');
+      var isPast = ev.date < TODAY_ISO;
+      return '<div class="list-row'+(isPast?' past':'')+'"><div class="lr-main"><div class="lr-title">'+escHtml(ev.title)+'</div>' +
+        '<div class="lr-sub">'+d.toLocaleDateString('pt-PT',{day:'2-digit',month:'long',year:'numeric'})+'</div></div>' +
+        '<span class="del" data-id="'+ev.id+'">'+TRASH_SVG+'</span></div>';
+    }).join('') : '<div class="list-row" style="color:var(--ink-faint)">Sem eventos agendados.</div>';
+    list.querySelectorAll('.del').forEach(function(btn){
+      btn.addEventListener('click', function(){
+        state.agenda = state.agenda.filter(function(x){ return x.id!==btn.getAttribute('data-id'); });
+        saveState(); renderAgenda();
+      });
+    });
+  }
+  document.getElementById('agendaForm').addEventListener('submit', function(e){
+    e.preventDefault();
+    var date = document.getElementById('agendaDate').value;
+    var title = document.getElementById('agendaTitle').value.trim();
+    if(!date || !title) return;
+    state.agenda.push({ id:'ag'+Date.now().toString(36)+Math.random().toString(36).slice(2,5), date:date, title:title });
+    saveState();
+    document.getElementById('agendaForm').reset();
+    renderAgenda();
+  });
+
+  var openPlanoEditId = null;
+  function renderPlanos(){
+    var list = document.getElementById('planosList');
+    if(!state.planos.length){
+      list.innerHTML = '<p style="color:var(--ink-faint); font-size:13px; padding:8px 0;">Sem planos ainda — toca no + para criar.</p>';
+      return;
+    }
+    list.innerHTML = state.planos.map(function(p){
+      if(p.id === openPlanoEditId){
+        return '<div class="plano-card plano-edit" data-id="'+p.id+'">' +
+          '<input data-f="title" type="text" placeholder="Título" value="'+escAttr(p.title)+'">' +
+          '<textarea data-f="body" placeholder="Notas…">'+escHtml(p.body)+'</textarea>' +
+          '<div class="form-actions"><button class="btn ghost" data-act="cancel" type="button">Cancelar</button><button class="btn" data-act="save" type="button">Guardar</button></div></div>';
+      }
+      return '<div class="plano-card" data-id="'+p.id+'">' +
+        '<div class="pl-top"><h3>'+escHtml(p.title)+'</h3>' +
+        '<div class="pl-actions"><button class="ar-icon-btn" data-act="edit" type="button">'+PENCIL_SVG+'</button><button class="ar-icon-btn danger" data-act="del" type="button">'+TRASH_SVG+'</button></div></div>' +
+        (p.body ? '<p>'+escHtml(p.body)+'</p>' : '') + '</div>';
+    }).join('');
+
+    list.querySelectorAll('.plano-card[data-id] [data-act="edit"]').forEach(function(btn){
+      btn.addEventListener('click', function(){ openPlanoEditId = btn.closest('.plano-card').getAttribute('data-id'); renderPlanos(); });
+    });
+    list.querySelectorAll('.plano-card[data-id] [data-act="del"]').forEach(function(btn){
+      btn.addEventListener('click', function(){
+        if(!confirm('Apagar este plano?')) return;
+        var id = btn.closest('.plano-card').getAttribute('data-id');
+        state.planos = state.planos.filter(function(p){ return p.id!==id; });
+        saveState(); renderPlanos();
+      });
+    });
+    list.querySelectorAll('.plano-edit [data-act="cancel"]').forEach(function(btn){
+      btn.addEventListener('click', function(){ openPlanoEditId=null; renderPlanos(); });
+    });
+    list.querySelectorAll('.plano-edit [data-act="save"]').forEach(function(btn){
+      btn.addEventListener('click', function(){
+        var card = btn.closest('.plano-edit');
+        var id = card.getAttribute('data-id');
+        var p = state.planos.find(function(x){ return x.id===id; });
+        p.title = card.querySelector('[data-f="title"]').value.trim() || 'Sem título';
+        p.body = card.querySelector('[data-f="body"]').value.trim();
+        saveState(); openPlanoEditId=null; renderPlanos();
+      });
+    });
+  }
+  document.getElementById('btnAddPlano').addEventListener('click', function(){
+    var p = { id:'pl'+Date.now().toString(36)+Math.random().toString(36).slice(2,5), title:'Novo plano', body:'' };
+    state.planos.push(p);
+    saveState();
+    openPlanoEditId = p.id;
+    renderPlanos();
+  });
+
+  function renderVida(){
+    renderFinance();
+    renderChecklist('shopping', 'shoppingList');
+    renderChecklist('pendentes', 'pendentesList');
+    renderAgenda();
+    renderPlanos();
+  }
+
   /* ================= DASHBOARD ================= */
   function renderDashboard(){
     document.getElementById('dashDate').textContent = TODAY.toLocaleDateString('pt-PT',{ weekday:'long', day:'numeric', month:'long' });
@@ -730,6 +953,8 @@
   function renderAll(){
     renderLangStatic();
     renderFitStatic();
+    renderWorkStatic();
+    renderVida();
     renderDashboard();
   }
   applyTheme(state.theme);

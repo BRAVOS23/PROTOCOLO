@@ -344,6 +344,48 @@ p.lead{ color:var(--ink-soft); font-size:14px; margin:0 0 16px; }
 }
 .btn-add-activity:hover{ border-color:var(--accent); color:var(--accent-strong); }
 
+/* ---------------- mini-form (finanças / compras / agenda / pendentes) ---------------- */
+.mini-form{ display:flex; flex-wrap:wrap; gap:8px; margin-top:16px; }
+.mini-form input, .mini-form select{
+  flex:1; min-width:100px; border:1px solid var(--line); background:var(--surface-2); border-radius:var(--radius-s);
+  padding:9px 11px; font-size:13.5px; color:var(--ink); font-family:var(--font-body);
+}
+.mini-form button{ flex-shrink:0; }
+
+/* generic row (finanças / agenda) */
+.list-row{
+  display:flex; align-items:center; justify-content:space-between; gap:10px;
+  padding:11px 4px; border-top:1px solid var(--line); font-size:13.5px;
+}
+.list-row:first-child{ border-top:none; }
+.list-row .lr-main{ min-width:0; }
+.list-row .lr-title{ font-weight:600; color:var(--ink); }
+.list-row .lr-sub{ font-size:12px; color:var(--ink-faint); margin-top:2px; }
+.list-row .lr-right{ display:flex; align-items:center; gap:10px; flex-shrink:0; }
+.list-row .lr-amount{ font-family:var(--font-mono); font-weight:700; white-space:nowrap; }
+.list-row .lr-amount.in{ color:var(--good); }
+.list-row .lr-amount.out{ color:var(--bad); }
+.list-row.past{ opacity:.5; }
+.list-row .del{ cursor:pointer; color:var(--ink-faint); flex-shrink:0; }
+.list-row .del:hover{ color:var(--bad); }
+.list-row .del svg{ width:14px; height:14px; display:block; }
+
+.today-item .del{ margin-left:auto; cursor:pointer; color:var(--ink-faint); flex-shrink:0; padding:4px; }
+.today-item .del:hover{ color:var(--bad); }
+.today-item .del svg{ width:14px; height:14px; display:block; }
+
+/* planos futuros (notas) */
+.plano-card{ background:var(--surface); border:1px solid var(--line); border-radius:var(--radius-m); padding:16px; margin-top:12px; box-shadow:var(--shadow-1); }
+.plano-card .pl-top{ display:flex; align-items:flex-start; justify-content:space-between; gap:10px; margin-bottom:6px; }
+.plano-card h3{ font-size:15px; font-family:var(--font-display); font-weight:600; }
+.plano-card p{ font-size:13.5px; color:var(--ink-soft); white-space:pre-wrap; }
+.plano-card .pl-actions{ display:flex; gap:4px; flex-shrink:0; }
+.plano-edit input, .plano-edit textarea{
+  width:100%; border:1px solid var(--line); background:var(--surface-2); border-radius:var(--radius-s);
+  padding:9px 11px; font-size:13.5px; color:var(--ink); font-family:var(--font-body); margin-bottom:8px;
+}
+.plano-edit textarea{ min-height:70px; resize:vertical; }
+
 /* ---------------- sub tabs (dentro de Línguas/Forma) ---------------- */
 .subtabs-wrap{ position:relative; }
 .subtabs-wrap::after{
