@@ -97,6 +97,11 @@
       <div id="dashAgenda"></div>
     </section>
 
+    <section class="blk" id="dashPendentesBlk" hidden>
+      <div class="blk-head"><div><span class="kicker">Pendentes</span><h2>Prazo a chegar</h2></div></div>
+      <div id="dashPendentes"></div>
+    </section>
+
     <section class="blk">
       <div class="blk-head"><div><span class="kicker">Peso</span><h2>Tendência</h2></div></div>
       <div class="card pad">
@@ -211,12 +216,7 @@
     <section class="blk" id="ft-treino">
       <div class="blk-head">
         <div><span class="kicker">Treino semanal</span><h2>Marca os treinos feitos</h2></div>
-        <div style="display:flex;align-items:center;gap:8px;">
-          <span class="progress-chip" id="trainChip">0/5 esta semana</span>
-          <button class="iconbtn" id="btnEditFitWeek" aria-label="Editar treino" type="button">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"></path></svg>
-          </button>
-        </div>
+        <span class="progress-chip" id="trainChip">0/5 esta semana</span>
       </div>
       <div class="tbl-scroll">
         <table class="week">
@@ -224,6 +224,7 @@
           <tbody id="fitTraining"></tbody>
         </table>
       </div>
+      <p class="lead" style="margin-top:6px;font-size:12px;color:var(--ink-faint);">Toca numa linha para editar hora, treino ou foco.</p>
       <div class="blk-head" style="margin-top:22px;">
         <div><span class="kicker">Como treinar</span><h2>Protocolos</h2></div>
         <button class="iconbtn" id="btnAddProtocolo" aria-label="Novo protocolo" type="button">
@@ -277,11 +278,9 @@
     <section class="blk">
       <div class="blk-head">
         <div><span class="kicker">Semana</span><h2>Foco por dia</h2></div>
-        <button class="iconbtn" id="btnEditWork" aria-label="Editar tarefas" type="button">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"></path></svg>
-        </button>
       </div>
       <div id="workList"></div>
+      <p class="lead" style="margin-top:6px;font-size:12px;color:var(--ink-faint);">Toca numa linha para editar a tarefa ou o detalhe.</p>
     </section>
     <footer class="page-footer">Protocolo — DROP, o negócio que financia o rumo.</footer>
   </section>
@@ -359,9 +358,12 @@
       <section class="blk" style="padding-top:16px;">
         <p class="lead">Tarefas que não pertencem à rotina diária.</p>
         <form class="mini-form" id="pendentesForm">
-          <input id="pendentesInput" type="text" placeholder="Adicionar pendente…" style="flex:3;" required>
+          <input id="pendentesInput" type="text" placeholder="Adicionar pendente…" style="flex:2;" required>
+          <input id="pendentesDate" type="date" aria-label="Data (opcional)">
+          <input id="pendentesTime" type="time" aria-label="Hora (opcional)">
           <button class="btn" type="submit">Adicionar</button>
         </form>
+        <p class="lead" style="margin-top:6px;font-size:12px;color:var(--ink-faint);">Data e hora são opcionais — se definires, aparece um aviso no Início quando faltarem 24h.</p>
         <div class="today-list" id="pendentesList" style="margin-top:14px;"></div>
       </section>
     </div>

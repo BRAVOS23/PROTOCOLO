@@ -230,9 +230,9 @@
       var items = r.items.map(function(it){
         return '<div class="sched-item"><span class="t">'+escHtml(it.t)+'</span><span class="d">'+escHtml(it.d)+'</span></div>';
       }).join('');
-      return '<div class="sched-card '+variant+'" data-id="'+r.id+'">' +
-        '<button class="cardedit" data-act="edit" type="button">'+PENCIL_SVG+'</button>' +
-        '<div class="sched-head"><div class="days">'+escHtml(r.days)+'</div><div class="time">'+escHtml(r.time)+'</div></div>' +
+      return '<div class="sched-card '+variant+'" data-id="'+r.id+'" style="position:relative;">' +
+        '<button class="cardedit" data-act="edit" type="button" style="position:absolute;top:10px;right:10px;">'+PENCIL_SVG+'</button>' +
+        '<div class="sched-head"><div class="days" style="padding-right:26px;">'+escHtml(r.days)+'</div><div class="time">'+escHtml(r.time)+'</div></div>' +
         '<div class="sched-body">'+items+'</div></div>';
     }).join('');
     bindRotinaHandlers();
@@ -322,9 +322,9 @@
           '</div></div>';
       }
       var badgeLabel = r.badgeType === 'official' ? 'Oficial' : (r.badge || 'Novo');
-      return '<div class="res-card" data-id="'+r.id+'">' +
-        '<button class="cardedit" data-act="edit" type="button" style="color:var(--ink-faint);background:var(--surface-2);">'+PENCIL_SVG+'</button>' +
-        '<div class="res-top"><h4>'+escHtml(r.name)+'</h4><span class="badge '+r.badgeType+'">'+escHtml(badgeLabel)+'</span></div>' +
+      return '<div class="res-card" data-id="'+r.id+'" style="position:relative;">' +
+        '<button class="cardedit" data-act="edit" type="button" style="position:absolute;top:10px;right:10px;color:var(--ink-faint);background:var(--surface-2);">'+PENCIL_SVG+'</button>' +
+        '<div class="res-top" style="padding-right:26px;"><h4>'+escHtml(r.name)+'</h4><span class="badge '+r.badgeType+'">'+escHtml(badgeLabel)+'</span></div>' +
         '<p>'+escHtml(r.desc)+'</p></div>';
     }).join('');
     bindRecursosHandlers();
@@ -471,6 +471,7 @@
   }
 
   /* ================= FORMA ================= */
+  var openFitRowDay = null;
   function renderFitStatic(){
     document.getElementById('fitStats').innerHTML =
       stat('Idade', FIT_META.age + ' anos') +
@@ -485,8 +486,18 @@
       var dISO = iso(weekdaysThisWeek[i]);
       var isToday = dISO === TODAY_ISO;
       var area = AREAS.fitness;
+      if(day === openFitRowDay){
+        return '<tr class="editing-row" data-day="'+day+'"><td colspan="5" style="padding:10px 16px;">' +
+          '<div style="max-width:min(320px,80vw);">' +
+          '<div style="display:flex;gap:6px;margin-bottom:6px;">' +
+          '<input data-f="time" value="'+escAttr(act.time||'')+'" placeholder="Hora" style="width:90px;flex-shrink:0;border:1px solid var(--line-strong);border-radius:6px;padding:5px 7px;font-size:12px;font-family:var(--font-mono);">' +
+          '<input data-f="title" value="'+escAttr(act.title)+'" placeholder="Treino" style="flex:1;min-width:0;border:1px solid var(--line-strong);border-radius:6px;padding:5px 7px;font-size:12px;font-weight:600;"></div>' +
+          '<textarea data-f="detail" placeholder="Foco" style="width:100%;border:1px solid var(--line-strong);border-radius:6px;padding:5px 7px;font-size:12px;min-height:40px;font-family:inherit;">'+escHtml(act.detail||'')+'</textarea>' +
+          '<div class="form-actions" style="justify-content:flex-end;margin-top:6px;"><span style="display:flex;gap:8px;"><button class="btn ghost" data-act="cancelrow" type="button">Cancelar</button><button class="btn" data-act="saverow" type="button">Guardar</button></span></div>' +
+          '</div></td></tr>';
+      }
       var checkbox = '<span class="done-check" data-date="'+dISO+'" data-day="'+day+'" data-act="'+act.id+'">'+CHECK_SVG+'</span>';
-      return '<tr'+(isToday?' class="today"':'')+'>' +
+      return '<tr'+(isToday?' class="today"':'')+' data-act="editrow" data-day="'+day+'" style="cursor:pointer;">' +
         '<td>'+checkbox+'</td>' +
         '<td class="day">'+day+'</td>' +
         '<td class="time mono">'+(act.time||'—')+'</td>' +
@@ -751,16 +762,39 @@
   });
 
   function bindTrainHandlers(){
-    document.querySelectorAll('.done-check[data-act]').forEach(function(el){
+    var table = document.getElementById('fitTraining');
+    table.querySelectorAll('.done-check[data-act]').forEach(function(el){
       var d = el.getAttribute('data-date');
       var day = el.getAttribute('data-day');
       var actId = el.getAttribute('data-act');
       el.classList.toggle('on', isActDone(d, actId));
-      el.addEventListener('click', function(){
+      el.addEventListener('click', function(e){
+        e.stopPropagation();
         toggleActivityDone(d, day, actId);
         el.classList.toggle('on', isActDone(d, actId));
         renderTrainProgress();
         renderDashboard();
+      });
+    });
+    table.querySelectorAll('[data-act="editrow"]').forEach(function(tr){
+      tr.addEventListener('click', function(){
+        openFitRowDay = tr.getAttribute('data-day');
+        renderFitStatic();
+      });
+    });
+    table.querySelectorAll('[data-act="cancelrow"]').forEach(function(btn){
+      btn.addEventListener('click', function(){ openFitRowDay=null; renderFitStatic(); });
+    });
+    table.querySelectorAll('[data-act="saverow"]').forEach(function(btn){
+      btn.addEventListener('click', function(){
+        var tr = btn.closest('[data-day]');
+        var day = tr.getAttribute('data-day');
+        var act = fitnessActivityForDay(day);
+        var time = tr.querySelector('[data-f="time"]').value.trim();
+        var title = tr.querySelector('[data-f="title"]').value.trim() || act.title;
+        var detail = tr.querySelector('[data-f="detail"]').value.trim();
+        updateActivity(day, act.id, { time:time, title:title, detail:detail });
+        openFitRowDay=null; renderFitStatic();
       });
     });
     renderTrainProgress();
@@ -935,6 +969,7 @@
   }
 
   /* ---- aba Trabalho (DROP) ---- */
+  var openWorkRowDay = null;
   function renderWorkStatic(){
     var weekdaysThisWeek = weekDates(TODAY);
     document.getElementById('workList').innerHTML =
@@ -944,29 +979,52 @@
         if(!act) return '';
         var dISO = iso(weekdaysThisWeek[i]);
         var isToday = dISO === TODAY_ISO;
+        if(day === openWorkRowDay){
+          return '<tr class="editing-row" data-day="'+day+'"><td colspan="4" style="padding:10px 16px;">' +
+            '<div style="max-width:min(320px,80vw);">' +
+            '<input data-f="title" value="'+escAttr(act.title)+'" placeholder="Tarefa" style="width:100%;margin-bottom:6px;border:1px solid var(--line-strong);border-radius:6px;padding:5px 7px;font-size:12px;font-weight:600;">' +
+            '<textarea data-f="detail" placeholder="Detalhe" style="width:100%;border:1px solid var(--line-strong);border-radius:6px;padding:5px 7px;font-size:12px;min-height:40px;font-family:inherit;">'+escHtml(act.detail||'')+'</textarea>' +
+            '<div class="form-actions" style="justify-content:flex-end;margin-top:6px;"><span style="display:flex;gap:8px;"><button class="btn ghost" data-act="cancelrow" type="button">Cancelar</button><button class="btn" data-act="saverow" type="button">Guardar</button></span></div>' +
+            '</div></td></tr>';
+        }
         var checkbox = '<span class="done-check" data-date="'+dISO+'" data-day="'+day+'" data-act="'+act.id+'">'+CHECK_SVG+'</span>';
-        return '<tr'+(isToday?' class="today"':'')+'>' +
-          '<td>'+checkbox+'</td><td class="day">'+day+'</td><td>'+act.title.replace(/^DROP\s*—\s*/,'')+'</td>' +
-          '<td style="color:var(--ink-soft);font-size:12.5px;">'+(act.detail||'')+'</td></tr>';
+        return '<tr'+(isToday?' class="today"':'')+' data-act="editrow" data-day="'+day+'" style="cursor:pointer;">' +
+          '<td>'+checkbox+'</td><td class="day">'+day+'</td><td>'+escHtml(act.title.replace(/^DROP\s*—\s*/,''))+'</td>' +
+          '<td style="color:var(--ink-soft);font-size:12.5px;">'+escHtml(act.detail||'')+'</td></tr>';
       }).join('') + '</tbody></table></div>';
 
-    document.querySelectorAll('#workList .done-check').forEach(function(el){
+    var table = document.getElementById('workList');
+    table.querySelectorAll('.done-check').forEach(function(el){
       var d = el.getAttribute('data-date'), day = el.getAttribute('data-day'), actId = el.getAttribute('data-act');
       el.classList.toggle('on', isActDone(d, actId));
-      el.addEventListener('click', function(){
+      el.addEventListener('click', function(e){
+        e.stopPropagation();
         toggleActivityDone(d, day, actId);
         el.classList.toggle('on', isActDone(d, actId));
         renderDashboard();
       });
     });
+    table.querySelectorAll('[data-act="editrow"]').forEach(function(tr){
+      tr.addEventListener('click', function(){
+        openWorkRowDay = tr.getAttribute('data-day');
+        renderWorkStatic();
+      });
+    });
+    table.querySelectorAll('[data-act="cancelrow"]').forEach(function(btn){
+      btn.addEventListener('click', function(){ openWorkRowDay=null; renderWorkStatic(); });
+    });
+    table.querySelectorAll('[data-act="saverow"]').forEach(function(btn){
+      btn.addEventListener('click', function(){
+        var tr = btn.closest('[data-day]');
+        var day = tr.getAttribute('data-day');
+        var act = dayActivities(day).find(function(a){ return a.area==='trabalho'; });
+        var title = tr.querySelector('[data-f="title"]').value.trim() || act.title;
+        var detail = tr.querySelector('[data-f="detail"]').value.trim();
+        updateActivity(day, act.id, { title:title, detail:detail });
+        openWorkRowDay=null; renderWorkStatic();
+      });
+    });
   }
-  document.getElementById('btnEditWork').addEventListener('click', function(){
-    editingDay = TODAY_WEEKDAY;
-    openEditId = null;
-    renderDayPicker();
-    renderActivityList();
-    openSheet(activitySheet);
-  });
 
   /* ---- editor sheet ---- */
   var editingDay = TODAY_WEEKDAY;
@@ -1193,23 +1251,58 @@
     toast('Registado');
   });
 
+  function pendenteDueDate(it){
+    if(!it || !it.due) return null;
+    return new Date(it.due + 'T' + (it.dueTime || '23:59') + ':00');
+  }
+  function dueHoursLabel(d){
+    var diffMs = d - new Date();
+    if(diffMs < 0) return 'atrasado';
+    var diffH = diffMs / 3600000;
+    if(diffH < 1) return 'em ' + Math.max(1, Math.round(diffMs/60000)) + ' min';
+    if(diffH < 24) return 'em ' + Math.round(diffH) + 'h';
+    var days = Math.round(diffH/24);
+    return 'em ' + days + (days===1?' dia':' dias');
+  }
+  function formatDueFull(it){
+    var d = new Date(it.due+'T00:00:00');
+    var label = d.toLocaleDateString('pt-PT',{day:'2-digit',month:'short'});
+    return it.dueTime ? label+' · '+it.dueTime : label;
+  }
+
+  var openPendenteEdit = null;
   function renderChecklist(stateKey, containerId){
     var arr = state[stateKey];
+    var isPendentes = stateKey === 'pendentes';
     var el = document.getElementById(containerId);
     el.innerHTML = arr.length ? arr.map(function(it){
+      if(isPendentes && it.id === openPendenteEdit){
+        return '<div class="today-item editing-item" data-id="'+it.id+'" style="display:block;padding:12px;">' +
+          '<input data-f="text" value="'+escAttr(it.text)+'" style="width:100%;margin-bottom:6px;border:1px solid var(--line-strong);border-radius:6px;padding:6px 8px;font-size:13px;">' +
+          '<div style="display:flex;gap:6px;margin-bottom:8px;">' +
+          '<input data-f="date" type="date" value="'+(it.due||'')+'" style="border:1px solid var(--line-strong);border-radius:6px;padding:5px 7px;font-size:12px;">' +
+          '<input data-f="time" type="time" value="'+(it.dueTime||'')+'" style="border:1px solid var(--line-strong);border-radius:6px;padding:5px 7px;font-size:12px;">' +
+          '</div>' +
+          '<div class="form-actions" style="justify-content:flex-end;"><span style="display:flex;gap:8px;"><button class="btn ghost" data-act="cancel" type="button">Cancelar</button><button class="btn" data-act="save" type="button">Guardar</button></span></div>' +
+          '</div>';
+      }
+      var due = isPendentes && it.due ? pendenteDueDate(it) : null;
+      var dueHtml = due ? '<div class="ts" style="color:'+(due-new Date()<0?'var(--bad)':'var(--ink-faint)')+';">'+formatDueFull(it)+' · '+dueHoursLabel(due)+'</div>' : '';
       return '<div class="today-item'+(it.done?' done':'')+'" data-id="'+it.id+'">' +
         '<span class="today-check'+(it.done?' on':'')+'">'+CHECK_SVG+'</span>' +
-        '<div class="today-txt"><div class="tt">'+escHtml(it.text)+'</div></div>' +
+        '<div class="today-txt"><div class="tt">'+escHtml(it.text)+'</div>'+dueHtml+'</div>' +
+        (isPendentes ? '<button class="ar-icon-btn" data-act="editdue" data-id="'+it.id+'" type="button">'+PENCIL_SVG+'</button>' : '') +
         '<span class="del" data-id="'+it.id+'">'+TRASH_SVG+'</span></div>';
     }).join('') : '<p style="color:var(--ink-faint); font-size:13px;">Nada por aqui ainda.</p>';
 
-    el.querySelectorAll('.today-item').forEach(function(row){
+    el.querySelectorAll('.today-item:not(.editing-item)').forEach(function(row){
       row.addEventListener('click', function(ev){
-        if(ev.target.closest('.del')) return;
+        if(ev.target.closest('.del') || ev.target.closest('[data-act="editdue"]')) return;
         var it = arr.find(function(x){ return x.id===row.getAttribute('data-id'); });
         it.done = !it.done;
         saveState();
         renderChecklist(stateKey, containerId);
+        if(isPendentes) renderDashPendentes();
       });
     });
     el.querySelectorAll('.del').forEach(function(btn){
@@ -1218,6 +1311,31 @@
         state[stateKey] = state[stateKey].filter(function(x){ return x.id!==btn.getAttribute('data-id'); });
         saveState();
         renderChecklist(stateKey, containerId);
+        if(isPendentes) renderDashPendentes();
+      });
+    });
+    el.querySelectorAll('[data-act="editdue"]').forEach(function(btn){
+      btn.addEventListener('click', function(ev){
+        ev.stopPropagation();
+        openPendenteEdit = btn.getAttribute('data-id');
+        renderChecklist(stateKey, containerId);
+      });
+    });
+    el.querySelectorAll('[data-act="cancel"]').forEach(function(btn){
+      btn.addEventListener('click', function(){ openPendenteEdit=null; renderChecklist(stateKey, containerId); });
+    });
+    el.querySelectorAll('[data-act="save"]').forEach(function(btn){
+      btn.addEventListener('click', function(){
+        var row = btn.closest('[data-id]');
+        var id = row.getAttribute('data-id');
+        var it = arr.find(function(x){ return x.id===id; });
+        it.text = row.querySelector('[data-f="text"]').value.trim() || it.text;
+        it.due = row.querySelector('[data-f="date"]').value || null;
+        it.dueTime = row.querySelector('[data-f="time"]').value || null;
+        saveState();
+        openPendenteEdit=null;
+        renderChecklist(stateKey, containerId);
+        renderDashPendentes();
       });
     });
   }
@@ -1282,9 +1400,17 @@
   document.getElementById('pendentesForm').addEventListener('submit', function(e){
     e.preventDefault();
     var input = document.getElementById('pendentesInput');
+    var dateInput = document.getElementById('pendentesDate');
+    var timeInput = document.getElementById('pendentesTime');
     var v = input.value.trim(); if(!v) return;
-    state.pendentes.push({ id:'p'+Date.now().toString(36)+Math.random().toString(36).slice(2,5), text:v, done:false });
-    saveState(); input.value=''; renderChecklist('pendentes','pendentesList');
+    state.pendentes.push({
+      id:'p'+Date.now().toString(36)+Math.random().toString(36).slice(2,5), text:v, done:false,
+      due: dateInput.value || null, dueTime: timeInput.value || null,
+    });
+    saveState();
+    document.getElementById('pendentesForm').reset();
+    renderChecklist('pendentes','pendentesList');
+    renderDashPendentes();
   });
 
   function daysUntil(dateISO){ return Math.round((new Date(dateISO) - new Date(TODAY_ISO)) / 86400000); }
@@ -1350,6 +1476,28 @@
     document.querySelector('.tabbtn[data-tab="vida"]').classList.toggle('has-today', !!soonest && daysUntil(soonest.date) <= 3);
   }
 
+  function pendentesDueSoon(){
+    return state.pendentes.filter(function(it){
+      if(it.done || !it.due) return false;
+      var d = pendenteDueDate(it);
+      return (d - new Date()) <= 24*3600*1000;
+    }).sort(function(a,b){ return pendenteDueDate(a) - pendenteDueDate(b); });
+  }
+  function renderDashPendentes(){
+    var soon = pendentesDueSoon();
+    var blk = document.getElementById('dashPendentesBlk');
+    blk.hidden = soon.length === 0;
+    if(soon.length){
+      document.getElementById('dashPendentes').innerHTML = soon.map(function(it){
+        var d = pendenteDueDate(it);
+        var late = (d - new Date()) < 0;
+        return '<div class="today-item" style="cursor:default;">' +
+          '<span class="area-tag" style="background:'+(late?'var(--bad-soft, var(--accent-soft))':'var(--accent-soft)')+'; color:'+(late?'var(--bad)':'var(--accent-strong)')+'; font-weight:700;">'+dueHoursLabel(d)+'</span>' +
+          '<div class="today-txt"><div class="tt">'+escHtml(it.text)+'</div><div class="ts">'+formatDueFull(it)+'</div></div></div>';
+      }).join('');
+    }
+  }
+
   /* ---- sistema genérico de notas (título + texto) — reutilizado em vários sítios ---- */
   var openNoteEditId = {};
   function notesRowView(note){
@@ -1408,13 +1556,6 @@
     renderNotesGroup(arr, containerId);
   }
   document.getElementById('btnAddPlano').addEventListener('click', function(){ addNoteToGroup(state.planos, 'planosList', 'Novo plano'); });
-  document.getElementById('btnEditFitWeek').addEventListener('click', function(){
-    editingDay = TODAY_WEEKDAY;
-    openEditId = null;
-    renderDayPicker();
-    renderActivityList();
-    openSheet(activitySheet);
-  });
 
   function renderVida(){
     renderFinance();
@@ -1532,6 +1673,7 @@
     renderTrainProgress();
     renderWeightAll();
     renderDashAgenda();
+    renderDashPendentes();
     updateTabDots();
   }
 
