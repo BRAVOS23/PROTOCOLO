@@ -29,15 +29,25 @@
     // (tabelas, listas com itens soltos) em vez do texto plano da v4/v5.
     if(!s.fitNotes.refeicoes.length || !s.fitNotes.refeicoes[0].rows){
       s.fitNotes.refeicoes = seedFitNotes().refeicoes;
+    }else{
+      // remove cartões corrompidos por um bug antigo (botões "+" com dois handlers)
+      // que injetava itens no formato errado {title,body} sem "rows".
+      s.fitNotes.refeicoes = s.fitNotes.refeicoes.filter(function(m){ return Array.isArray(m.rows); });
     }
     if(!s.fitNotes.alimentos.length || !s.fitNotes.alimentos[0].items){
       s.fitNotes.alimentos = seedFitNotes().alimentos;
+    }else{
+      s.fitNotes.alimentos = s.fitNotes.alimentos.filter(function(g){ return Array.isArray(g.items); });
     }
     if(!s.langNotes.rotina.length || !s.langNotes.rotina[0].items){
       s.langNotes.rotina = seedLangNotes().rotina;
+    }else{
+      s.langNotes.rotina = s.langNotes.rotina.filter(function(r){ return Array.isArray(r.items); });
     }
     if(!s.langNotes.recursos.length || !s.langNotes.recursos[0].badge){
       s.langNotes.recursos = seedLangNotes().recursos;
+    }else{
+      s.langNotes.recursos = s.langNotes.recursos.filter(function(r){ return typeof r.name === 'string'; });
     }
     if(!s.fitNotes.protocolos.some(function(p){ return /hiperlordose/i.test(p.title); })){
       s.fitNotes.protocolos.push({
@@ -81,6 +91,7 @@
   function clone(o){ return JSON.parse(JSON.stringify(o)); }
 
   var state = loadState();
+  saveState(); // persiste já qualquer limpeza feita pela migração (itens corrompidos removidos)
 
   /* ---------------- date helpers ---------------- */
   var WEEKDAYS_PT = ['Domingo','Segunda','Terça','Quarta','Quinta','Sexta','Sábado'];
@@ -1397,12 +1408,6 @@
     renderNotesGroup(arr, containerId);
   }
   document.getElementById('btnAddPlano').addEventListener('click', function(){ addNoteToGroup(state.planos, 'planosList', 'Novo plano'); });
-  document.getElementById('btnAddProtocolo').addEventListener('click', function(){ addNoteToGroup(state.fitNotes.protocolos, 'fitProtocolosNotes', 'Novo protocolo'); });
-  document.getElementById('btnAddRefeicao').addEventListener('click', function(){ addNoteToGroup(state.fitNotes.refeicoes, 'fitRefeicoesNotes', 'Nova refeição'); });
-  document.getElementById('btnAddRegra').addEventListener('click', function(){ addNoteToGroup(state.fitNotes.regras, 'fitRegrasNotes', 'Nova regra'); });
-  document.getElementById('btnAddAlimento').addEventListener('click', function(){ addNoteToGroup(state.fitNotes.alimentos, 'fitAlimentosNotes', 'Novo grupo'); });
-  document.getElementById('btnAddRotina').addEventListener('click', function(){ addNoteToGroup(state.langNotes.rotina, 'langRotinaNotes', 'Nova sessão'); });
-  document.getElementById('btnAddRecurso').addEventListener('click', function(){ addNoteToGroup(state.langNotes.recursos, 'langResourcesNotes', 'Novo recurso'); });
   document.getElementById('btnEditFitWeek').addEventListener('click', function(){
     editingDay = TODAY_WEEKDAY;
     openEditId = null;
