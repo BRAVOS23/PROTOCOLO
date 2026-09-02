@@ -362,31 +362,35 @@ function stripHtml(html){
     .trim();
 }
 
-function makeNote(title, body){
-  return { id: 'n' + Math.random().toString(36).slice(2, 9), title: title, body: body };
-}
+function rid(prefix){ return prefix + Math.random().toString(36).slice(2, 9); }
 
 function seedFitNotes(){
-  var protocolos = FIT_PROTOCOLS.map(function(p){ return makeNote(p.title, p.text); });
+  var protocolos = FIT_PROTOCOLS.map(function(p){ return { id: rid('n'), title: p.title, body: p.text }; });
   var refeicoes = ['judo', 'tiros', 'rest'].map(function(key){
     var m = FIT_MEALS[key];
-    var body = m.rows.map(function(r){ return r.time + ' — ' + r.name + ': ' + r.desc + (r.note ? ' (' + r.note + ')' : ''); }).join('\n');
-    return makeNote(m.label + ' (' + m.days + ')', body);
+    return {
+      id: rid('n'), title: m.label, days: m.days, tag: m.tag,
+      rows: m.rows.map(function(r){ return { id: rid('r'), time: r.time, name: r.name, desc: r.desc, note: r.note || '' }; }),
+    };
   });
-  var regras = FIT_RULES.map(function(r){ return makeNote(r.k, r.v); });
+  var regras = FIT_RULES.map(function(r){ return { id: rid('n'), title: r.k, body: r.v }; });
   var alimentos = [
-    makeNote('Sempre disponíveis', FIT_FOODS.base.join(', ')),
-    makeNote('Envolvem custo', FIT_FOODS.extra.join(', ')),
+    { id: rid('n'), title: 'Sempre disponíveis', items: FIT_FOODS.base.slice() },
+    { id: rid('n'), title: 'Envolvem custo', items: FIT_FOODS.extra.slice() },
   ];
   return { protocolos: protocolos, refeicoes: refeicoes, regras: regras, alimentos: alimentos };
 }
 
 function seedLangNotes(){
   var rotina = LANG_ROUTINE.map(function(r){
-    var body = r.items.map(function(it){ return it.t + ' — ' + it.d; }).join('\n');
-    return makeNote(r.days + ' · ' + r.time, body);
+    return {
+      id: rid('n'), days: r.days, time: r.time,
+      items: r.items.map(function(it){ return { id: rid('i'), t: it.t, d: it.d }; }),
+    };
   });
-  var recursos = LANG_RESOURCES.map(function(r){ return makeNote(r.name + ' (' + r.badge + ')', r.desc); });
+  var recursos = LANG_RESOURCES.map(function(r){
+    return { id: rid('n'), name: r.name, badge: r.badge, badgeType: r.badgeType, desc: r.desc };
+  });
   return { rotina: rotina, recursos: recursos };
 }
 

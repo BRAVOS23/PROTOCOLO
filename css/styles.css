@@ -178,6 +178,8 @@ a{ color:var(--accent-strong); }
 /* ---------------- views ---------------- */
 .view{ display:none; animation:fadein .22s ease; }
 .view.active{ display:block; }
+.subview{ display:none; }
+.subview.active{ display:block; animation:fadein .2s ease; }
 @keyframes fadein{ from{ opacity:0; transform:translateY(6px);} to{ opacity:1; transform:translateY(0);} }
 section.blk{ padding:26px 0 6px; }
 .blk-head{ margin-bottom:16px; display:flex; align-items:baseline; justify-content:space-between; gap:10px; flex-wrap:wrap; }
@@ -403,6 +405,58 @@ p.lead{ color:var(--ink-soft); font-size:14px; margin:0 0 16px; }
   border:1px solid var(--line); background:var(--surface-2); border-radius:var(--radius-s);
   padding:9px 11px; font-size:13.5px; color:var(--ink); font-family:var(--font-body);
 }
+
+/* ---------------- Vida: hub + ecrãs de detalhe ---------------- */
+.hub-cards{ display:flex; flex-direction:column; gap:12px; }
+.hcard{
+  display:flex; align-items:center; gap:14px; padding:16px; border-radius:var(--radius-l);
+  background:var(--surface); border:1px solid var(--line); box-shadow:var(--shadow-1); width:100%; text-align:left; cursor:pointer;
+}
+.hcard:hover{ border-color:var(--line-strong); box-shadow:var(--shadow-2); }
+.hcard .hicn{ width:44px; height:44px; border-radius:12px; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+.hcard .hicn svg{ width:21px; height:21px; }
+.hcard .hicn.financas{ background:var(--good-soft); color:var(--good); }
+.hcard .hicn.compras{ background:var(--warn-soft); color:var(--warn); }
+.hcard .hicn.agenda{ background:var(--cat-lang-soft); color:var(--cat-lang); }
+.hcard .hicn.pendentes{ background:var(--accent-soft); color:var(--accent-strong); }
+.hcard .hicn.planos{ background:var(--cat-fit-soft); color:var(--cat-fit); }
+.hcard .hbody{ flex:1; min-width:0; }
+.hcard .hname{ font-family:var(--font-display); font-weight:600; font-size:16px; }
+.hcard .hsum{ font-size:12.5px; color:var(--ink-faint); margin-top:2px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.hcard .hval{ font-family:var(--font-mono); font-weight:700; font-size:14px; white-space:nowrap; flex-shrink:0; }
+.hcard .hchev{ color:var(--ink-faint); flex-shrink:0; }
+.hcard .hchev svg{ width:16px; height:16px; display:block; }
+.hcard .hcount{
+  background:var(--accent); color:#fff; font-family:var(--font-mono); font-size:11px; font-weight:700;
+  min-width:20px; height:20px; padding:0 6px; border-radius:999px; display:flex; align-items:center; justify-content:center; flex-shrink:0;
+}
+
+.detail-head{
+  position:sticky; top:calc(var(--safe-t) + 53px); z-index:4; display:flex; align-items:center; gap:10px;
+  padding:14px 18px; background:color-mix(in srgb, var(--paper) 88%, transparent); backdrop-filter:blur(10px);
+  border-bottom:1px solid var(--line); margin:0 -18px;
+}
+.detail-head h2{ font-size:17px; }
+.backbtn{
+  width:32px; height:32px; border-radius:999px; border:1px solid var(--line); background:var(--surface);
+  display:flex; align-items:center; justify-content:center; color:var(--ink-soft); flex-shrink:0; cursor:pointer;
+}
+.backbtn svg{ width:16px; height:16px; }
+
+/* estados de edição em cima do visual original */
+.proto.editing, .rule.editing, .res-card.editing, .sched-card.editing{
+  border-color:var(--accent); box-shadow:0 0 0 3px var(--accent-soft);
+}
+.cardedit{
+  width:22px; height:22px; border-radius:7px; border:none; cursor:pointer;
+  background:rgba(255,255,255,.22); color:#fff; display:flex; align-items:center; justify-content:center;
+}
+.cardedit svg{ width:11px; height:11px; }
+.itemrow2{ display:flex; gap:6px; align-items:center; margin-bottom:6px; }
+.itemrow2 input{ border:1px solid var(--line); background:var(--surface-2); border-radius:6px; padding:6px 8px; font-size:12.5px; font-family:var(--font-body); color:var(--ink); }
+.itemrow2 input:first-child{ width:70px; flex-shrink:0; }
+.itemrow2 input:nth-child(2){ flex:1; }
+.itemrow2 .mx{ cursor:pointer; color:var(--ink-faint); flex-shrink:0; }
 
 /* ---------------- sub tabs (dentro de Línguas/Forma) ---------------- */
 .subtabs-wrap{ position:relative; }

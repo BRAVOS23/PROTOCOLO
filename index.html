@@ -288,92 +288,96 @@
 
   <!-- ===================== VIDA ===================== -->
   <section class="view" id="view-vida">
-    <section class="blk" style="padding-top:20px;">
-      <span class="kicker">Organização</span>
-      <h1 style="font-size:24px;">Vida <em style="font-style:normal;color:var(--accent-strong);">fora da rotina</em></h1>
-      <p class="lead" style="margin-top:8px;">Finanças, compras, agenda, pendentes e planos futuros.</p>
-    </section>
 
-    <section class="blk">
-      <div class="subtabs-wrap"><div class="subtabs">
-        <button data-anchor="#vd-financas">Finanças</button>
-        <button data-anchor="#vd-compras">Compras</button>
-        <button data-anchor="#vd-agenda">Agenda</button>
-        <button data-anchor="#vd-pendentes">Pendentes</button>
-        <button data-anchor="#vd-planos">Planos</button>
-      </div></div>
-    </section>
+    <!-- Hub: resumo de cada área -->
+    <div class="subview active" id="vida-hub">
+      <section class="blk" style="padding-top:20px;">
+        <span class="kicker">Organização</span>
+        <h1 style="font-size:24px;">Vida <em style="font-style:normal;color:var(--accent-strong);">fora da rotina</em></h1>
+      </section>
+      <section class="blk">
+        <div class="hub-cards" id="vidaHubCards"></div>
+      </section>
+      <footer class="page-footer">Protocolo — o resto da vida que sustenta a rotina.</footer>
+    </div>
 
-    <section class="blk" id="vd-financas">
-      <div class="blk-head">
-        <div><span class="kicker">Carteiras</span><h2>Contas</h2></div>
-        <button class="iconbtn" id="btnAddAccount" aria-label="Nova conta" type="button">
+    <!-- Finanças -->
+    <div class="subview" id="vida-financas">
+      <div class="detail-head"><button class="backbtn" data-vida-back type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 6-6 6 6 6"></path></svg></button><h2>Finanças</h2></div>
+      <section class="blk" style="padding-top:16px;">
+        <span class="kicker">Este mês</span>
+        <h2 style="margin-bottom:12px;">Fluxo</h2>
+        <div class="stats" id="financeStats"></div>
+        <form class="mini-form" id="financeForm">
+          <select id="financeType">
+            <option value="entrada">Entrada</option>
+            <option value="saida">Saída</option>
+          </select>
+          <input id="financeDesc" type="text" placeholder="Descrição" required>
+          <input id="financeAmount" type="number" step="0.01" min="0" placeholder="Valor (MT)" required>
+          <select id="financeCategory"></select>
+          <button class="btn" type="submit">Registar</button>
+        </form>
+        <div id="financeLog"></div>
+      </section>
+    </div>
+
+    <!-- Compras -->
+    <div class="subview" id="vida-compras">
+      <div class="detail-head"><button class="backbtn" data-vida-back type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 6-6 6 6 6"></path></svg></button><h2>Compras</h2></div>
+      <section class="blk" style="padding-top:16px;">
+        <div class="day-picker" id="shoppingListPicker" style="margin-bottom:12px;"></div>
+        <form class="mini-form" id="shoppingListForm" style="margin-bottom:6px;">
+          <input id="shoppingListNameInput" type="text" placeholder="Nova lista (ex.: Farmácia)…" style="flex:2;" required>
+          <button class="btn ghost" type="submit">Criar lista</button>
+        </form>
+        <form class="mini-form" id="shoppingForm">
+          <input id="shoppingInput" type="text" placeholder="Adicionar item…" style="flex:3;" required>
+          <button class="btn" type="submit">Adicionar</button>
+        </form>
+        <div class="today-list" id="shoppingList" style="margin-top:14px;"></div>
+      </section>
+    </div>
+
+    <!-- Agenda -->
+    <div class="subview" id="vida-agenda">
+      <div class="detail-head"><button class="backbtn" data-vida-back type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 6-6 6 6 6"></path></svg></button><h2>Agenda</h2></div>
+      <section class="blk" style="padding-top:16px;">
+        <form class="mini-form" id="agendaForm">
+          <input id="agendaDate" type="date" required>
+          <input id="agendaTime" type="time">
+          <input id="agendaTitle" type="text" placeholder="O quê?" style="flex:2;" required>
+          <button class="btn" type="submit">Adicionar</button>
+        </form>
+        <div id="agendaList" style="margin-top:6px;"></div>
+      </section>
+    </div>
+
+    <!-- Pendentes -->
+    <div class="subview" id="vida-pendentes">
+      <div class="detail-head"><button class="backbtn" data-vida-back type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 6-6 6 6 6"></path></svg></button><h2>Pendentes</h2></div>
+      <section class="blk" style="padding-top:16px;">
+        <p class="lead">Tarefas que não pertencem à rotina diária.</p>
+        <form class="mini-form" id="pendentesForm">
+          <input id="pendentesInput" type="text" placeholder="Adicionar pendente…" style="flex:3;" required>
+          <button class="btn" type="submit">Adicionar</button>
+        </form>
+        <div class="today-list" id="pendentesList" style="margin-top:14px;"></div>
+      </section>
+    </div>
+
+    <!-- Planos futuros -->
+    <div class="subview" id="vida-planos">
+      <div class="detail-head"><button class="backbtn" data-vida-back type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 6-6 6 6 6"></path></svg></button><h2>Planos futuros</h2>
+        <button class="iconbtn" id="btnAddPlano" aria-label="Novo plano" type="button" style="margin-left:auto;">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
         </button>
       </div>
-      <div id="financeAccounts"></div>
+      <section class="blk" style="padding-top:16px;">
+        <div id="planosList"></div>
+      </section>
+    </div>
 
-      <div class="blk-head" style="margin-top:22px;"><div><span class="kicker">Este mês</span><h2>Fluxo</h2></div></div>
-      <div class="stats" id="financeStats"></div>
-      <form class="mini-form" id="financeForm">
-        <select id="financeType">
-          <option value="entrada">Entrada</option>
-          <option value="saida">Saída</option>
-        </select>
-        <input id="financeDesc" type="text" placeholder="Descrição" required>
-        <input id="financeAmount" type="number" step="0.01" min="0" placeholder="Valor (MT)" required>
-        <select id="financeCategory"></select>
-        <button class="btn" type="submit">Registar</button>
-      </form>
-      <div id="financeLog"></div>
-    </section>
-
-    <section class="blk" id="vd-compras">
-      <div class="blk-head"><div><span class="kicker">Precisas de</span><h2>Listas de compras</h2></div></div>
-      <div class="day-picker" id="shoppingListPicker" style="margin-bottom:12px;"></div>
-      <form class="mini-form" id="shoppingListForm" style="margin-bottom:6px;">
-        <input id="shoppingListNameInput" type="text" placeholder="Nova lista (ex.: Farmácia)…" style="flex:2;" required>
-        <button class="btn ghost" type="submit">Criar lista</button>
-      </form>
-      <form class="mini-form" id="shoppingForm">
-        <input id="shoppingInput" type="text" placeholder="Adicionar item…" style="flex:3;" required>
-        <button class="btn" type="submit">Adicionar</button>
-      </form>
-      <div class="today-list" id="shoppingList" style="margin-top:14px;"></div>
-    </section>
-
-    <section class="blk" id="vd-agenda">
-      <div class="blk-head"><div><span class="kicker">Datas importantes</span><h2>Agenda</h2></div></div>
-      <form class="mini-form" id="agendaForm">
-        <input id="agendaDate" type="date" required>
-        <input id="agendaTime" type="time">
-        <input id="agendaTitle" type="text" placeholder="O quê?" style="flex:2;" required>
-        <button class="btn" type="submit">Adicionar</button>
-      </form>
-      <div id="agendaList" style="margin-top:6px;"></div>
-    </section>
-
-    <section class="blk" id="vd-pendentes">
-      <div class="blk-head"><div><span class="kicker">Soltos</span><h2>Pendentes</h2></div></div>
-      <p class="lead">Tarefas que não pertencem à rotina diária.</p>
-      <form class="mini-form" id="pendentesForm">
-        <input id="pendentesInput" type="text" placeholder="Adicionar pendente…" style="flex:3;" required>
-        <button class="btn" type="submit">Adicionar</button>
-      </form>
-      <div class="today-list" id="pendentesList" style="margin-top:14px;"></div>
-    </section>
-
-    <section class="blk" id="vd-planos">
-      <div class="blk-head">
-        <div><span class="kicker">Longo prazo</span><h2>Planos futuros</h2></div>
-        <button class="iconbtn" id="btnAddPlano" aria-label="Novo plano" type="button">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
-        </button>
-      </div>
-      <div id="planosList"></div>
-    </section>
-
-    <footer class="page-footer">Protocolo — o resto da vida que sustenta a rotina.</footer>
   </section>
 
 </main>

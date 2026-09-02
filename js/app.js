@@ -10,7 +10,6 @@
       activityDone: {},
       protocolo: clone(DEFAULT_PROTOCOLO),
       finance: [],
-      financeAccounts: [],
       shoppingLists: [ { id:'default', name:'Compras', items: [] } ],
       pendentes: [],
       agenda: [],
@@ -25,13 +24,20 @@
   /* Dados reais puxados do Notion (BORN TO MAKE HISTORY!) — entram uma única vez,
      tanto para quem começa de novo como para quem já tinha o app instalado. */
   function migrateNotionImports(s){
-    if(!s.financeAccounts.length){
-      s.financeAccounts = [
-        { id:'acc-broto', name:'BROTO SAÚDE', detail:'Emola · 869908668', balance:0 },
-        { id:'acc-achaki-mpesa', name:'ACHAKI', detail:'Mpesa · 852211552', balance:0 },
-        { id:'acc-achaki-cash', name:'ACHAKI · Numerário', detail:'Dinheiro em caixa', balance:2000 },
-        { id:'acc-ads', name:'Conta ADS', detail:'BIM · 974590429', balance:0 },
-      ];
+    delete s.financeAccounts; // secção "Contas" removida a pedido do utilizador
+    // v6: restaura refeições/alimentos/rotina/recursos para a forma estruturada
+    // (tabelas, listas com itens soltos) em vez do texto plano da v4/v5.
+    if(!s.fitNotes.refeicoes.length || !s.fitNotes.refeicoes[0].rows){
+      s.fitNotes.refeicoes = seedFitNotes().refeicoes;
+    }
+    if(!s.fitNotes.alimentos.length || !s.fitNotes.alimentos[0].items){
+      s.fitNotes.alimentos = seedFitNotes().alimentos;
+    }
+    if(!s.langNotes.rotina.length || !s.langNotes.rotina[0].items){
+      s.langNotes.rotina = seedLangNotes().rotina;
+    }
+    if(!s.langNotes.recursos.length || !s.langNotes.recursos[0].badge){
+      s.langNotes.recursos = seedLangNotes().recursos;
     }
     if(!s.fitNotes.protocolos.some(function(p){ return /hiperlordose/i.test(p.title); })){
       s.fitNotes.protocolos.push({
@@ -186,8 +192,8 @@
       stat('Total 13 sem', LANG_META.hoursTotal, true) +
       stat('Meta', 'B1 funcional');
 
-    renderNotesGroup(state.langNotes.rotina, 'langRotinaNotes');
-    renderNotesGroup(state.langNotes.recursos, 'langResourcesNotes');
+    renderRotinaCards();
+    renderRecursosGrid();
 
     document.getElementById('langMonths').innerHTML = LANG_MONTHS.map(function(m){
       var weeksHtml = state.langWeeks.filter(function(w){ return w.monthId===m.id; }).map(renderWeek).join('');
@@ -201,6 +207,151 @@
 
     document.getElementById('langSources').innerHTML = LANG_SOURCES.map(function(s){ return '<li>'+s+'</li>'; }).join('');
   }
+
+  /* ---- rotina semanal (sched-cards, visual original + edição inline) ---- */
+  var openRotinaEdit = null;
+  function renderRotinaCards(){
+    var box = document.getElementById('langRotinaNotes');
+    box.className = 'sched-grid';
+    box.innerHTML = state.langNotes.rotina.map(function(r, i){
+      var variant = i % 2 === 0 ? 'a' : 'b';
+      if(r.id === openRotinaEdit) return rotinaEditForm(r);
+      var items = r.items.map(function(it){
+        return '<div class="sched-item"><span class="t">'+escHtml(it.t)+'</span><span class="d">'+escHtml(it.d)+'</span></div>';
+      }).join('');
+      return '<div class="sched-card '+variant+'" data-id="'+r.id+'">' +
+        '<button class="cardedit" data-act="edit" type="button">'+PENCIL_SVG+'</button>' +
+        '<div class="sched-head"><div class="days">'+escHtml(r.days)+'</div><div class="time">'+escHtml(r.time)+'</div></div>' +
+        '<div class="sched-body">'+items+'</div></div>';
+    }).join('');
+    bindRotinaHandlers();
+  }
+  function rotinaEditForm(r){
+    var rows = r.items.map(function(it, i){
+      return '<div class="itemrow2" data-i="'+i+'">' +
+        '<input data-if="t" value="'+escAttr(it.t)+'" placeholder="ex.: 10min">' +
+        '<input data-if="d" value="'+escAttr(it.d)+'" placeholder="Descrição">' +
+        '<span class="mx" data-idel="'+i+'">✕</span></div>';
+    }).join('');
+    return '<div class="sched-card editing" data-id="'+r.id+'" style="grid-column:1/-1;">' +
+      '<div class="activity-edit-form" style="padding:14px;">' +
+        '<div class="row2"><input data-f="days" value="'+escAttr(r.days)+'" placeholder="Dias"><input data-f="time" value="'+escAttr(r.time)+'" placeholder="Hora"></div>' +
+        '<div id="rotinaItems-'+r.id+'">'+rows+'</div>' +
+        '<button type="button" class="pc-add-meta" data-act="additem" style="color:var(--ink-soft);border-color:var(--line-strong);align-self:flex-start;">+ item</button>' +
+        '<div class="form-actions" style="justify-content:space-between;"><button class="btn ghost" data-act="del" type="button">Apagar</button><span style="display:flex;gap:8px;"><button class="btn ghost" data-act="cancel" type="button">Cancelar</button><button class="btn" data-act="save" type="button">Guardar</button></span></div>' +
+      '</div></div>';
+  }
+  function bindRotinaHandlers(){
+    var box = document.getElementById('langRotinaNotes');
+    box.querySelectorAll('[data-act="edit"]').forEach(function(btn){
+      btn.addEventListener('click', function(){ openRotinaEdit = btn.closest('[data-id]').getAttribute('data-id'); renderRotinaCards(); });
+    });
+    box.querySelectorAll('[data-act="cancel"]').forEach(function(btn){
+      btn.addEventListener('click', function(){ openRotinaEdit=null; renderRotinaCards(); });
+    });
+    box.querySelectorAll('[data-act="del"]').forEach(function(btn){
+      btn.addEventListener('click', function(){
+        if(!confirm('Apagar esta sessão?')) return;
+        var id = btn.closest('[data-id]').getAttribute('data-id');
+        state.langNotes.rotina = state.langNotes.rotina.filter(function(r){ return r.id!==id; });
+        saveState(); openRotinaEdit=null; renderRotinaCards();
+      });
+    });
+    box.querySelectorAll('[data-act="additem"]').forEach(function(btn){
+      btn.addEventListener('click', function(){
+        var id = btn.closest('[data-id]').getAttribute('data-id');
+        var r = state.langNotes.rotina.find(function(x){ return x.id===id; });
+        r.items.push({ id:'i'+Date.now().toString(36)+Math.random().toString(36).slice(2,5), t:'', d:'' });
+        renderRotinaCards();
+      });
+    });
+    box.querySelectorAll('[data-idel]').forEach(function(btn){
+      btn.addEventListener('click', function(){
+        var id = btn.closest('[data-id]').getAttribute('data-id');
+        var r = state.langNotes.rotina.find(function(x){ return x.id===id; });
+        r.items.splice(+btn.getAttribute('data-idel'), 1);
+        renderRotinaCards();
+      });
+    });
+    box.querySelectorAll('[data-act="save"]').forEach(function(btn){
+      btn.addEventListener('click', function(){
+        var card = btn.closest('[data-id]');
+        var id = card.getAttribute('data-id');
+        var r = state.langNotes.rotina.find(function(x){ return x.id===id; });
+        r.days = card.querySelector('[data-f="days"]').value.trim();
+        r.time = card.querySelector('[data-f="time"]').value.trim();
+        card.querySelectorAll('.itemrow2').forEach(function(row, i){
+          r.items[i].t = row.querySelector('[data-if="t"]').value.trim();
+          r.items[i].d = row.querySelector('[data-if="d"]').value.trim();
+        });
+        r.items = r.items.filter(function(it){ return it.t || it.d; });
+        saveState(); openRotinaEdit=null; renderRotinaCards();
+      });
+    });
+  }
+  document.getElementById('btnAddRotina').addEventListener('click', function(){
+    var r = { id:'n'+Date.now().toString(36)+Math.random().toString(36).slice(2,5), days:'Nova sessão', time:'', items:[] };
+    state.langNotes.rotina.push(r);
+    saveState(); openRotinaEdit = r.id; renderRotinaCards();
+  });
+
+  /* ---- recursos (res-cards, visual original + edição inline) ---- */
+  var openRecursoEdit = null;
+  function renderRecursosGrid(){
+    var box = document.getElementById('langResourcesNotes');
+    box.className = 'res-grid';
+    box.innerHTML = state.langNotes.recursos.map(function(r){
+      if(r.id === openRecursoEdit){
+        return '<div class="res-card editing" data-id="'+r.id+'" style="grid-column:1/-1;">' +
+          '<div class="activity-edit-form" style="padding:0;border-top:none;">' +
+          '<input data-f="name" value="'+escAttr(r.name)+'" placeholder="Nome">' +
+          '<select data-f="badgeType"><option value="official"'+(r.badgeType==='official'?' selected':'')+'>Oficial</option><option value="new"'+(r.badgeType==='new'?' selected':'')+'>Novo/Grátis</option></select>' +
+          '<textarea data-f="desc" placeholder="Descrição">'+escHtml(r.desc)+'</textarea>' +
+          '<div class="form-actions" style="justify-content:space-between;"><button class="btn ghost" data-act="del" type="button">Apagar</button><span style="display:flex;gap:8px;"><button class="btn ghost" data-act="cancel" type="button">Cancelar</button><button class="btn" data-act="save" type="button">Guardar</button></span></div>' +
+          '</div></div>';
+      }
+      var badgeLabel = r.badgeType === 'official' ? 'Oficial' : (r.badge || 'Novo');
+      return '<div class="res-card" data-id="'+r.id+'">' +
+        '<button class="cardedit" data-act="edit" type="button" style="color:var(--ink-faint);background:var(--surface-2);">'+PENCIL_SVG+'</button>' +
+        '<div class="res-top"><h4>'+escHtml(r.name)+'</h4><span class="badge '+r.badgeType+'">'+escHtml(badgeLabel)+'</span></div>' +
+        '<p>'+escHtml(r.desc)+'</p></div>';
+    }).join('');
+    bindRecursosHandlers();
+  }
+  function bindRecursosHandlers(){
+    var box = document.getElementById('langResourcesNotes');
+    box.querySelectorAll('[data-act="edit"]').forEach(function(btn){
+      btn.addEventListener('click', function(){ openRecursoEdit = btn.closest('[data-id]').getAttribute('data-id'); renderRecursosGrid(); });
+    });
+    box.querySelectorAll('[data-act="cancel"]').forEach(function(btn){
+      btn.addEventListener('click', function(){ openRecursoEdit=null; renderRecursosGrid(); });
+    });
+    box.querySelectorAll('[data-act="del"]').forEach(function(btn){
+      btn.addEventListener('click', function(){
+        if(!confirm('Apagar este recurso?')) return;
+        var id = btn.closest('[data-id]').getAttribute('data-id');
+        state.langNotes.recursos = state.langNotes.recursos.filter(function(r){ return r.id!==id; });
+        saveState(); openRecursoEdit=null; renderRecursosGrid();
+      });
+    });
+    box.querySelectorAll('[data-act="save"]').forEach(function(btn){
+      btn.addEventListener('click', function(){
+        var card = btn.closest('[data-id]');
+        var id = card.getAttribute('data-id');
+        var r = state.langNotes.recursos.find(function(x){ return x.id===id; });
+        r.name = card.querySelector('[data-f="name"]').value.trim() || 'Sem título';
+        r.badgeType = card.querySelector('[data-f="badgeType"]').value;
+        r.badge = r.badgeType === 'official' ? 'Oficial' : 'Novo';
+        r.desc = card.querySelector('[data-f="desc"]').value.trim();
+        saveState(); openRecursoEdit=null; renderRecursosGrid();
+      });
+    });
+  }
+  document.getElementById('btnAddRecurso').addEventListener('click', function(){
+    var r = { id:'n'+Date.now().toString(36)+Math.random().toString(36).slice(2,5), name:'Novo recurso', badge:'Novo', badgeType:'new', desc:'' };
+    state.langNotes.recursos.push(r);
+    saveState(); openRecursoEdit = r.id; renderRecursosGrid();
+  });
 
   var openWeekEditId = null;
   function renderWeek(w){
@@ -333,14 +484,260 @@
         '</tr>';
     }).join('');
 
-    renderNotesGroup(state.fitNotes.protocolos, 'fitProtocolosNotes');
-    renderNotesGroup(state.fitNotes.refeicoes, 'fitRefeicoesNotes');
-    renderNotesGroup(state.fitNotes.regras, 'fitRegrasNotes');
-    renderNotesGroup(state.fitNotes.alimentos, 'fitAlimentosNotes');
+    renderProtocolosGrid();
+    renderRefeicoesCards();
+    renderRegrasGrid();
+    renderAlimentosBoxes();
 
     bindTrainHandlers();
     bindWeightForm();
   }
+
+  /* ---- protocolos (grelha 2-col, visual original + edição inline) ---- */
+  var openProtoEdit = null;
+  function renderProtocolosGrid(){
+    var box = document.getElementById('fitProtocolosNotes');
+    box.className = 'protocols';
+    box.innerHTML = state.fitNotes.protocolos.map(function(p){
+      if(p.id === openProtoEdit){
+        return '<div class="proto editing" data-id="'+p.id+'" style="grid-column:1/-1;">' +
+          '<input data-f="title" type="text" value="'+escAttr(p.title)+'" style="width:100%;margin-bottom:6px;border:1px solid var(--line);background:var(--surface-2);border-radius:6px;padding:7px 9px;font-size:13px;font-weight:600;">' +
+          '<textarea data-f="body" style="width:100%;min-height:60px;border:1px solid var(--line);background:var(--surface-2);border-radius:6px;padding:7px 9px;font-size:12.5px;font-family:inherit;">'+escHtml(p.body)+'</textarea>' +
+          '<div class="form-actions" style="justify-content:space-between;margin-top:8px;"><button class="btn ghost" data-act="del" type="button">Apagar</button><span style="display:flex;gap:8px;"><button class="btn ghost" data-act="cancel" type="button">Cancelar</button><button class="btn" data-act="save" type="button">Guardar</button></span></div>' +
+          '</div>';
+      }
+      return '<div class="proto" data-id="'+p.id+'" style="position:relative;">' +
+        '<button class="cardedit" data-act="edit" type="button" style="position:absolute;top:10px;right:10px;background:var(--surface-2);color:var(--ink-faint);">'+PENCIL_SVG+'</button>' +
+        '<h3 style="padding-right:22px;">'+escHtml(p.title)+'</h3><p>'+escHtml(p.body)+'</p></div>';
+    }).join('');
+    var box2 = box;
+    box2.querySelectorAll('[data-act="edit"]').forEach(function(btn){
+      btn.addEventListener('click', function(){ openProtoEdit = btn.closest('[data-id]').getAttribute('data-id'); renderProtocolosGrid(); });
+    });
+    box2.querySelectorAll('[data-act="cancel"]').forEach(function(btn){
+      btn.addEventListener('click', function(){ openProtoEdit=null; renderProtocolosGrid(); });
+    });
+    box2.querySelectorAll('[data-act="del"]').forEach(function(btn){
+      btn.addEventListener('click', function(){
+        if(!confirm('Apagar este protocolo?')) return;
+        var id = btn.closest('[data-id]').getAttribute('data-id');
+        state.fitNotes.protocolos = state.fitNotes.protocolos.filter(function(p){ return p.id!==id; });
+        saveState(); openProtoEdit=null; renderProtocolosGrid();
+      });
+    });
+    box2.querySelectorAll('[data-act="save"]').forEach(function(btn){
+      btn.addEventListener('click', function(){
+        var card = btn.closest('[data-id]');
+        var id = card.getAttribute('data-id');
+        var p = state.fitNotes.protocolos.find(function(x){ return x.id===id; });
+        p.title = card.querySelector('[data-f="title"]').value.trim() || 'Sem título';
+        p.body = card.querySelector('[data-f="body"]').value.trim();
+        saveState(); openProtoEdit=null; renderProtocolosGrid();
+      });
+    });
+  }
+  document.getElementById('btnAddProtocolo').addEventListener('click', function(){
+    var p = { id:'n'+Date.now().toString(36)+Math.random().toString(36).slice(2,5), title:'Novo protocolo', body:'' };
+    state.fitNotes.protocolos.push(p);
+    saveState(); openProtoEdit = p.id; renderProtocolosGrid();
+  });
+
+  /* ---- regras de ouro (grelha 2-col k/v, visual original + edição inline) ---- */
+  var openRegraEdit = null;
+  function renderRegrasGrid(){
+    var box = document.getElementById('fitRegrasNotes');
+    box.className = 'rules';
+    box.innerHTML = state.fitNotes.regras.map(function(r){
+      if(r.id === openRegraEdit){
+        return '<div class="rule editing" data-id="'+r.id+'" style="background:var(--accent-soft);">' +
+          '<input data-f="title" value="'+escAttr(r.title)+'" style="width:100%;margin-bottom:5px;border:1px solid var(--line-strong);background:var(--surface);border-radius:6px;padding:5px 7px;font-size:12px;font-weight:600;">' +
+          '<input data-f="body" value="'+escAttr(r.body)+'" style="width:100%;border:1px solid var(--line-strong);background:var(--surface);border-radius:6px;padding:5px 7px;font-size:12px;">' +
+          '<div class="miniactions" style="display:flex;justify-content:space-between;margin-top:6px;"><span class="btnmini" data-act="del" style="cursor:pointer;color:var(--bad);font-size:11px;">Apagar</span><span style="display:flex;gap:6px;"><span class="btnmini" data-act="cancel" style="cursor:pointer;font-size:11px;">✕</span><span class="btnmini" data-act="save" style="cursor:pointer;font-size:11px;font-weight:700;">✓</span></span></div>' +
+          '</div>';
+      }
+      return '<div class="rule" data-id="'+r.id+'" style="position:relative;">' +
+        '<button class="cardedit" data-act="edit" type="button" style="position:absolute;top:8px;right:8px;width:20px;height:20px;background:none;border:none;color:var(--ink-faint);padding:0;">'+PENCIL_SVG+'</button>' +
+        '<div class="k">'+escHtml(r.title)+'</div><p class="v">'+escHtml(r.body)+'</p></div>';
+    }).join('');
+    var box2 = box;
+    box2.querySelectorAll('[data-act="edit"]').forEach(function(btn){
+      btn.addEventListener('click', function(){ openRegraEdit = btn.closest('[data-id]').getAttribute('data-id'); renderRegrasGrid(); });
+    });
+    box2.querySelectorAll('[data-act="cancel"]').forEach(function(btn){
+      btn.addEventListener('click', function(){ openRegraEdit=null; renderRegrasGrid(); });
+    });
+    box2.querySelectorAll('[data-act="del"]').forEach(function(btn){
+      btn.addEventListener('click', function(){
+        if(!confirm('Apagar esta regra?')) return;
+        var id = btn.closest('[data-id]').getAttribute('data-id');
+        state.fitNotes.regras = state.fitNotes.regras.filter(function(r){ return r.id!==id; });
+        saveState(); openRegraEdit=null; renderRegrasGrid();
+      });
+    });
+    box2.querySelectorAll('[data-act="save"]').forEach(function(btn){
+      btn.addEventListener('click', function(){
+        var card = btn.closest('[data-id]');
+        var id = card.getAttribute('data-id');
+        var r = state.fitNotes.regras.find(function(x){ return x.id===id; });
+        r.title = card.querySelector('[data-f="title"]').value.trim() || 'Sem título';
+        r.body = card.querySelector('[data-f="body"]').value.trim();
+        saveState(); openRegraEdit=null; renderRegrasGrid();
+      });
+    });
+  }
+  document.getElementById('btnAddRegra').addEventListener('click', function(){
+    var r = { id:'n'+Date.now().toString(36)+Math.random().toString(36).slice(2,5), title:'Nova regra', body:'' };
+    state.fitNotes.regras.push(r);
+    saveState(); openRegraEdit = r.id; renderRegrasGrid();
+  });
+
+  /* ---- alimentos (2 colunas com itens soltos, visual original) ---- */
+  function renderAlimentosBoxes(){
+    var box = document.getElementById('fitAlimentosNotes');
+    box.className = 'foods';
+    box.innerHTML = state.fitNotes.alimentos.map(function(g){
+      var items = g.items.map(function(food, i){
+        return '<li>'+escHtml(food)+'<span class="x" data-gid="'+g.id+'" data-fi="'+i+'">✕</span></li>';
+      }).join('');
+      return '<div class="foodbox" data-id="'+g.id+'">' +
+        '<h3>'+escHtml(g.title)+'</h3><ul>'+items+'</ul>' +
+        '<div class="foodadd"><input placeholder="+ adicionar…" data-gid="'+g.id+'"></div></div>';
+    }).join('');
+
+    box.querySelectorAll('.x').forEach(function(el){
+      el.addEventListener('click', function(){
+        var g = state.fitNotes.alimentos.find(function(x){ return x.id===el.getAttribute('data-gid'); });
+        g.items.splice(+el.getAttribute('data-fi'), 1);
+        saveState(); renderAlimentosBoxes();
+      });
+    });
+    box.querySelectorAll('.foodadd input').forEach(function(inp){
+      inp.addEventListener('keydown', function(e){
+        if(e.key !== 'Enter') return;
+        var v = inp.value.trim(); if(!v) return;
+        var g = state.fitNotes.alimentos.find(function(x){ return x.id===inp.getAttribute('data-gid'); });
+        g.items.push(v);
+        saveState(); renderAlimentosBoxes();
+      });
+    });
+  }
+  document.getElementById('btnAddAlimento').addEventListener('click', function(){
+    state.fitNotes.alimentos.push({ id:'n'+Date.now().toString(36)+Math.random().toString(36).slice(2,5), title:'Novo grupo', items:[] });
+    saveState(); renderAlimentosBoxes();
+  });
+
+  /* ---- refeições (mealcard colorido + linhas editáveis, visual original) ---- */
+  var MEAL_TAG_COLOR = { judo:'var(--cat-fit)', tiros:'var(--warn)', rest:'var(--ink-faint)' };
+  var openRefeicaoHeadEdit = null;
+  var openRefeicaoRowEdit = null;
+  function renderRefeicoesCards(){
+    var box = document.getElementById('fitRefeicoesNotes');
+    box.innerHTML = state.fitNotes.refeicoes.map(function(m){
+      var headEditing = m.id === openRefeicaoHeadEdit;
+      var headHtml = headEditing
+        ? '<div style="padding:12px 16px;background:var(--surface-2);display:flex;flex-direction:column;gap:6px;">' +
+            '<input data-f="title" value="'+escAttr(m.title)+'" style="border:1px solid var(--line-strong);border-radius:6px;padding:6px 8px;font-size:13px;">' +
+            '<div style="display:flex;gap:6px;"><input data-f="days" value="'+escAttr(m.days)+'" style="flex:1;border:1px solid var(--line-strong);border-radius:6px;padding:6px 8px;font-size:12px;">' +
+            '<select data-f="tag" style="border:1px solid var(--line-strong);border-radius:6px;font-size:12px;"><option value="judo"'+(m.tag==='judo'?' selected':'')+'>Verde</option><option value="tiros"'+(m.tag==='tiros'?' selected':'')+'>Âmbar</option><option value="rest"'+(m.tag==='rest'?' selected':'')+'>Neutro</option></select></div>' +
+            '<div class="form-actions" style="justify-content:space-between;"><button class="btn ghost" data-act="delcard" type="button">Apagar cartão</button><span style="display:flex;gap:8px;"><button class="btn ghost" data-act="cancelhead" type="button">Cancelar</button><button class="btn" data-act="savehead" type="button">Guardar</button></span></div>' +
+          '</div>'
+        : '<div class="head" style="background:'+(MEAL_TAG_COLOR[m.tag]||'var(--ink-faint)')+';cursor:pointer;" data-act="edithead">' +
+            '<h3>'+escHtml(m.title)+'</h3><span>'+escHtml(m.days)+'</span></div>';
+
+      var rows = m.rows.map(function(r){
+        if(m.id+'|'+r.id === openRefeicaoRowEdit){
+          return '<tr class="editing-row" data-rid="'+r.id+'"><td colspan="3" style="padding:10px 16px;">' +
+            '<div style="display:flex;gap:6px;margin-bottom:6px;">' +
+            '<input data-rf="time" value="'+escAttr(r.time)+'" style="width:90px;border:1px solid var(--line-strong);border-radius:6px;padding:5px 7px;font-size:12px;font-family:var(--font-mono);">' +
+            '<input data-rf="name" value="'+escAttr(r.name)+'" style="flex:1;border:1px solid var(--line-strong);border-radius:6px;padding:5px 7px;font-size:12px;font-weight:600;"></div>' +
+            '<textarea data-rf="desc" style="width:100%;border:1px solid var(--line-strong);border-radius:6px;padding:5px 7px;font-size:12px;min-height:40px;">'+escHtml(r.desc)+'</textarea>' +
+            '<div class="form-actions" style="justify-content:space-between;margin-top:6px;"><button class="btn ghost" data-act="delrow" type="button">Apagar</button><span style="display:flex;gap:8px;"><button class="btn ghost" data-act="cancelrow" type="button">Cancelar</button><button class="btn" data-act="saverow" type="button">Guardar</button></span></div>' +
+            '</td></tr>';
+        }
+        return '<tr data-rid="'+r.id+'" data-act="editrow" style="cursor:pointer;">' +
+          '<td class="mtime">'+escHtml(r.time)+'</td><td class="mname">'+escHtml(r.name)+'</td>' +
+          '<td>'+escHtml(r.desc)+(r.note?'<span class="note">'+escHtml(r.note)+'</span>':'')+'</td></tr>';
+      }).join('');
+
+      return '<div class="mealcard" data-id="'+m.id+'">' + headHtml +
+        '<table><tbody>'+rows+'<tr data-act="addrow"><td colspan="3" style="text-align:center;color:var(--ink-faint);font-size:12px;cursor:pointer;padding:10px;">+ adicionar refeição</td></tr></tbody></table></div>';
+    }).join('');
+
+    var box2 = box;
+    box2.querySelectorAll('[data-act="edithead"]').forEach(function(el){
+      el.addEventListener('click', function(){ openRefeicaoHeadEdit = el.closest('[data-id]').getAttribute('data-id'); openRefeicaoRowEdit=null; renderRefeicoesCards(); });
+    });
+    box2.querySelectorAll('[data-act="cancelhead"]').forEach(function(el){
+      el.addEventListener('click', function(){ openRefeicaoHeadEdit=null; renderRefeicoesCards(); });
+    });
+    box2.querySelectorAll('[data-act="delcard"]').forEach(function(el){
+      el.addEventListener('click', function(){
+        if(!confirm('Apagar este cartão de refeições?')) return;
+        var id = el.closest('[data-id]').getAttribute('data-id');
+        state.fitNotes.refeicoes = state.fitNotes.refeicoes.filter(function(m){ return m.id!==id; });
+        saveState(); openRefeicaoHeadEdit=null; renderRefeicoesCards();
+      });
+    });
+    box2.querySelectorAll('[data-act="savehead"]').forEach(function(el){
+      el.addEventListener('click', function(){
+        var card = el.closest('[data-id]');
+        var id = card.getAttribute('data-id');
+        var m = state.fitNotes.refeicoes.find(function(x){ return x.id===id; });
+        m.title = card.querySelector('[data-f="title"]').value.trim() || 'Sem título';
+        m.days = card.querySelector('[data-f="days"]').value.trim();
+        m.tag = card.querySelector('[data-f="tag"]').value;
+        saveState(); openRefeicaoHeadEdit=null; renderRefeicoesCards();
+      });
+    });
+    box2.querySelectorAll('[data-act="editrow"]').forEach(function(el){
+      el.addEventListener('click', function(){
+        var mid = el.closest('[data-id]').getAttribute('data-id');
+        openRefeicaoRowEdit = mid+'|'+el.getAttribute('data-rid');
+        renderRefeicoesCards();
+      });
+    });
+    box2.querySelectorAll('[data-act="cancelrow"]').forEach(function(el){
+      el.addEventListener('click', function(){ openRefeicaoRowEdit=null; renderRefeicoesCards(); });
+    });
+    box2.querySelectorAll('[data-act="delrow"]').forEach(function(el){
+      el.addEventListener('click', function(){
+        var card = el.closest('[data-id]');
+        var mid = card.getAttribute('data-id');
+        var rid = el.closest('tr').getAttribute('data-rid');
+        var m = state.fitNotes.refeicoes.find(function(x){ return x.id===mid; });
+        m.rows = m.rows.filter(function(r){ return r.id!==rid; });
+        saveState(); openRefeicaoRowEdit=null; renderRefeicoesCards();
+      });
+    });
+    box2.querySelectorAll('[data-act="saverow"]').forEach(function(el){
+      el.addEventListener('click', function(){
+        var card = el.closest('[data-id]');
+        var mid = card.getAttribute('data-id');
+        var rid = el.closest('tr').getAttribute('data-rid');
+        var m = state.fitNotes.refeicoes.find(function(x){ return x.id===mid; });
+        var r = m.rows.find(function(x){ return x.id===rid; });
+        r.time = el.closest('tr').querySelector('[data-rf="time"]').value.trim();
+        r.name = el.closest('tr').querySelector('[data-rf="name"]').value.trim();
+        r.desc = el.closest('tr').querySelector('[data-rf="desc"]').value.trim();
+        saveState(); openRefeicaoRowEdit=null; renderRefeicoesCards();
+      });
+    });
+    box2.querySelectorAll('[data-act="addrow"]').forEach(function(el){
+      el.addEventListener('click', function(){
+        var mid = el.closest('[data-id]').getAttribute('data-id');
+        var m = state.fitNotes.refeicoes.find(function(x){ return x.id===mid; });
+        var row = { id:'r'+Date.now().toString(36)+Math.random().toString(36).slice(2,5), time:'', name:'Nova refeição', desc:'' };
+        m.rows.push(row);
+        openRefeicaoRowEdit = mid+'|'+row.id;
+        renderRefeicoesCards();
+      });
+    });
+  }
+  document.getElementById('btnAddRefeicao').addEventListener('click', function(){
+    var m = { id:'n'+Date.now().toString(36)+Math.random().toString(36).slice(2,5), title:'Novo dia', days:'', tag:'rest', rows:[] };
+    state.fitNotes.refeicoes.push(m);
+    saveState(); openRefeicaoHeadEdit = m.id; renderRefeicoesCards();
+  });
 
   function bindTrainHandlers(){
     document.querySelectorAll('.done-check[data-act]').forEach(function(el){
@@ -740,63 +1137,6 @@
   /* ================= VIDA (finanças / compras / agenda / pendentes / planos) ================= */
   function fmtMT(n){ return (n<0?'−':'') + Math.abs(n).toLocaleString('pt-PT',{minimumFractionDigits:0, maximumFractionDigits:2}) + ' MT'; }
 
-  var openAccountEditId = null;
-  function renderAccounts(){
-    var box = document.getElementById('financeAccounts');
-    if(!state.financeAccounts.length){
-      box.innerHTML = '<p style="color:var(--ink-faint); font-size:13px; padding:8px 0;">Sem contas ainda — toca no + para criar.</p>';
-      return;
-    }
-    box.innerHTML = state.financeAccounts.map(function(a){
-      if(a.id === openAccountEditId){
-        return '<div class="account-edit" data-id="'+a.id+'">' +
-          '<input data-f="name" type="text" placeholder="Nome da conta" value="'+escAttr(a.name)+'">' +
-          '<input data-f="detail" type="text" placeholder="Método / número" value="'+escAttr(a.detail)+'">' +
-          '<input data-f="balance" type="number" step="0.01" placeholder="Saldo (MT)" value="'+a.balance+'">' +
-          '<div class="form-actions"><button class="btn ghost" data-act="cancelacc" type="button">Cancelar</button><button class="btn" data-act="saveacc" type="button">Guardar</button></div></div>';
-      }
-      return '<div class="account-row" data-id="'+a.id+'">' +
-        '<div><div class="ar-name">'+escHtml(a.name)+'</div><div class="ar-detail">'+escHtml(a.detail||'')+'</div></div>' +
-        '<div style="display:flex; align-items:center; gap:8px;">' +
-        '<span class="ar-balance" style="color:'+(a.balance>=0?'var(--ink)':'var(--bad)')+'">'+fmtMT(a.balance)+'</span>' +
-        '<button class="ar-icon-btn" data-act="editacc" type="button">'+PENCIL_SVG+'</button>' +
-        '<button class="ar-icon-btn danger" data-act="delacc" type="button">'+TRASH_SVG+'</button></div></div>';
-    }).join('');
-
-    box.querySelectorAll('[data-act="editacc"]').forEach(function(btn){
-      btn.addEventListener('click', function(){ openAccountEditId = btn.closest('[data-id]').getAttribute('data-id'); renderAccounts(); });
-    });
-    box.querySelectorAll('[data-act="delacc"]').forEach(function(btn){
-      btn.addEventListener('click', function(){
-        if(!confirm('Apagar esta conta?')) return;
-        var id = btn.closest('[data-id]').getAttribute('data-id');
-        state.financeAccounts = state.financeAccounts.filter(function(a){ return a.id!==id; });
-        saveState(); renderAccounts();
-      });
-    });
-    box.querySelectorAll('[data-act="cancelacc"]').forEach(function(btn){
-      btn.addEventListener('click', function(){ openAccountEditId=null; renderAccounts(); });
-    });
-    box.querySelectorAll('[data-act="saveacc"]').forEach(function(btn){
-      btn.addEventListener('click', function(){
-        var card = btn.closest('.account-edit');
-        var id = card.getAttribute('data-id');
-        var a = state.financeAccounts.find(function(x){ return x.id===id; });
-        a.name = card.querySelector('[data-f="name"]').value.trim() || 'Sem nome';
-        a.detail = card.querySelector('[data-f="detail"]').value.trim();
-        a.balance = parseFloat(card.querySelector('[data-f="balance"]').value) || 0;
-        saveState(); openAccountEditId=null; renderAccounts();
-      });
-    });
-  }
-  document.getElementById('btnAddAccount').addEventListener('click', function(){
-    var a = { id:'acc'+Date.now().toString(36)+Math.random().toString(36).slice(2,5), name:'Nova conta', detail:'', balance:0 };
-    state.financeAccounts.push(a);
-    saveState();
-    openAccountEditId = a.id;
-    renderAccounts();
-  });
-
   function renderFinance(){
     var mk = TODAY_ISO.slice(0,7);
     var monthTx = state.finance.filter(function(t){ return t.date.slice(0,7)===mk; });
@@ -1072,13 +1412,79 @@
   });
 
   function renderVida(){
-    renderAccounts();
     renderFinance();
     renderShopping();
     renderChecklist('pendentes', 'pendentesList');
     renderAgenda();
     renderNotesGroup(state.planos, 'planosList');
+    renderVidaHub();
   }
+
+  /* ---- Vida: hub + navegação por ecrã (evita scroll infinito com tudo junto) ---- */
+  var vidaScreen = 'hub';
+  var HUB_ICONS = {
+    financas: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="6" width="20" height="12" rx="2"></rect><circle cx="12" cy="12" r="2.5"></circle></svg>',
+    compras: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 6h15l-1.5 9h-12z"></path><path d="M6 6 5 2H2"></path><circle cx="9" cy="20" r="1"></circle><circle cx="18" cy="20" r="1"></circle></svg>',
+    agenda: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4.5" width="18" height="16" rx="2"></rect><path d="M3 9.5h18M8 2.5v4M16 2.5v4"></path></svg>',
+    pendentes: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11l3 3L22 4"></path><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2h11"></path></svg>',
+    planos: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2 2 7l10 5 10-5-10-5Z"></path><path d="M2 17l10 5 10-5M2 12l10 5 10-5"></path></svg>',
+  };
+  function renderVidaHub(){
+    var mk = TODAY_ISO.slice(0,7);
+    var monthTx = state.finance.filter(function(t){ return t.date.slice(0,7)===mk; });
+    var totalIn = monthTx.filter(function(t){ return t.type==='entrada'; }).reduce(function(s,t){ return s+t.amount; },0);
+    var totalOut = monthTx.filter(function(t){ return t.type==='saida'; }).reduce(function(s,t){ return s+t.amount; },0);
+    var saldo = totalIn - totalOut;
+
+    var pendingShopping = state.shoppingLists.reduce(function(s,l){ return s + l.items.filter(function(it){ return !it.done; }).length; }, 0);
+
+    var upcoming = sortedAgenda().filter(function(ev){ return ev.date >= TODAY_ISO; })[0];
+
+    var pendentesOpen = state.pendentes.filter(function(p){ return !p.done; }).length;
+
+    var planosCount = state.planos.length;
+    var planosSub = planosCount ? (state.planos[0].title + (planosCount>1 ? ' + ' + (planosCount-1) : '')) : 'Nenhum ainda';
+
+    var cards = [
+      { key:'financas', label:'Finanças', sum:'Saldo do mês', val:fmtMT(saldo), valColor: saldo>=0?'var(--good)':'var(--bad)' },
+      { key:'compras', label:'Compras', sum: state.shoppingLists.length + ' lista'+(state.shoppingLists.length===1?'':'s'), count: pendingShopping },
+      { key:'agenda', label:'Agenda', sum: upcoming ? upcoming.title : 'Sem eventos', val: upcoming ? dueLabel(daysUntil(upcoming.date)) : '', valColor:'var(--accent-strong)' },
+      { key:'pendentes', label:'Pendentes', sum:'Fora da rotina diária', count: pendentesOpen },
+      { key:'planos', label:'Planos futuros', sum: planosSub },
+    ];
+
+    document.getElementById('vidaHubCards').innerHTML = cards.map(function(c){
+      var right = c.count !== undefined
+        ? (c.count > 0 ? '<span class="hcount">'+c.count+'</span>' : '')
+        : (c.val ? '<span class="hval" style="color:'+(c.valColor||'var(--ink)')+'">'+c.val+'</span>' : '');
+      return '<button class="hcard" data-vida-go="'+c.key+'" type="button">' +
+        '<span class="hicn '+c.key+'">'+HUB_ICONS[c.key]+'</span>' +
+        '<span class="hbody"><span class="hname">'+c.label+'</span><span class="hsum">'+escHtml(c.sum)+'</span></span>' +
+        right +
+        '<span class="hchev"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 6 6 6-6 6"></path></svg></span>' +
+        '</button>';
+    }).join('');
+
+    document.querySelectorAll('#vidaHubCards [data-vida-go]').forEach(function(btn){
+      btn.addEventListener('click', function(){ goVida(btn.getAttribute('data-vida-go')); });
+    });
+
+    var vidaBtn = document.querySelector('.tabbtn[data-tab="vida"]');
+    if(vidaBtn) vidaBtn.classList.toggle('has-today', (pendingShopping+pendentesOpen)>0 || (!!upcoming && daysUntil(upcoming.date)<=3));
+  }
+  function goVida(screen){
+    vidaScreen = screen;
+    document.querySelectorAll('#view-vida .subview').forEach(function(el){
+      el.classList.toggle('active', el.id === (screen==='hub' ? 'vida-hub' : 'vida-'+screen));
+    });
+    document.getElementById('view-vida').scrollTop = 0;
+    window.scrollTo({ top:0, behavior:'instant' in window ? 'instant':'auto' });
+  }
+  document.querySelectorAll('#view-vida [data-vida-back]').forEach(function(btn){
+    btn.addEventListener('click', function(){ goVida('hub'); });
+  });
+  // ao voltar à aba Vida a partir de outra aba, mostra sempre o hub primeiro
+  document.querySelector('.tabbtn[data-tab="vida"]').addEventListener('click', function(){ goVida('hub'); });
 
   /* ================= DASHBOARD ================= */
   function renderDashboard(){
