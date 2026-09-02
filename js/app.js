@@ -623,7 +623,7 @@
       }).join('');
       return '<div class="foodbox" data-id="'+g.id+'">' +
         '<h3>'+escHtml(g.title)+'</h3><ul>'+items+'</ul>' +
-        '<div class="foodadd"><input placeholder="+ adicionar…" data-gid="'+g.id+'"></div></div>';
+        '<form class="foodadd" data-gid="'+g.id+'"><input type="text" placeholder="+ adicionar…"><button type="submit" hidden></button></form></div>';
     }).join('');
 
     box.querySelectorAll('.x').forEach(function(el){
@@ -633,11 +633,12 @@
         saveState(); renderAlimentosBoxes();
       });
     });
-    box.querySelectorAll('.foodadd input').forEach(function(inp){
-      inp.addEventListener('keydown', function(e){
-        if(e.key !== 'Enter') return;
+    box.querySelectorAll('.foodadd').forEach(function(form){
+      form.addEventListener('submit', function(e){
+        e.preventDefault();
+        var inp = form.querySelector('input');
         var v = inp.value.trim(); if(!v) return;
-        var g = state.fitNotes.alimentos.find(function(x){ return x.id===inp.getAttribute('data-gid'); });
+        var g = state.fitNotes.alimentos.find(function(x){ return x.id===form.getAttribute('data-gid'); });
         g.items.push(v);
         saveState(); renderAlimentosBoxes();
       });
