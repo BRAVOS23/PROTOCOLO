@@ -500,7 +500,7 @@
       return '<tr'+(isToday?' class="today"':'')+' data-act="editrow" data-day="'+day+'" style="cursor:pointer;">' +
         '<td>'+checkbox+'</td>' +
         '<td class="day">'+day+'</td>' +
-        '<td class="time mono">'+(act.time||'—')+'</td>' +
+        '<td class="time mono">'+escHtml(act.time||'—')+'</td>' +
         '<td><span class="area-tag"><span class="area-dot" style="background:'+area.color+'"></span>'+escHtml(act.title)+'</span></td>' +
         '<td style="color:var(--ink-soft);font-size:12.5px;">'+escHtml(act.detail||'')+'</td>' +
         '</tr>';
@@ -512,7 +512,7 @@
     renderAlimentosBoxes();
 
     bindTrainHandlers();
-    bindWeightForm();
+    renderWeightAll();
   }
 
   /* ---- protocolos (grelha 2-col, visual original + edição inline) ---- */
@@ -847,18 +847,14 @@
     return rate;
   }
 
-  function bindWeightForm(){
-    var form = document.getElementById('weightForm');
+  document.getElementById('weightForm').addEventListener('submit', function(e){
+    e.preventDefault();
     var input = document.getElementById('weightInput');
-    form.addEventListener('submit', function(e){
-      e.preventDefault();
-      var v = parseFloat(input.value);
-      if(!v || v<30 || v>300) return;
-      addWeight(Math.round(v*10)/10);
-      input.value='';
-    });
-    renderWeightAll();
-  }
+    var v = parseFloat(input.value);
+    if(!v || v<30 || v>300) return;
+    addWeight(Math.round(v*10)/10);
+    input.value='';
+  });
 
   function renderWeightAll(){
     var cur = currentWeight();
@@ -1046,8 +1042,8 @@
     return '<div class="activity-row" data-id="'+act.id+'">' +
       '<span class="area-dot" style="background:'+area.color+'; margin-top:6px;"></span>' +
       '<div class="ar-body">' +
-        '<div class="ar-title">'+act.title+(act.time?' <span class="mono" style="color:var(--ink-faint);font-weight:500;font-size:11.5px;">· '+act.time+'</span>':'')+'</div>' +
-        (act.detail ? '<div class="ar-detail">'+act.detail+'</div>' : '') +
+        '<div class="ar-title">'+escHtml(act.title)+(act.time?' <span class="mono" style="color:var(--ink-faint);font-weight:500;font-size:11.5px;">· '+escHtml(act.time)+'</span>':'')+'</div>' +
+        (act.detail ? '<div class="ar-detail">'+escHtml(act.detail)+'</div>' : '') +
       '</div>' +
       '<div class="ar-actions">' +
         '<button class="ar-icon-btn" data-act="edit" type="button">'+PENCIL_SVG+'</button>' +
@@ -1150,7 +1146,7 @@
       document.getElementById('pcMetas').hidden = false;
       document.getElementById('pcMetaEdit').hidden = true;
       document.getElementById('pcMetas').innerHTML = state.protocolo.metas.map(function(m){
-        return '<span class="meta-chip"><span class="ml">'+m.label+'</span><span class="mv">'+m.value+'</span></span>';
+        return '<span class="meta-chip"><span class="ml">'+escHtml(m.label)+'</span><span class="mv">'+escHtml(m.value)+'</span></span>';
       }).join('');
     } else {
       document.getElementById('pcManifestoText').hidden = true;
@@ -1349,6 +1345,7 @@
     }
     return state.shoppingLists.find(function(l){ return l.id===currentShoppingListId; });
   }
+  var renamingShoppingList = false;
   function renderShopping(){
     var list = currentShoppingList();
     var picker = document.getElementById('shoppingListPicker');
@@ -1356,8 +1353,34 @@
       return '<button data-id="'+l.id+'" class="'+(l.id===list.id?'active':'')+'">'+escHtml(l.name)+' <span class="mono" style="opacity:.6;">'+l.items.length+'</span></button>';
     }).join('');
     picker.querySelectorAll('button').forEach(function(b){
-      b.addEventListener('click', function(){ currentShoppingListId = b.getAttribute('data-id'); renderShopping(); });
+      b.addEventListener('click', function(){ currentShoppingListId = b.getAttribute('data-id'); renamingShoppingList=false; renderShopping(); });
     });
+
+    var cur = document.getElementById('shoppingListCurrent');
+    if(renamingShoppingList){
+      cur.innerHTML = '<input id="shoppingListRenameInput" value="'+escAttr(list.name)+'" style="flex:1;border:1px solid var(--line-strong);border-radius:6px;padding:6px 8px;font-size:13px;">' +
+        '<span style="display:flex;gap:6px;margin-left:8px;"><button class="btn ghost" id="btnCancelRenameList" type="button">Cancelar</button><button class="btn" id="btnSaveRenameList" type="button">Guardar</button></span>';
+      document.getElementById('btnCancelRenameList').addEventListener('click', function(){ renamingShoppingList=false; renderShopping(); });
+      document.getElementById('btnSaveRenameList').addEventListener('click', function(){
+        var v = document.getElementById('shoppingListRenameInput').value.trim();
+        if(v) list.name = v;
+        saveState(); renamingShoppingList=false; renderShopping();
+      });
+    } else {
+      cur.innerHTML = '<span style="font-weight:600;font-size:13.5px;">'+escHtml(list.name)+'</span>' +
+        '<span style="display:flex;gap:6px;">' +
+        '<button class="ar-icon-btn" id="btnRenameList" type="button">'+PENCIL_SVG+'</button>' +
+        (state.shoppingLists.length>1 ? '<button class="ar-icon-btn danger" id="btnDeleteList" type="button">'+TRASH_SVG+'</button>' : '') +
+        '</span>';
+      document.getElementById('btnRenameList').addEventListener('click', function(){ renamingShoppingList=true; renderShopping(); });
+      var delBtn = document.getElementById('btnDeleteList');
+      if(delBtn) delBtn.addEventListener('click', function(){
+        if(!confirm('Apagar a lista "'+list.name+'" e todos os seus itens?')) return;
+        state.shoppingLists = state.shoppingLists.filter(function(l){ return l.id!==list.id; });
+        currentShoppingListId = null;
+        saveState(); renderShopping();
+      });
+    }
 
     var el = document.getElementById('shoppingList');
     el.innerHTML = list.items.length ? list.items.map(function(it){
@@ -1429,21 +1452,56 @@
       return (a.time||'')<(b.time||'') ? -1 : 1;
     });
   }
+  var openAgendaEdit = null;
   function renderAgenda(){
     var list = document.getElementById('agendaList');
     var arr = sortedAgenda();
     list.innerHTML = arr.length ? arr.map(function(ev){
+      if(ev.id === openAgendaEdit){
+        return '<div class="list-row" data-id="'+ev.id+'" style="display:block;padding:12px 4px;">' +
+          '<input data-f="title" value="'+escAttr(ev.title)+'" style="width:100%;margin-bottom:6px;border:1px solid var(--line-strong);border-radius:6px;padding:6px 8px;font-size:13px;">' +
+          '<div style="display:flex;gap:6px;margin-bottom:8px;">' +
+          '<input data-f="date" type="date" value="'+ev.date+'" style="border:1px solid var(--line-strong);border-radius:6px;padding:5px 7px;font-size:12px;">' +
+          '<input data-f="time" type="time" value="'+escAttr(ev.time||'')+'" style="border:1px solid var(--line-strong);border-radius:6px;padding:5px 7px;font-size:12px;">' +
+          '</div>' +
+          '<div class="form-actions" style="justify-content:flex-end;"><span style="display:flex;gap:8px;"><button class="btn ghost" data-act="cancel" type="button">Cancelar</button><button class="btn" data-act="save" type="button">Guardar</button></span></div>' +
+          '</div>';
+      }
       var d = new Date(ev.date+'T00:00:00');
       var isPast = ev.date < TODAY_ISO;
       var days = daysUntil(ev.date);
-      return '<div class="list-row'+(isPast?' past':'')+'"><div class="lr-main"><div class="lr-title">'+escHtml(ev.title)+'</div>' +
-        '<div class="lr-sub">'+d.toLocaleDateString('pt-PT',{day:'2-digit',month:'long',year:'numeric'})+(ev.time?' · '+ev.time:'')+(!isPast?' · '+dueLabel(days):'')+'</div></div>' +
-        '<span class="del" data-id="'+ev.id+'">'+TRASH_SVG+'</span></div>';
+      return '<div class="list-row'+(isPast?' past':'')+'" data-id="'+ev.id+'"><div class="lr-main"><div class="lr-title">'+escHtml(ev.title)+'</div>' +
+        '<div class="lr-sub">'+d.toLocaleDateString('pt-PT',{day:'2-digit',month:'long',year:'numeric'})+(ev.time?' · '+escHtml(ev.time):'')+(!isPast?' · '+dueLabel(days):'')+'</div></div>' +
+        '<span class="lr-right"><button class="ar-icon-btn" data-act="edit" data-id="'+ev.id+'" type="button">'+PENCIL_SVG+'</button><span class="del" data-id="'+ev.id+'">'+TRASH_SVG+'</span></span></div>';
     }).join('') : '<div class="list-row" style="color:var(--ink-faint)">Sem eventos agendados.</div>';
     list.querySelectorAll('.del').forEach(function(btn){
       btn.addEventListener('click', function(){
         state.agenda = state.agenda.filter(function(x){ return x.id!==btn.getAttribute('data-id'); });
         saveState(); renderAgenda(); renderDashAgenda();
+      });
+    });
+    list.querySelectorAll('[data-act="edit"]').forEach(function(btn){
+      btn.addEventListener('click', function(){
+        openAgendaEdit = btn.getAttribute('data-id');
+        renderAgenda();
+      });
+    });
+    list.querySelectorAll('[data-act="cancel"]').forEach(function(btn){
+      btn.addEventListener('click', function(){ openAgendaEdit=null; renderAgenda(); });
+    });
+    list.querySelectorAll('[data-act="save"]').forEach(function(btn){
+      btn.addEventListener('click', function(){
+        var row = btn.closest('[data-id]');
+        var ev = state.agenda.find(function(x){ return x.id===row.getAttribute('data-id'); });
+        var title = row.querySelector('[data-f="title"]').value.trim();
+        var date = row.querySelector('[data-f="date"]').value;
+        if(title) ev.title = title;
+        if(date) ev.date = date;
+        ev.time = row.querySelector('[data-f="time"]').value || '';
+        saveState();
+        openAgendaEdit=null;
+        renderAgenda();
+        renderDashAgenda();
       });
     });
   }
@@ -1470,7 +1528,7 @@
         var soon = days <= 3;
         return '<div class="today-item" style="cursor:default;">' +
           '<span class="area-tag" style="background:'+(soon?'var(--accent-soft)':'var(--surface-2)')+'; color:'+(soon?'var(--accent-strong)':'var(--ink-soft)')+'; font-weight:700;">'+dueLabel(days)+'</span>' +
-          '<div class="today-txt"><div class="tt">'+escHtml(ev.title)+'</div>'+(ev.time?'<div class="ts">'+ev.time+'</div>':'')+'</div></div>';
+          '<div class="today-txt"><div class="tt">'+escHtml(ev.title)+'</div>'+(ev.time?'<div class="ts">'+escHtml(ev.time)+'</div>':'')+'</div></div>';
       }).join('');
     }
     var soonest = upcoming[0];
@@ -1649,10 +1707,10 @@
     document.getElementById('todayList').innerHTML = acts.length ? acts.map(function(act){
       var area = AREAS[act.area] || AREAS.outro;
       var done = isActDone(TODAY_ISO, act.id);
-      var sub = [act.time, act.detail].filter(Boolean).join(' · ');
+      var sub = escHtml([act.time, act.detail].filter(Boolean).join(' · '));
       return '<div class="today-item'+(done?' done':'')+'" data-act="'+act.id+'">' +
         '<span class="today-check'+(done?' on':'')+'">'+CHECK_SVG+'</span>' +
-        '<div class="today-txt"><div class="tt">'+act.title+'</div>' +
+        '<div class="today-txt"><div class="tt">'+escHtml(act.title)+'</div>' +
         '<div class="ts"><span class="area-tag"><span class="area-dot" style="background:'+area.color+'"></span>'+area.label+'</span>'+(sub?'<span>'+sub+'</span>':'')+'</div></div>' +
         '</div>';
     }).join('') : '<p style="color:var(--ink-faint); font-size:13px;">Sem atividades para hoje — toca no lápis para adicionar.</p>';
