@@ -224,7 +224,7 @@ const FIT_MEALS = {
       { time: '06h–07h', name: 'Pequeno-almoço', desc: 'Aveia ou rhale (tigela a metade) + 1 banana + leite (se disponível)' },
       { time: '10h–11h', name: 'Merenda', desc: '1 fruta + 1 ovo cozido (se disponível)' },
       { time: '12h–13h', name: 'Almoço', desc: 'Moela 150g ou frango 200g + massa, arroz ou xima (tigela cheia) + feijão (tigela cheia) + cove ou matapa' },
-      { time: '16h30–17h', name: 'Pré-tiro', desc: '2 bananas ou pão de trigo com pouca manteiga', note: 'Come 1h–1h30 antes — comida pesada causa enjoo nos tiros' },
+      { time: '17h', name: 'Pré-tiro', desc: '2 bananas ou pão de trigo com pouca manteiga', note: '1h30 antes dos tiros — comida pesada causa enjoo' },
       { time: '19h30–20h30', name: 'Jantar', desc: 'Frango 150g ou moela 120g + arroz/xima (tigela 3/4) + feijão (meia tigela) + cove ou matapa' },
     ],
   },
@@ -276,66 +276,89 @@ const AREAS = {
   revisao: { label: 'Revisão', color: 'var(--warn)' },
   pessoal: { label: 'Cuidados pessoais', color: 'var(--accent)' },
   domestico: { label: 'Doméstico', color: 'var(--accent)' },
+  diario: { label: 'Diário', color: '#2c757a' },
   outro: { label: 'Outro', color: 'var(--ink-faint)' },
 };
+
+/* itens fixos do AIF — Autenticidade: entram no fim da checklist de todos os dias */
+const AIF_DIARIO_TITLES = ['Escrevi no diário — incluindo o que correu mal', 'O que fiz hoje foi por mim, não para mostrar'];
 
 /* Estado inicial (seed) — o utilizador pode editar/apagar/adicionar tudo isto dentro do app. */
 function seedActivities() {
   var mk = function (area, title, detail, time) { return { area: area, title: title, detail: detail || '', time: time || '' }; };
+  var acordar = function(){ return mk('pessoal', 'Acordar', '', '05h30'); };
+  var lordose = function(){ return mk('fitness', 'Exercícios de lordose', 'Alongamento + abdominal + prancha + fortalecimento', '05h30'); };
+  var godMoment = function(){ return mk('pessoal', 'God Moment', '', '05h40'); };
   return {
     Segunda: [
+      acordar(), lordose(), godMoment(),
       mk('trabalho', 'DROP — Espionagem', 'Ofertas vencedoras, produtos com potencial, levar criativos · importar produtos (remodelar fotos, copy, achar comentários)'),
       mk('fitness', 'Judo técnico', 'Kuzushi → tsukuri → kake, sem pressão de combate — foco na forma', '15h30'),
       mk('linguas', 'Inglês — Anki + gramática', 'Revisão dos cards + explicação curta e exercícios', '14h00'),
       mk('leitura', 'Leitura', ''),
     ],
     Terça: [
+      acordar(), lordose(), godMoment(),
       mk('trabalho', 'DROP — Loja', 'Melhorar a credibilidade, aprimorar landpages para converter mais, trabalhar nas seções e abas'),
       mk('fitness', 'Tiros na areia', '6–10 tiros de 15–30m a 100%, descanso de 1–2min a caminhar', '18h00'),
       mk('linguas', 'Inglês — vocabulário, escrita, listening, speaking', ''),
-      mk('linguas', 'Mandarim', ''),
-      mk('revisao', 'Revisão da matéria', ''),
+      mk('revisao', 'Revisão da matéria', '', '11h00'),
       mk('pessoal', 'Cuidados pessoais', ''),
       mk('domestico', 'Trabalhos domésticos', ''),
     ],
     Quarta: [
+      acordar(), lordose(), godMoment(),
       mk('trabalho', 'DROP — Criativos', 'Criar novos ADS'),
       mk('fitness', 'Judo combate', 'Treino explosivo, com carga e luta de pegas', '15h30'),
       mk('linguas', 'Inglês — Anki + gramática', '', '14h00'),
       mk('leitura', 'Leitura', ''),
     ],
     Quinta: [
+      acordar(), lordose(), godMoment(),
       mk('trabalho', 'DROP — Campanhas', 'Como estão as métricas, levantar teste de ADS, produto ou landingpage'),
       mk('fitness', 'Tiros na areia', '6–10 tiros de 15–30m a 100%', '18h00'),
       mk('linguas', 'Inglês — vocabulário, escrita, listening, speaking', ''),
-      mk('linguas', 'Mandarim', ''),
-      mk('revisao', 'Revisão da matéria', ''),
+      mk('revisao', 'Revisão da matéria', '', '11h00'),
       mk('pessoal', 'Cuidados pessoais', ''),
       mk('domestico', 'Trabalhos domésticos', ''),
     ],
     Sexta: [
+      acordar(), lordose(), godMoment(),
       mk('trabalho', 'DROP — Minerar & Aprender', 'Minerar e aprender coisas novas'),
       mk('fitness', 'Judo randori', 'Randori a 100%, sem hesitação', '15h00'),
       mk('linguas', 'Inglês — Anki + gramática', '', '14h00'),
       mk('leitura', 'Leitura', ''),
     ],
     Sábado: [
+      acordar(), lordose(), godMoment(),
       mk('trabalho', 'DROP — Remarketing', 'Remarketing e pausar ADS'),
       mk('fitness', 'Descanso ativo', 'Caminhada de 30–45min, sem barra, 7–8h de sono'),
+      mk('revisao', 'Revisão da matéria', '', '14h00'),
     ],
     Domingo: [
+      acordar(), lordose(), godMoment(),
       mk('trabalho', 'DROP — Campanhas', 'Como estão as métricas, levantar teste de ADS, produto ou landingpage'),
       mk('linguas', 'Inglês — vocabulário, escrita, listening, speaking', ''),
-      mk('linguas', 'Mandarim', ''),
-      mk('revisao', 'Revisão da matéria', ''),
+      mk('revisao', 'Revisão da matéria', '', '17h00'),
       mk('pessoal', 'Cuidados pessoais', ''),
       mk('fitness', 'Descanso ativo', 'Caminhada de 30–45min, sem barra, 7–8h de sono'),
+      mk('domestico', 'Marmitas da semana', '', '18h–19h'),
     ],
   };
 }
+function appendDailyClose(data){
+  WEEKDAYS.forEach(function(day){
+    data[day].push(
+      { area:'diario', title: AIF_DIARIO_TITLES[0], detail:'', time:'' },
+      { area:'diario', title: AIF_DIARIO_TITLES[1], detail:'', time:'' },
+      { area:'pessoal', title:'Dormir', detail:'', time:'22h00' }
+    );
+  });
+  return data;
+}
 
 function seedActivitiesWithIds() {
-  var data = seedActivities();
+  var data = appendDailyClose(seedActivities());
   WEEKDAYS.forEach(function (day) {
     (data[day] || []).forEach(function (act, i) {
       act.id = day + '-' + i;
@@ -425,3 +448,60 @@ const DEFAULT_PROTOCOLO = {
     { label: 'Inglês', value: 'Imersão B1' },
   ],
 };
+
+/* ---------------- AIF: Autenticidade · Intensidade · Fidelidade ---------------- */
+/* Compromisso feito no crisma, 2025. Não é um tracker novo — é uma lente sobre a
+   checklist diária que já existe. As cores são fixas por letra (identidade),
+   o texto de cada letra é editável pelo utilizador dentro do app. */
+const AIF_LETTERS = {
+  a: {
+    letter: 'A', color: '#2c757a',
+    title: 'Autenticidade que inspira',
+    body: 'Não ser cópia. O problema nunca é a ideia vir de fora — tudo vem de fora. O problema é adotar sem testar.',
+    test: 'De onde veio isto, e quando testo contra a minha vida, aguenta?',
+  },
+  i: {
+    letter: 'I', color: '#b8471f',
+    title: 'Intensidade que marca',
+    body: 'Presença não é entrega. Intensidade não é espalhar esforço por muitas frentes — é o que dou àquilo que amo.',
+    test: 'Dei tudo, ou só marquei presença?',
+  },
+  f: {
+    letter: 'F', color: '#966b18',
+    title: 'Fidelidade que define',
+    body: 'Cumprir o combinado quando ninguém vê e ninguém saberia.',
+    test: 'Faria isto na mesma se ninguém ficasse a saber?',
+  },
+};
+
+/* Áreas cujos itens marcados na checklist do dia podem levar o segundo toque
+   ("dei 100%") que alimenta a percentagem de Intensidade. */
+const AIF_INTENSITY_AREAS = ['fitness', 'linguas', 'revisao'];
+
+const AIF_STREAK_RULE_TEXT = 'A regra é uma só: nunca falhar dois dias seguidos. Um dia mau é ruído. Dois seguidos é o início de uma desistência.';
+
+/* ---------------- Rota: linha do tempo até à candidatura na China ---------------- */
+const ROTA_META = {
+  countdownTarget: '2028-12-01',
+  countdownLabel: 'até à abertura da janela de candidatura',
+  chips: ['2º ano · 2º semestre', 'Meta: HSK 4', '22 anos na candidatura'],
+  note: 'O IELTS é o exame que carrega a candidatura; o HSK 4 é objetivo esticado. Se o inglês e o mandarim competirem por tempo até 2028, o inglês ganha.',
+};
+
+function seedRotaTimeline(){
+  var mk = function(year, period, title, detail, tag){ return { id: rid('rt'), year: year, period: period, title: title, detail: detail || '', tag: tag || '' }; };
+  return [
+    mk(2026, 'Set 2026', 'Estás aqui', '2º semestre do 2º ano. Até ao fim do ano só estudo inglês; o mandarim fica adiado para janeiro.', 'aqui'),
+    mk(2026, 'Out – Dez 2026', 'Fecha o 2º semestre', 'Estas notas entram no histórico em definitivo.'),
+    mk(2026, 'Dez 2026', 'Inglês em B1', ''),
+    mk(2027, 'Jan 2027', 'Mandarim começa do zero', 'O relógio do HSK só conta a partir daqui.'),
+    mk(2027, 'Meio de 2027', 'HSK 1', '150 palavras.'),
+    mk(2027, 'Dez 2027', 'HSK 2', '300 palavras. Inglês a entrar em B2.'),
+    mk(2028, 'Jun 2028', 'IELTS', 'Nota válida 2 anos, cobre a candidatura de 2029. Programas em inglês pedem banda 6.0 a 6.5.'),
+    mk(2028, 'Jun 2028', 'HSK 3', '600 palavras.'),
+    mk(2028, 'Out 2028', 'HSK 4', '1200 palavras. Objetivo esticado, não requisito.'),
+    mk(2028, 'Nov – Dez 2028', 'Fim da licenciatura, 22 anos', 'Começar a juntar documentos em setembro: diploma, histórico traduzido, 2 cartas de recomendação, plano de estudos, exame médico (validade 6 meses), passaporte e legalizações.'),
+    mk(2029, 'Dez 2028 – Mar 2029', 'Janela de candidatura', 'campuschina.org, via Instituto Confúcio (UEM, em Maputo) e edital do IBE. Candidatar por mais de uma via — são processos separados.', 'janela'),
+    mk(2029, 'Set 2029', 'Início das aulas na China', ''),
+  ];
+}

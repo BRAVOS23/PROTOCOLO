@@ -711,3 +711,72 @@ footer.page-footer{ padding:30px 0 10px; text-align:center; color:var(--ink-fain
   box-shadow:var(--shadow-3); opacity:0; pointer-events:none; transition:.2s; z-index:60; white-space:nowrap;
 }
 .toast.show{ opacity:1; transform:translateX(-50%) translateY(0); }
+
+/* ============ AIF: Autenticidade · Intensidade · Fidelidade ============ */
+.aif-cards{ display:grid; grid-template-columns:1fr; gap:10px; }
+@media (min-width:560px){ .aif-cards{ grid-template-columns:1fr 1fr 1fr; } }
+.aif-card{
+  background:var(--surface); border:1px solid var(--line); border-radius:var(--radius-m);
+  padding:16px; border-top:3px solid var(--aif-color);
+}
+.aif-letter{
+  display:inline-flex; align-items:center; justify-content:center; width:26px; height:26px;
+  border-radius:50%; background:var(--aif-color); color:#fff; font-family:var(--font-mono);
+  font-weight:700; font-size:13px; margin-bottom:8px;
+}
+.aif-title{ font-size:14px; font-weight:700; margin-bottom:6px; color:var(--aif-color); }
+.aif-body{ font-size:12.5px; color:var(--ink-soft); margin-bottom:8px; }
+.aif-test{ font-size:12px; color:var(--ink-faint); font-style:italic; margin:0; }
+
+.aif-rings{ display:grid; grid-template-columns:1fr 1fr 1fr; gap:10px; }
+.aif-ring-card{
+  background:var(--surface-2); border-radius:var(--radius-m); padding:12px 8px;
+  display:flex; flex-direction:column; align-items:center; gap:2px; text-align:center;
+}
+.aif-ring-card svg{ width:48px; height:48px; }
+.aif-ring-letter{ font-family:var(--font-mono); font-weight:700; font-size:12px; margin-top:2px; }
+.aif-ring-pct{ font-size:11.5px; color:var(--ink-faint); }
+.aif-total{
+  display:flex; align-items:baseline; justify-content:space-between; margin-top:14px;
+  padding-top:14px; border-top:1px solid var(--line);
+}
+.aif-total-label{ font-family:var(--font-mono); font-size:11px; text-transform:uppercase; letter-spacing:.06em; color:var(--ink-faint); }
+.aif-total-val{ font-family:var(--font-display); font-size:26px; font-weight:600; color:var(--ink); }
+.aif-streak-row{ display:flex; gap:8px; flex-wrap:wrap; margin-top:16px; }
+.aif-strip{ display:flex; gap:3px; margin-top:12px; overflow-x:auto; padding-bottom:2px; scrollbar-width:none; }
+.aif-strip::-webkit-scrollbar{ display:none; }
+.aif-strip-day{ width:8px; height:22px; border-radius:3px; flex-shrink:0; }
+.aif-rule-text{ font-size:12px; color:var(--ink-faint); margin-top:12px; line-height:1.5; }
+
+.today-flame{
+  margin-left:6px; flex-shrink:0; display:flex; align-items:center; justify-content:center;
+  width:22px; height:22px; border-radius:50%; color:var(--ink-faint); cursor:pointer;
+}
+.today-flame svg{ width:14px; height:14px; }
+.today-flame.on{ color:var(--warn); background:var(--warn-soft); }
+.today-flame.disabled{ opacity:.3; cursor:default; pointer-events:none; }
+
+/* ============ Ligação Início → Rota ============ */
+.pc-rota-link{
+  display:flex; align-items:center; gap:6px; margin-top:14px; background:none; border:none;
+  color:rgba(245,241,232,.85); font-size:12.5px; font-weight:600; cursor:pointer; padding:0;
+}
+.pc-rota-link svg{ width:14px; height:14px; }
+
+/* ============ Rota ============ */
+.rota-countdown{ display:flex; align-items:center; gap:10px; }
+.rota-countdown-n{ font-family:var(--font-display); font-size:34px; font-weight:600; color:var(--ink); }
+.rota-countdown-label{ font-size:12.5px; color:var(--ink-faint); max-width:180px; }
+.rota-chips{ display:flex; flex-wrap:wrap; gap:8px; margin-top:12px; }
+.rota-note-box{ background:var(--accent-soft); border:1px solid var(--accent-soft-line); border-radius:var(--radius-m); padding:14px 16px; display:flex; gap:10px; align-items:flex-start; justify-content:space-between; }
+.rota-note-text{ font-size:13px; color:var(--ink); margin:0; line-height:1.55; }
+.rota-year-group{ margin-bottom:22px; }
+.rota-year{ font-family:var(--font-mono); font-size:12px; font-weight:700; letter-spacing:.06em; color:var(--accent-strong); margin-bottom:10px; }
+.rota-marco{
+  background:var(--surface); border:1px solid var(--line); border-radius:var(--radius-m);
+  padding:14px 16px; margin-bottom:8px; border-left:3px solid var(--accent);
+}
+.rota-marco-period{ font-family:var(--font-mono); font-size:11px; color:var(--ink-faint); margin-bottom:4px; }
+.rota-tag-aqui{ background:var(--accent); color:var(--on-accent); font-weight:700; padding:1px 6px; border-radius:4px; font-size:10px; letter-spacing:.04em; }
+.rota-marco-title{ font-size:14px; font-weight:700; color:var(--ink); }
+.rota-marco-detail{ font-size:12.5px; color:var(--ink-soft); margin-top:4px; line-height:1.5; }

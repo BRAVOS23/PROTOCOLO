@@ -8,6 +8,9 @@
       vocab:{}, langDone:{}, workouts:{}, weight:[], theme:'system',
       activities: seedActivitiesWithIds(),
       activityDone: {},
+      activityFull: {},
+      aif: clone(AIF_LETTERS),
+      rota: { timeline: seedRotaTimeline(), note: ROTA_META.note, countdownTarget: ROTA_META.countdownTarget, countdownLabel: ROTA_META.countdownLabel, chips: ROTA_META.chips.slice() },
       protocolo: clone(DEFAULT_PROTOCOLO),
       finance: [],
       shoppingLists: [ { id:'default', name:'Compras', items: [] } ],
@@ -68,6 +71,51 @@
         ],
       });
     }
+    // v7: sistema AIF (Autenticidade · Intensidade · Fidelidade) + aba Rota + ajustes de rotina
+    if(!s.aif) s.aif = clone(AIF_LETTERS);
+    if(!s.activityFull) s.activityFull = {};
+    if(!s.rota || !s.rota.timeline || !s.rota.timeline.length){
+      s.rota = { timeline: seedRotaTimeline(), note: ROTA_META.note, countdownTarget: ROTA_META.countdownTarget, countdownLabel: ROTA_META.countdownLabel, chips: ROTA_META.chips.slice() };
+    }
+    if(s.rota.countdownTarget === undefined) s.rota.countdownTarget = ROTA_META.countdownTarget;
+    if(s.rota.countdownLabel === undefined) s.rota.countdownLabel = ROTA_META.countdownLabel;
+    if(!s.rota.chips) s.rota.chips = ROTA_META.chips.slice();
+    // remove Mandarim (adiado para jan/2027) e acrescenta as âncoras fixas do dia —
+    // só quando ainda não existem, para não tocar em nada que já tenha sido editado.
+    WEEKDAYS.forEach(function(day){
+      var acts = s.activities[day];
+      if(!acts) return;
+      acts = acts.filter(function(a){ return a.title !== 'Mandarim'; });
+      var hasTitle = function(t){ return acts.some(function(a){ return a.title===t; }); };
+      var mkAct = function(area, title, detail, time){ return { id: day+'-x'+Math.random().toString(36).slice(2,7), area:area, title:title, detail:detail||'', time:time||'' }; };
+      if(!hasTitle('God Moment')) acts.unshift(mkAct('pessoal','God Moment','','05h40'));
+      if(!hasTitle('Exercícios de lordose')) acts.unshift(mkAct('fitness','Exercícios de lordose','Alongamento + abdominal + prancha + fortalecimento','05h30'));
+      if(!hasTitle('Acordar')) acts.unshift(mkAct('pessoal','Acordar','','05h30'));
+      if(!hasTitle(AIF_DIARIO_TITLES[0])) acts.push(mkAct('diario', AIF_DIARIO_TITLES[0], ''));
+      if(!hasTitle(AIF_DIARIO_TITLES[1])) acts.push(mkAct('diario', AIF_DIARIO_TITLES[1], ''));
+      if(!hasTitle('Dormir')) acts.push(mkAct('pessoal','Dormir','','22h00'));
+      s.activities[day] = acts;
+    });
+    (function(){
+      function setTimeIfEmpty(day, title, time){
+        var act = (s.activities[day]||[]).find(function(a){ return a.title===title; });
+        if(act && !act.time) act.time = time;
+      }
+      setTimeIfEmpty('Terça', 'Revisão da matéria', '11h00');
+      setTimeIfEmpty('Quinta', 'Revisão da matéria', '11h00');
+      setTimeIfEmpty('Domingo', 'Revisão da matéria', '17h00');
+      if(!(s.activities['Sábado']||[]).some(function(a){ return a.title==='Revisão da matéria'; })){
+        s.activities['Sábado'].push({ id:'Sábado-x'+Math.random().toString(36).slice(2,7), area:'revisao', title:'Revisão da matéria', detail:'', time:'14h00' });
+      }
+      if(!(s.activities['Domingo']||[]).some(function(a){ return a.title==='Marmitas da semana'; })){
+        s.activities['Domingo'].push({ id:'Domingo-x'+Math.random().toString(36).slice(2,7), area:'domestico', title:'Marmitas da semana', detail:'', time:'18h–19h' });
+      }
+      var tirosMeal = s.fitNotes.refeicoes.find(function(m){ return m.tag==='tiros'; });
+      if(tirosMeal){
+        var preTiro = tirosMeal.rows.find(function(r){ return r.name==='Pré-tiro'; });
+        if(preTiro && preTiro.time==='16h30–17h'){ preTiro.time='17h'; preTiro.note='1h30 antes dos tiros — comida pesada causa enjoo'; }
+      }
+    })();
     return s;
   }
 
@@ -932,8 +980,10 @@
 
   function toggleActivityDone(dateISO, day, actId){
     var key = doneKey(dateISO, actId);
-    if(state.activityDone[key]) delete state.activityDone[key];
-    else state.activityDone[key] = true;
+    if(state.activityDone[key]){
+      delete state.activityDone[key];
+      delete state.activityFull[fullKey(dateISO, actId)];
+    } else state.activityDone[key] = true;
     recomputeDerived(dateISO, day);
     saveState();
   }
@@ -1199,6 +1249,296 @@
     }
     renderProtocolo();
   });
+
+  /* ================= AIF: Autenticidade · Intensidade · Fidelidade =================
+     Não é um tracker novo — é uma lente sobre a checklist diária que já existe. */
+  var FLAME_SVG = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8.5 14.5A2.5 2.5 0 0 0 11 17a2.5 2.5 0 0 0 2.5-2.5c0-1.38-.5-2-1-3 1.5.5 3 2.5 3 5a5.5 5.5 0 1 1-11 0c0-4 3-6 3-10 1.5 1 4 2.5 4 6.5Z"></path></svg>';
+
+  function fullKey(dateISO, actId){ return dateISO + '|' + actId; }
+  function isActFull(dateISO, actId){ return !!state.activityFull[fullKey(dateISO, actId)]; }
+  function toggleActivityFull(dateISO, actId){
+    var key = fullKey(dateISO, actId);
+    if(state.activityFull[key]) delete state.activityFull[key];
+    else state.activityFull[key] = true;
+    saveState();
+  }
+
+  function aifPercentForDate(dateISO, weekday){
+    var acts = dayActivities(weekday);
+    var fTotal = acts.length;
+    var fDone = acts.filter(function(a){ return isActDone(dateISO, a.id); }).length;
+    var fPct = fTotal ? (fDone/fTotal*100) : 0;
+
+    var iDone = acts.filter(function(a){ return AIF_INTENSITY_AREAS.indexOf(a.area)!==-1 && isActDone(dateISO, a.id); });
+    var iFull = iDone.filter(function(a){ return isActFull(dateISO, a.id); });
+    var iPct = iDone.length ? (iFull.length/iDone.length*100) : 0;
+
+    var aActs = acts.filter(function(a){ return a.area==='diario'; });
+    var aDone = aActs.filter(function(a){ return isActDone(dateISO, a.id); }).length;
+    var aPct = aActs.length ? (aDone/aActs.length*100) : 0;
+
+    return { f:fPct, i:iPct, a:aPct, total:(fPct+iPct+aPct)/3 };
+  }
+
+  function aifEarliestDate(){
+    var dates = Object.keys(state.activityDone).concat(Object.keys(state.activityFull))
+      .map(function(k){ return k.split('|')[0]; }).filter(Boolean);
+    dates.sort();
+    return dates.length ? dates[0] : TODAY_ISO;
+  }
+  function aifHistory(){
+    var d = new Date(aifEarliestDate()+'T00:00:00');
+    var out = [];
+    while(d <= TODAY){
+      var dISO = iso(d);
+      var pct = aifPercentForDate(dISO, WEEKDAYS_PT[d.getDay()]);
+      out.push({ date: dISO, total: pct.total, done: pct.total >= 80 });
+      d = addDays(d, 1);
+    }
+    return out;
+  }
+  function aifStripDays(n){
+    var out = [];
+    for(var i=n-1;i>=0;i--){
+      var d = addDays(TODAY, -i);
+      var dISO = iso(d);
+      out.push({ date: dISO, total: aifPercentForDate(dISO, WEEKDAYS_PT[d.getDay()]).total });
+    }
+    return out;
+  }
+  function aifStreakInfo(){
+    var hist = aifHistory();
+    var doneMap = {};
+    hist.forEach(function(h){ if(h.done) doneMap[h.date] = true; });
+    var current = computeStreak(doneMap);
+    var best = 0, run = 0;
+    hist.forEach(function(h){ if(h.done){ run++; if(run>best) best=run; } else run=0; });
+    return { current: current, best: best, cumpridos: hist.filter(function(h){ return h.done; }).length };
+  }
+
+  var openAifEdit = null;
+  function renderAifCards(){
+    var box = document.getElementById('aifCards');
+    box.innerHTML = ['a','i','f'].map(function(k){
+      var L = state.aif[k];
+      if(openAifEdit === k){
+        return '<div class="aif-card editing" data-letter="'+k+'" style="--aif-color:'+L.color+';grid-column:1/-1;">' +
+          '<input data-f="title" value="'+escAttr(L.title)+'" placeholder="Título" style="width:100%;margin-bottom:6px;border:1px solid var(--line-strong);border-radius:6px;padding:6px 8px;font-size:13px;font-weight:600;">' +
+          '<textarea data-f="body" placeholder="Texto" style="width:100%;min-height:56px;border:1px solid var(--line-strong);border-radius:6px;padding:6px 8px;font-size:12.5px;font-family:inherit;margin-bottom:6px;">'+escHtml(L.body)+'</textarea>' +
+          '<input data-f="test" value="'+escAttr(L.test)+'" placeholder="Teste" style="width:100%;border:1px solid var(--line-strong);border-radius:6px;padding:6px 8px;font-size:12.5px;font-style:italic;">' +
+          '<div class="form-actions" style="justify-content:flex-end;margin-top:8px;"><span style="display:flex;gap:8px;"><button class="btn ghost" data-act="cancel" type="button">Cancelar</button><button class="btn" data-act="save" type="button">Guardar</button></span></div>' +
+          '</div>';
+      }
+      return '<div class="aif-card" data-letter="'+k+'" style="--aif-color:'+L.color+';position:relative;">' +
+        '<button class="cardedit" data-act="edit" data-letter="'+k+'" type="button" style="position:absolute;top:10px;right:10px;color:var(--ink-faint);background:var(--surface-2);">'+PENCIL_SVG+'</button>' +
+        '<span class="aif-letter">'+L.letter+'</span>' +
+        '<h4 class="aif-title">'+escHtml(L.title)+'</h4>' +
+        '<p class="aif-body">'+escHtml(L.body)+'</p>' +
+        '<p class="aif-test">"'+escHtml(L.test)+'"</p>' +
+        '</div>';
+    }).join('');
+    box.querySelectorAll('[data-act="edit"]').forEach(function(btn){
+      btn.addEventListener('click', function(){ openAifEdit = btn.getAttribute('data-letter'); renderAifCards(); });
+    });
+    box.querySelectorAll('[data-act="cancel"]').forEach(function(btn){
+      btn.addEventListener('click', function(){ openAifEdit=null; renderAifCards(); });
+    });
+    box.querySelectorAll('[data-act="save"]').forEach(function(btn){
+      btn.addEventListener('click', function(){
+        var card = btn.closest('[data-letter]');
+        var k = card.getAttribute('data-letter');
+        var L = state.aif[k];
+        L.title = card.querySelector('[data-f="title"]').value.trim() || L.title;
+        L.body = card.querySelector('[data-f="body"]').value.trim();
+        L.test = card.querySelector('[data-f="test"]').value.trim();
+        saveState(); openAifEdit=null; renderAifCards();
+      });
+    });
+  }
+
+  function renderAifToday(){
+    var pct = aifPercentForDate(TODAY_ISO, TODAY_WEEKDAY);
+    document.getElementById('aifRings').innerHTML = ['f','i','a'].map(function(k){
+      var val = Math.round(pct[k]);
+      var L = state.aif[k];
+      var circ = 97.4;
+      return '<div class="aif-ring-card">' +
+        '<svg viewBox="0 0 36 36"><circle cx="18" cy="18" r="15.5" fill="none" stroke="'+L.color+'33" stroke-width="4"></circle>' +
+        '<circle cx="18" cy="18" r="15.5" fill="none" stroke="'+L.color+'" stroke-width="4" stroke-linecap="round" stroke-dasharray="'+circ+'" stroke-dashoffset="'+(circ-(circ*Math.min(val,100)/100))+'" transform="rotate(-90 18 18)"></circle></svg>' +
+        '<span class="aif-ring-letter" style="color:'+L.color+';">'+L.letter+'</span>' +
+        '<span class="aif-ring-pct">'+val+'%</span>' +
+        '</div>';
+    }).join('');
+    document.getElementById('aifTotal').innerHTML =
+      '<span class="aif-total-label">Total do dia</span><span class="aif-total-val">'+Math.round(pct.total)+'%</span>';
+  }
+
+  function renderAifStreak(){
+    var info = aifStreakInfo();
+    document.getElementById('aifStreakStats').innerHTML =
+      '<span class="streak-chip"><span class="dot" style="background:#966b18"></span>Sequência <span class="n">'+info.current+'</span> dias</span>' +
+      '<span class="streak-chip"><span class="dot" style="background:#b8471f"></span>Melhor <span class="n">'+info.best+'</span> dias</span>' +
+      '<span class="streak-chip"><span class="dot" style="background:#2c757a"></span>Cumpridos <span class="n">'+info.cumpridos+'</span></span>';
+    document.getElementById('aifStrip').innerHTML = aifStripDays(45).map(function(d){
+      var alpha = Math.max(0.07, Math.min(1, d.total/100));
+      return '<span class="aif-strip-day" title="'+d.date+' · '+Math.round(d.total)+'%" style="background:rgba(150,107,24,'+alpha.toFixed(2)+');"></span>';
+    }).join('');
+  }
+
+  /* ================= ROTA (linha do tempo até à China) ================= */
+  var rotaPreviousTab = 'inicio';
+  function openRota(){
+    var activeBtn = document.querySelector('.tabbtn.active');
+    rotaPreviousTab = activeBtn ? activeBtn.getAttribute('data-tab') : 'inicio';
+    Object.keys(views).forEach(function(k){ document.getElementById(views[k]).classList.remove('active'); });
+    document.getElementById('view-rota').classList.add('active');
+    document.getElementById('pageTitle').textContent = 'Rota';
+    window.scrollTo({top:0, behavior:'instant' in window ? 'instant':'auto'});
+  }
+  function closeRota(){
+    document.getElementById('view-rota').classList.remove('active');
+    goTab(rotaPreviousTab || 'inicio');
+  }
+  document.getElementById('btnGoRota').addEventListener('click', openRota);
+  document.getElementById('btnRotaBack').addEventListener('click', closeRota);
+
+  function daysUntilDate(dateStr){
+    return Math.ceil((new Date(dateStr+'T00:00:00') - TODAY) / 86400000);
+  }
+  var rotaHeaderEditing = false;
+  var rotaEditChips = [];
+  function renderRotaHeader(){
+    var days = daysUntilDate(state.rota.countdownTarget);
+    var box = document.getElementById('rotaCountdown');
+    if(rotaHeaderEditing){
+      box.innerHTML =
+        '<div style="width:100%;"><div style="display:flex;gap:6px;margin-bottom:8px;">' +
+        '<input data-f="date" type="date" value="'+state.rota.countdownTarget+'" style="border:1px solid var(--line-strong);border-radius:6px;padding:6px 8px;font-size:12px;">' +
+        '<input data-f="label" value="'+escAttr(state.rota.countdownLabel)+'" placeholder="Rótulo" style="flex:1;border:1px solid var(--line-strong);border-radius:6px;padding:6px 8px;font-size:12px;">' +
+        '</div><div id="rotaChipsEdit"></div>' +
+        '<div class="form-actions" style="justify-content:space-between;margin-top:8px;"><button class="btn ghost" id="btnRotaHeaderCancel" type="button">Cancelar</button><button class="btn" id="btnRotaHeaderSave" type="button">Guardar</button></div></div>';
+      document.getElementById('rotaChips').innerHTML = '';
+      renderRotaChipsEdit();
+      document.getElementById('btnRotaHeaderCancel').addEventListener('click', function(){ rotaHeaderEditing=false; renderRotaHeader(); });
+      document.getElementById('btnRotaHeaderSave').addEventListener('click', function(){
+        state.rota.countdownTarget = box.querySelector('[data-f="date"]').value || state.rota.countdownTarget;
+        state.rota.countdownLabel = box.querySelector('[data-f="label"]').value.trim();
+        state.rota.chips = rotaEditChips.map(function(c){ return c.trim(); }).filter(Boolean);
+        saveState(); rotaHeaderEditing=false; renderRotaHeader();
+      });
+    } else {
+      box.innerHTML = '<span class="aif-total-label" style="display:block;">Contagem</span>' +
+        '<div style="display:flex;align-items:baseline;gap:10px;">' +
+        '<span class="rota-countdown-n">'+Math.max(0,days)+'</span><span class="rota-countdown-label">dias '+escHtml(state.rota.countdownLabel)+'</span>' +
+        '<button class="ar-icon-btn" id="btnEditRotaHeader" type="button" style="margin-left:auto;">'+PENCIL_SVG+'</button>' +
+        '</div>';
+      document.getElementById('btnEditRotaHeader').addEventListener('click', function(){
+        rotaEditChips = state.rota.chips.slice(); rotaHeaderEditing=true; renderRotaHeader();
+      });
+      document.getElementById('rotaChips').innerHTML = state.rota.chips.map(function(c){ return '<span class="streak-chip">'+escHtml(c)+'</span>'; }).join('');
+    }
+  }
+  function renderRotaChipsEdit(){
+    var box = document.getElementById('rotaChipsEdit');
+    box.innerHTML = rotaEditChips.map(function(c, i){
+      return '<div class="itemrow2" data-i="'+i+'"><input data-ci="'+i+'" value="'+escAttr(c)+'" placeholder="Chip"><span class="mx" data-cidel="'+i+'">✕</span></div>';
+    }).join('') + '<button type="button" class="pc-add-meta" id="btnAddRotaChip">+ chip</button>';
+    box.querySelectorAll('[data-ci]').forEach(function(inp){
+      inp.addEventListener('input', function(){ rotaEditChips[+inp.getAttribute('data-ci')] = inp.value; });
+    });
+    box.querySelectorAll('[data-cidel]').forEach(function(x){
+      x.addEventListener('click', function(){ rotaEditChips.splice(+x.getAttribute('data-cidel'), 1); renderRotaChipsEdit(); });
+    });
+    document.getElementById('btnAddRotaChip').addEventListener('click', function(){ rotaEditChips.push(''); renderRotaChipsEdit(); });
+  }
+
+  var rotaNoteEditing = false;
+  function renderRotaNote(){
+    var box = document.getElementById('rotaNoteBox');
+    if(rotaNoteEditing){
+      box.innerHTML = '<textarea id="rotaNoteInput" style="width:100%;min-height:70px;border:1px solid var(--line-strong);border-radius:8px;padding:8px 10px;font-size:13px;font-family:inherit;">'+escHtml(state.rota.note)+'</textarea>' +
+        '<div class="form-actions" style="justify-content:flex-end;margin-top:8px;"><span style="display:flex;gap:8px;"><button class="btn ghost" id="btnRotaNoteCancel" type="button">Cancelar</button><button class="btn" id="btnRotaNoteSave" type="button">Guardar</button></span></div>';
+      document.getElementById('btnRotaNoteCancel').addEventListener('click', function(){ rotaNoteEditing=false; renderRotaNote(); });
+      document.getElementById('btnRotaNoteSave').addEventListener('click', function(){
+        state.rota.note = document.getElementById('rotaNoteInput').value.trim();
+        saveState(); rotaNoteEditing=false; renderRotaNote();
+      });
+    } else {
+      box.innerHTML = '<p class="rota-note-text">'+escHtml(state.rota.note)+'</p><button class="ar-icon-btn" id="btnEditRotaNote" type="button">'+PENCIL_SVG+'</button>';
+      document.getElementById('btnEditRotaNote').addEventListener('click', function(){ rotaNoteEditing=true; renderRotaNote(); });
+    }
+  }
+
+  var openRotaEdit = null;
+  function renderRotaTimeline(){
+    var box = document.getElementById('rotaTimeline');
+    var years = [];
+    state.rota.timeline.forEach(function(m){ if(years.indexOf(m.year)===-1) years.push(m.year); });
+    years.sort(function(a,b){ return a-b; });
+    box.innerHTML = years.map(function(y){
+      var marcos = state.rota.timeline.filter(function(m){ return m.year===y; });
+      return '<div class="rota-year-group"><h3 class="rota-year">'+y+'</h3>' +
+        marcos.map(function(m){
+          if(m.id === openRotaEdit) return rotaMarcoEditForm(m);
+          return '<div class="rota-marco" data-id="'+m.id+'" style="position:relative;">' +
+            '<button class="cardedit" data-act="edit" type="button" style="position:absolute;top:10px;right:10px;color:var(--ink-faint);background:var(--surface-2);">'+PENCIL_SVG+'</button>' +
+            '<div class="rota-marco-period">'+escHtml(m.period)+(m.tag==='aqui'?' <span class="rota-tag-aqui">ESTÁS AQUI</span>':'')+'</div>' +
+            '<div class="rota-marco-title">'+escHtml(m.title)+'</div>' +
+            (m.detail ? '<div class="rota-marco-detail">'+escHtml(m.detail)+'</div>' : '') +
+            '</div>';
+        }).join('') +
+        '</div>';
+    }).join('');
+    bindRotaTimelineHandlers();
+  }
+  function rotaMarcoEditForm(m){
+    return '<div class="rota-marco editing" data-id="'+m.id+'">' +
+      '<div class="activity-edit-form" style="padding:12px;">' +
+      '<div class="row2"><input data-f="year" type="number" value="'+m.year+'" placeholder="Ano" style="width:90px;"><input data-f="period" value="'+escAttr(m.period)+'" placeholder="Período" style="flex:1;"></div>' +
+      '<input data-f="title" value="'+escAttr(m.title)+'" placeholder="Título" style="width:100%;margin:6px 0;border:1px solid var(--line-strong);border-radius:6px;padding:6px 8px;font-size:13px;font-weight:600;">' +
+      '<textarea data-f="detail" placeholder="Detalhe" style="width:100%;min-height:56px;border:1px solid var(--line-strong);border-radius:6px;padding:6px 8px;font-size:12.5px;font-family:inherit;">'+escHtml(m.detail)+'</textarea>' +
+      '<div class="form-actions" style="justify-content:space-between;margin-top:8px;"><button class="btn ghost" data-act="del" type="button">Apagar</button><span style="display:flex;gap:8px;"><button class="btn ghost" data-act="cancel" type="button">Cancelar</button><button class="btn" data-act="save" type="button">Guardar</button></span></div>' +
+      '</div></div>';
+  }
+  function bindRotaTimelineHandlers(){
+    var box = document.getElementById('rotaTimeline');
+    box.querySelectorAll('[data-act="edit"]').forEach(function(btn){
+      btn.addEventListener('click', function(){ openRotaEdit = btn.closest('[data-id]').getAttribute('data-id'); renderRotaTimeline(); });
+    });
+    box.querySelectorAll('[data-act="cancel"]').forEach(function(btn){
+      btn.addEventListener('click', function(){ openRotaEdit=null; renderRotaTimeline(); });
+    });
+    box.querySelectorAll('[data-act="del"]').forEach(function(btn){
+      btn.addEventListener('click', function(){
+        if(!confirm('Apagar este marco?')) return;
+        var id = btn.closest('[data-id]').getAttribute('data-id');
+        state.rota.timeline = state.rota.timeline.filter(function(m){ return m.id!==id; });
+        saveState(); openRotaEdit=null; renderRotaTimeline();
+      });
+    });
+    box.querySelectorAll('[data-act="save"]').forEach(function(btn){
+      btn.addEventListener('click', function(){
+        var card = btn.closest('[data-id]');
+        var id = card.getAttribute('data-id');
+        var m = state.rota.timeline.find(function(x){ return x.id===id; });
+        m.year = +card.querySelector('[data-f="year"]').value || m.year;
+        m.period = card.querySelector('[data-f="period"]').value.trim() || m.period;
+        m.title = card.querySelector('[data-f="title"]').value.trim() || m.title;
+        m.detail = card.querySelector('[data-f="detail"]').value.trim();
+        saveState(); openRotaEdit=null; renderRotaTimeline();
+      });
+    });
+  }
+  document.getElementById('btnAddRotaMarco').addEventListener('click', function(){
+    var m = { id:'rt'+Date.now().toString(36)+Math.random().toString(36).slice(2,5), year:new Date().getFullYear(), period:'Novo marco', title:'Novo marco', detail:'', tag:'' };
+    state.rota.timeline.push(m);
+    saveState(); openRotaEdit = m.id; renderRotaTimeline();
+  });
+  function renderRota(){
+    renderRotaHeader();
+    renderRotaNote();
+    renderRotaTimeline();
+  }
 
   /* ================= VIDA (finanças / compras / agenda / pendentes / planos) ================= */
   function fmtMT(n){ return (n<0?'−':'') + Math.abs(n).toLocaleString('pt-PT',{minimumFractionDigits:0, maximumFractionDigits:2}) + ' MT'; }
@@ -1708,15 +2048,21 @@
       var area = AREAS[act.area] || AREAS.outro;
       var done = isActDone(TODAY_ISO, act.id);
       var sub = escHtml([act.time, act.detail].filter(Boolean).join(' · '));
+      var showFlame = AIF_INTENSITY_AREAS.indexOf(act.area) !== -1;
+      var flameHtml = showFlame
+        ? '<span class="today-flame'+(isActFull(TODAY_ISO, act.id)?' on':'')+(done?'':' disabled')+'" data-flame="'+act.id+'" title="Dei 100%?">'+FLAME_SVG+'</span>'
+        : '';
       return '<div class="today-item'+(done?' done':'')+'" data-act="'+act.id+'">' +
         '<span class="today-check'+(done?' on':'')+'">'+CHECK_SVG+'</span>' +
         '<div class="today-txt"><div class="tt">'+escHtml(act.title)+'</div>' +
         '<div class="ts"><span class="area-tag"><span class="area-dot" style="background:'+area.color+'"></span>'+area.label+'</span>'+(sub?'<span>'+sub+'</span>':'')+'</div></div>' +
+        flameHtml +
         '</div>';
     }).join('') : '<p style="color:var(--ink-faint); font-size:13px;">Sem atividades para hoje — toca no lápis para adicionar.</p>';
 
     document.querySelectorAll('#todayList .today-item').forEach(function(el){
-      el.addEventListener('click', function(){
+      el.addEventListener('click', function(ev){
+        if(ev.target.closest('.today-flame')) return;
         var actId = el.getAttribute('data-act');
         toggleActivityDone(TODAY_ISO, TODAY_WEEKDAY, actId);
         renderDashboard();
@@ -1726,8 +2072,19 @@
         if(box) box.classList.toggle('on', isActDone(TODAY_ISO, actId));
       });
     });
+    document.querySelectorAll('#todayList .today-flame').forEach(function(el){
+      el.addEventListener('click', function(e){
+        e.stopPropagation();
+        if(el.classList.contains('disabled')) return;
+        toggleActivityFull(TODAY_ISO, el.getAttribute('data-flame'));
+        renderDashboard();
+      });
+    });
 
     renderProtocolo();
+    renderAifCards();
+    renderAifToday();
+    renderAifStreak();
     renderVocabProgress();
     renderTrainProgress();
     renderWeightAll();
@@ -1831,6 +2188,7 @@
     renderFitStatic();
     renderWorkStatic();
     renderVida();
+    renderRota();
     renderDashboard();
   }
   applyTheme(state.theme);

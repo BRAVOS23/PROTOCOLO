@@ -39,6 +39,20 @@
 
   <!-- ===================== INÍCIO ===================== -->
   <section class="view active" id="view-inicio">
+
+    <section class="blk aif-block">
+      <div class="blk-head"><div><span class="kicker">O que o Protocolo mede</span><h2>Autenticidade · Intensidade · Fidelidade</h2></div></div>
+      <div class="aif-cards" id="aifCards"></div>
+    </section>
+
+    <section class="blk aif-block">
+      <div class="aif-rings" id="aifRings"></div>
+      <div class="aif-total" id="aifTotal"></div>
+      <div class="aif-streak-row" id="aifStreakStats"></div>
+      <div class="aif-strip" id="aifStrip"></div>
+      <p class="aif-rule-text">A regra é uma só: nunca falhar dois dias seguidos. Um dia mau é ruído. Dois seguidos é o início de uma desistência.</p>
+    </section>
+
     <div class="hero">
       <span class="greet" id="dashDate">—</span>
       <h1>Bom trabalho a manter o rumo.</h1>
@@ -54,6 +68,7 @@
         <textarea class="pc-edit" id="pcManifestoEdit" hidden></textarea>
         <div class="pc-metas" id="pcMetas"></div>
         <div class="meta-edit-row" id="pcMetaEdit" hidden></div>
+        <button class="pc-rota-link" id="btnGoRota" type="button">Ver a Rota até à China <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 6 6 6-6 6"></path></svg></button>
       </div>
 
       <div class="streak-row">
@@ -381,6 +396,29 @@
       </section>
     </div>
 
+  </section>
+
+  <!-- ===================== ROTA (linha do tempo até à China) ===================== -->
+  <section class="view" id="view-rota">
+    <div class="detail-head"><button class="backbtn" id="btnRotaBack" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 6-6 6 6 6"></path></svg></button><h2>Rota</h2></div>
+    <section class="blk" style="padding-top:16px;">
+      <div class="rota-countdown" id="rotaCountdown"></div>
+      <div class="rota-chips" id="rotaChips"></div>
+    </section>
+    <section class="blk">
+      <div class="blk-head"><div><span class="kicker">Nota estratégica</span></div></div>
+      <div class="rota-note-box" id="rotaNoteBox"></div>
+    </section>
+    <section class="blk">
+      <div class="blk-head">
+        <div><span class="kicker">Linha do tempo</span><h2>Set 2026 → Set 2029</h2></div>
+        <button class="iconbtn" id="btnAddRotaMarco" aria-label="Novo marco" type="button">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+        </button>
+      </div>
+      <div class="rota-timeline" id="rotaTimeline"></div>
+    </section>
+    <footer class="page-footer">Rota — o caminho até à candidatura na China.</footer>
   </section>
 
 </main>
