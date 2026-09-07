@@ -399,25 +399,36 @@
       </section>
     </div>
 
-    <!-- Rota até à China -->
-    <div class="subview" id="vida-rota">
-      <div class="detail-head"><button class="backbtn" data-vida-back type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 6-6 6 6 6"></path></svg></button><h2>Rota</h2></div>
+    <!-- Detalhe de um plano (estrutura reutilizável: contador + chips + fases/marcos + nota) -->
+    <div class="subview" id="vida-plano-detail">
+      <div class="detail-head">
+        <button class="backbtn" data-vida-back="planos" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 6-6 6 6 6"></path></svg></button>
+        <h2 id="planoDetailTitle">Plano</h2>
+        <button class="iconbtn" id="btnDeletePlano" aria-label="Apagar plano" type="button" style="margin-left:auto;color:var(--bad);">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"></path><path d="M10 11v6M14 11v6"></path></svg>
+        </button>
+      </div>
       <section class="blk" style="padding-top:16px;">
-        <div class="rota-countdown" id="rotaCountdown"></div>
-        <div class="rota-chips" id="rotaChips"></div>
+        <div id="planoHeaderBox"></div>
       </section>
       <section class="blk">
-        <div class="blk-head"><div><span class="kicker">Nota estratégica</span></div></div>
-        <div class="rota-note-box" id="rotaNoteBox"></div>
+        <div id="planoCountdownBox"></div>
+      </section>
+      <section class="blk">
+        <div class="plano-chips" id="planoChipsBox"></div>
       </section>
       <section class="blk">
         <div class="blk-head">
-          <div><span class="kicker">Linha do tempo</span><h2>Set 2026 → Set 2029</h2></div>
-          <button class="iconbtn" id="btnAddRotaMarco" aria-label="Novo marco" type="button">
+          <div><span class="kicker">Fases</span><h2>Linha do tempo</h2></div>
+          <button class="iconbtn" id="btnAddPlanoFase" aria-label="Nova fase" type="button">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
           </button>
         </div>
-        <div class="rota-timeline" id="rotaTimeline"></div>
+        <div id="planoFasesBox"></div>
+      </section>
+      <section class="blk">
+        <div class="blk-head"><div><span class="kicker">Nota estratégica</span></div></div>
+        <div class="plano-note-box" id="planoNoteBox"></div>
       </section>
     </div>
 

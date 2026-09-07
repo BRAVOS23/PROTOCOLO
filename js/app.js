@@ -3,6 +3,45 @@
 
   /* ---------------- storage ---------------- */
   var STORE_KEY = 'protocolo:v1:state';
+
+  /* converte um objeto no formato antigo de "rota" (timeline+note+chips) num
+     "plano" genérico — usado tanto para semear instalações novas como para
+     migrar quem já tinha o app. */
+  function guessTipoFromTitle(title){
+    if(/HSK|IELTS/i.test(title)) return 'exame';
+    if(/licenciatura|semestre|aulas/i.test(title)) return 'academico';
+    if(/documentos/i.test(title)) return 'documento';
+    return 'meta';
+  }
+  function rotaStateToPlano(rota){
+    var years = [];
+    rota.timeline.forEach(function(m){ if(years.indexOf(m.year)===-1) years.push(m.year); });
+    years.sort(function(a,b){ return a-b; });
+    var tipoForTag = { aqui:'pessoal', janela:'entrega' };
+    var fases = years.map(function(y){
+      return {
+        id: 'fase-'+y,
+        label: String(y),
+        marcos: rota.timeline.filter(function(m){ return m.year===y; }).map(function(m){
+          return { id:m.id, quando:m.period, titulo:m.title, detalhe:m.detail||'', tipo: tipoForTag[m.tag] || guessTipoFromTitle(m.title) };
+        }),
+      };
+    });
+    return {
+      id: 'plano-rota-china',
+      title: 'Rota para a China',
+      description: 'Linha do tempo até à candidatura para a bolsa de estudo na China.',
+      countdownTarget: rota.countdownTarget || null,
+      countdownLabel: rota.countdownLabel || '',
+      chips: (rota.chips||[]).slice(),
+      fases: fases,
+      notaEstrategica: rota.note || '',
+    };
+  }
+  function defaultRotaState(){
+    return { timeline: seedRotaTimeline(), note: ROTA_META.note, countdownTarget: ROTA_META.countdownTarget, countdownLabel: ROTA_META.countdownLabel, chips: ROTA_META.chips.slice() };
+  }
+
   function freshDefaultState(){
     return {
       vocab:{}, langDone:{}, workouts:{}, weight:[], theme:'system',
@@ -10,14 +49,13 @@
       activityDone: {},
       activityFull: {},
       aif: clone(AIF_LETTERS),
-      rota: { timeline: seedRotaTimeline(), note: ROTA_META.note, countdownTarget: ROTA_META.countdownTarget, countdownLabel: ROTA_META.countdownLabel, chips: ROTA_META.chips.slice() },
       cycle: { start: '2026-09-01', end: '2026-11-29' },
       protocolo: clone(DEFAULT_PROTOCOLO),
       finance: [],
       shoppingLists: [ { id:'default', name:'Compras', items: [] } ],
       pendentes: [],
       agenda: [],
-      planos: [],
+      planos: [ rotaStateToPlano(defaultRotaState()) ],
       fitNotes: seedFitNotes(),
       langNotes: seedLangNotes(),
       langWeeks: seedLangWeeks(),
@@ -72,16 +110,25 @@
         ],
       });
     }
-    // v7: sistema AIF (Autenticidade · Intensidade · Fidelidade) + aba Rota + ajustes de rotina
+    // v7: sistema AIF (Autenticidade · Intensidade · Fidelidade) + ajustes de rotina
     if(!s.aif) s.aif = clone(AIF_LETTERS);
     if(!s.activityFull) s.activityFull = {};
-    if(!s.rota || !s.rota.timeline || !s.rota.timeline.length){
-      s.rota = { timeline: seedRotaTimeline(), note: ROTA_META.note, countdownTarget: ROTA_META.countdownTarget, countdownLabel: ROTA_META.countdownLabel, chips: ROTA_META.chips.slice() };
-    }
-    if(s.rota.countdownTarget === undefined) s.rota.countdownTarget = ROTA_META.countdownTarget;
-    if(s.rota.countdownLabel === undefined) s.rota.countdownLabel = ROTA_META.countdownLabel;
-    if(!s.rota.chips) s.rota.chips = ROTA_META.chips.slice();
     if(!s.cycle) s.cycle = { start: '2026-09-01', end: '2026-11-29' };
+    // v8: "planos" passam a ser um formato rico e reutilizável (fases + marcos).
+    // Planos simples (título+texto) de antes deste formato tornam-se planos
+    // com só o título/descrição preenchidos — nada se perde. A Rota até à
+    // China, que vivia à parte em s.rota, passa a ser o primeiro plano deste
+    // tipo (preservando qualquer edição que já lá estivesse).
+    s.planos = (s.planos||[]).map(function(p){
+      if(Array.isArray(p.fases)) return p;
+      return { id:p.id, title:p.title, description:p.body||'', countdownTarget:null, countdownLabel:'', chips:[], fases:[], notaEstrategica:'' };
+    });
+    if(s.rota){
+      if(!s.planos.some(function(p){ return p.id==='plano-rota-china'; })){
+        s.planos.push(rotaStateToPlano(s.rota));
+      }
+      delete s.rota;
+    }
     // remove Mandarim (adiado para jan/2027) e acrescenta as âncoras fixas do dia —
     // só quando ainda não existem, para não tocar em nada que já tenha sido editado.
     WEEKDAYS.forEach(function(day){
@@ -1435,145 +1482,318 @@
     }).join('');
   }
 
-  /* ================= ROTA (linha do tempo até à China) — vive dentro da Vida ================= */
+  /* ================= PLANOS: estrutura reutilizável (título+descrição, contador, chips, fases+marcos, nota) =================
+     A Rota até à China é apenas o primeiro exemplo preenchido deste formato. */
 
   function daysUntilDate(dateStr){
     return Math.ceil((new Date(dateStr+'T00:00:00') - TODAY) / 86400000);
   }
-  var rotaHeaderEditing = false;
-  var rotaEditChips = [];
-  function renderRotaHeader(){
-    var days = daysUntilDate(state.rota.countdownTarget);
-    var box = document.getElementById('rotaCountdown');
-    if(rotaHeaderEditing){
-      box.innerHTML =
-        '<div style="width:100%;"><div style="display:flex;gap:6px;margin-bottom:8px;">' +
-        '<input data-f="date" type="date" value="'+state.rota.countdownTarget+'" style="border:1px solid var(--line-strong);border-radius:6px;padding:6px 8px;font-size:12px;">' +
-        '<input data-f="label" value="'+escAttr(state.rota.countdownLabel)+'" placeholder="Rótulo" style="flex:1;border:1px solid var(--line-strong);border-radius:6px;padding:6px 8px;font-size:12px;">' +
-        '</div><div id="rotaChipsEdit"></div>' +
-        '<div class="form-actions" style="justify-content:space-between;margin-top:8px;"><button class="btn ghost" id="btnRotaHeaderCancel" type="button">Cancelar</button><button class="btn" id="btnRotaHeaderSave" type="button">Guardar</button></div></div>';
-      document.getElementById('rotaChips').innerHTML = '';
-      renderRotaChipsEdit();
-      document.getElementById('btnRotaHeaderCancel').addEventListener('click', function(){ rotaHeaderEditing=false; renderRotaHeader(); });
-      document.getElementById('btnRotaHeaderSave').addEventListener('click', function(){
-        state.rota.countdownTarget = box.querySelector('[data-f="date"]').value || state.rota.countdownTarget;
-        state.rota.countdownLabel = box.querySelector('[data-f="label"]').value.trim();
-        state.rota.chips = rotaEditChips.map(function(c){ return c.trim(); }).filter(Boolean);
-        saveState(); rotaHeaderEditing=false; renderRotaHeader();
+
+  var MARCO_TIPOS = {
+    exame:     { label:'Exame',      color:'var(--accent-strong)', soft:'var(--accent-soft)',   icon:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="4" width="12" height="17" rx="2"></rect><path d="M9 4V3a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v1"></path><path d="m9 13 2 2 4-4"></path></svg>' },
+    academico: { label:'Académico',  color:'var(--cat-lang)',       soft:'var(--cat-lang-soft)', icon:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 9 12 4l10 5-10 5-10-5Z"></path><path d="M6 11v5c0 1 3 3 6 3s6-2 6-3v-5"></path><path d="M22 9v6"></path></svg>' },
+    meta:      { label:'Meta',       color:'var(--good)',           soft:'var(--good-soft)',     icon:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"></circle><circle cx="12" cy="12" r="5"></circle><circle cx="12" cy="12" r="1.2" fill="currentColor" stroke="none"></circle></svg>' },
+    documento: { label:'Documento',  color:'var(--warn)',           soft:'var(--warn-soft)',     icon:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 3h7l5 5v13a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1Z"></path><path d="M14 3v5h5M9 13h6M9 17h6"></path></svg>' },
+    entrega:   { label:'Entrega',    color:'var(--bad)',            soft:'var(--bad-soft)',      icon:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m3 11 18-8-8 18-2-8-8-2Z"></path></svg>' },
+    pessoal:   { label:'Pessoal',    color:'var(--cat-fit)',        soft:'var(--cat-fit-soft)',  icon:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m12 2 2.9 6.3 6.9.8-5.1 4.8 1.4 6.8L12 17.3l-6.1 3.4 1.4-6.8-5.1-4.8 6.9-.8Z"></path></svg>' },
+  };
+  var MARCO_TIPO_KEYS = ['exame','academico','meta','documento','entrega','pessoal'];
+
+  function newPlano(){
+    return { id:'p'+Date.now().toString(36)+Math.random().toString(36).slice(2,5), title:'Novo plano', description:'', countdownTarget:null, countdownLabel:'', chips:[], fases:[], notaEstrategica:'' };
+  }
+
+  var openPlanoId = null;
+  function currentPlano(){ return state.planos.find(function(p){ return p.id===openPlanoId; }); }
+
+  function renderPlanosList(){
+    var box = document.getElementById('planosList');
+    box.innerHTML = state.planos.length ? state.planos.map(function(p){
+      var days = p.countdownTarget ? Math.max(0, daysUntilDate(p.countdownTarget)) : null;
+      return '<button class="plano-list-card" data-id="'+p.id+'" type="button">' +
+        '<span class="plano-list-body"><span class="plano-list-title">'+escHtml(p.title)+'</span>' +
+        (p.description ? '<span class="plano-list-desc">'+escHtml(p.description)+'</span>' : '') + '</span>' +
+        (days!==null ? '<span class="hval" style="color:var(--accent-strong);">'+days+'d</span>' : '') +
+        '<span class="hchev"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 6 6 6-6 6"></path></svg></span>' +
+        '</button>';
+    }).join('') : '<p style="color:var(--ink-faint); font-size:13px; padding:8px 0;">Nenhum plano ainda — toca no + para criar.</p>';
+    box.querySelectorAll('.plano-list-card').forEach(function(btn){
+      btn.addEventListener('click', function(){ openPlano(btn.getAttribute('data-id')); });
+    });
+  }
+  function openPlano(id){
+    openPlanoId = id;
+    resetPlanoEditState();
+    renderPlanoDetail();
+    goVida('plano-detail');
+  }
+  document.getElementById('btnAddPlano').addEventListener('click', function(){
+    var p = newPlano();
+    state.planos.push(p);
+    saveState();
+    renderPlanosList();
+    openPlanoId = p.id;
+    resetPlanoEditState();
+    planoHeaderEditing = true;
+    renderPlanoDetail();
+    goVida('plano-detail');
+  });
+  document.getElementById('btnDeletePlano').addEventListener('click', function(){
+    var p = currentPlano(); if(!p) return;
+    if(!confirm('Apagar o plano "'+p.title+'"? Esta ação não pode ser desfeita.')) return;
+    state.planos = state.planos.filter(function(x){ return x.id!==p.id; });
+    saveState();
+    renderPlanosList();
+    goVida('planos');
+  });
+
+  var planoHeaderEditing = false;
+  var planoCountdownEditing = false;
+  var planoChipsEditing = false;
+  var planoEditChips = [];
+  var planoNoteEditing = false;
+  var openFaseEditId = null;
+  var openMarcoEditKey = null;
+  function resetPlanoEditState(){
+    planoHeaderEditing=false; planoCountdownEditing=false; planoChipsEditing=false;
+    planoNoteEditing=false; openFaseEditId=null; openMarcoEditKey=null;
+  }
+
+  function renderPlanoDetail(){
+    var p = currentPlano();
+    if(!p) return;
+    document.getElementById('planoDetailTitle').textContent = p.title;
+    renderPlanoHeader();
+    renderPlanoCountdown();
+    renderPlanoChips();
+    renderPlanoFases();
+    renderPlanoNote();
+  }
+
+  function renderPlanoHeader(){
+    var p = currentPlano(); if(!p) return;
+    var box = document.getElementById('planoHeaderBox');
+    if(planoHeaderEditing){
+      box.innerHTML = '<input id="planoTitleInput" value="'+escAttr(p.title)+'" placeholder="Título" style="width:100%;margin-bottom:6px;border:1px solid var(--line-strong);border-radius:6px;padding:7px 9px;font-size:15px;font-weight:600;font-family:var(--font-display);">' +
+        '<textarea id="planoDescInput" placeholder="Descrição curta (opcional)" style="width:100%;min-height:50px;border:1px solid var(--line-strong);border-radius:6px;padding:7px 9px;font-size:13px;font-family:inherit;">'+escHtml(p.description)+'</textarea>' +
+        '<div class="form-actions" style="justify-content:flex-end;margin-top:8px;"><span style="display:flex;gap:8px;"><button class="btn ghost" id="btnPlanoHeaderCancel" type="button">Cancelar</button><button class="btn" id="btnPlanoHeaderSave" type="button">Guardar</button></span></div>';
+      document.getElementById('btnPlanoHeaderCancel').addEventListener('click', function(){ planoHeaderEditing=false; renderPlanoHeader(); });
+      document.getElementById('btnPlanoHeaderSave').addEventListener('click', function(){
+        p.title = document.getElementById('planoTitleInput').value.trim() || p.title;
+        p.description = document.getElementById('planoDescInput').value.trim();
+        saveState(); planoHeaderEditing=false;
+        document.getElementById('planoDetailTitle').textContent = p.title;
+        renderPlanoHeader(); renderPlanosList();
       });
     } else {
-      box.innerHTML = '<span class="aif-total-label" style="display:block;">Contagem</span>' +
-        '<div style="display:flex;align-items:baseline;gap:10px;">' +
-        '<span class="rota-countdown-n">'+Math.max(0,days)+'</span><span class="rota-countdown-label">dias '+escHtml(state.rota.countdownLabel)+'</span>' +
-        '<button class="ar-icon-btn" id="btnEditRotaHeader" type="button" style="margin-left:auto;">'+PENCIL_SVG+'</button>' +
+      box.innerHTML = '<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:10px;">' +
+        '<div><h1 style="font-size:20px;">'+escHtml(p.title)+'</h1>' + (p.description ? '<p class="lead" style="margin-top:4px;">'+escHtml(p.description)+'</p>' : '') + '</div>' +
+        '<button class="ar-icon-btn" id="btnEditPlanoHeader" type="button">'+PENCIL_SVG+'</button>' +
         '</div>';
-      document.getElementById('btnEditRotaHeader').addEventListener('click', function(){
-        rotaEditChips = state.rota.chips.slice(); rotaHeaderEditing=true; renderRotaHeader();
-      });
-      document.getElementById('rotaChips').innerHTML = state.rota.chips.map(function(c){ return '<span class="streak-chip">'+escHtml(c)+'</span>'; }).join('');
+      document.getElementById('btnEditPlanoHeader').addEventListener('click', function(){ planoHeaderEditing=true; renderPlanoHeader(); });
     }
   }
-  function renderRotaChipsEdit(){
-    var box = document.getElementById('rotaChipsEdit');
-    box.innerHTML = rotaEditChips.map(function(c, i){
+
+  function renderPlanoCountdown(){
+    var p = currentPlano(); if(!p) return;
+    var box = document.getElementById('planoCountdownBox');
+    if(planoCountdownEditing){
+      box.innerHTML = '<div style="display:flex;gap:6px;margin-bottom:8px;flex-wrap:wrap;">' +
+        '<input data-f="date" type="date" value="'+(p.countdownTarget||'')+'" style="border:1px solid var(--line-strong);border-radius:6px;padding:6px 8px;font-size:12px;">' +
+        '<input data-f="label" value="'+escAttr(p.countdownLabel||'')+'" placeholder="Rótulo (ex.: até ao lançamento)" style="flex:1;min-width:140px;border:1px solid var(--line-strong);border-radius:6px;padding:6px 8px;font-size:12px;">' +
+        '</div><div class="form-actions" style="justify-content:space-between;">' +
+        (p.countdownTarget ? '<button class="btn ghost" id="btnPlanoCountdownClear" type="button">Remover</button>' : '<span></span>') +
+        '<span style="display:flex;gap:8px;"><button class="btn ghost" id="btnPlanoCountdownCancel" type="button">Cancelar</button><button class="btn" id="btnPlanoCountdownSave" type="button">Guardar</button></span></div>';
+      document.getElementById('btnPlanoCountdownCancel').addEventListener('click', function(){ planoCountdownEditing=false; renderPlanoCountdown(); });
+      var clearBtn = document.getElementById('btnPlanoCountdownClear');
+      if(clearBtn) clearBtn.addEventListener('click', function(){
+        p.countdownTarget=null; p.countdownLabel='';
+        saveState(); planoCountdownEditing=false; renderPlanoCountdown(); renderPlanosList();
+      });
+      document.getElementById('btnPlanoCountdownSave').addEventListener('click', function(){
+        p.countdownTarget = box.querySelector('[data-f="date"]').value || null;
+        p.countdownLabel = box.querySelector('[data-f="label"]').value.trim();
+        saveState(); planoCountdownEditing=false; renderPlanoCountdown(); renderPlanosList();
+      });
+    } else if(p.countdownTarget){
+      var days = daysUntilDate(p.countdownTarget);
+      box.innerHTML = '<div style="display:flex;align-items:baseline;gap:10px;">' +
+        '<span class="plano-countdown-n">'+Math.max(0,days)+'</span><span class="plano-countdown-label">dias'+(p.countdownLabel?' '+escHtml(p.countdownLabel):'')+'</span>' +
+        '<button class="ar-icon-btn" id="btnEditPlanoCountdown" type="button" style="margin-left:auto;">'+PENCIL_SVG+'</button>' +
+        '</div>';
+      document.getElementById('btnEditPlanoCountdown').addEventListener('click', function(){ planoCountdownEditing=true; renderPlanoCountdown(); });
+    } else {
+      box.innerHTML = '<button class="btn ghost" id="btnEditPlanoCountdown" type="button">+ Adicionar contador</button>';
+      document.getElementById('btnEditPlanoCountdown').addEventListener('click', function(){ planoCountdownEditing=true; renderPlanoCountdown(); });
+    }
+  }
+
+  function renderPlanoChips(){
+    var p = currentPlano(); if(!p) return;
+    var box = document.getElementById('planoChipsBox');
+    if(planoChipsEditing){
+      box.innerHTML = '<div id="planoChipsEdit"></div><div class="form-actions" style="justify-content:flex-end;margin-top:8px;"><span style="display:flex;gap:8px;"><button class="btn ghost" id="btnPlanoChipsCancel" type="button">Cancelar</button><button class="btn" id="btnPlanoChipsSave" type="button">Guardar</button></span></div>';
+      renderPlanoChipsEdit();
+      document.getElementById('btnPlanoChipsCancel').addEventListener('click', function(){ planoChipsEditing=false; renderPlanoChips(); });
+      document.getElementById('btnPlanoChipsSave').addEventListener('click', function(){
+        p.chips = planoEditChips.map(function(c){ return c.trim(); }).filter(Boolean);
+        saveState(); planoChipsEditing=false; renderPlanoChips();
+      });
+    } else {
+      box.innerHTML = (p.chips||[]).map(function(c){ return '<span class="streak-chip">'+escHtml(c)+'</span>'; }).join('') +
+        '<button class="ar-icon-btn" id="btnEditPlanoChips" type="button">'+PENCIL_SVG+'</button>';
+      document.getElementById('btnEditPlanoChips').addEventListener('click', function(){
+        planoEditChips = (p.chips||[]).slice(); planoChipsEditing=true; renderPlanoChips();
+      });
+    }
+  }
+  function renderPlanoChipsEdit(){
+    var box = document.getElementById('planoChipsEdit');
+    box.innerHTML = planoEditChips.map(function(c, i){
       return '<div class="itemrow2" data-i="'+i+'"><input data-ci="'+i+'" value="'+escAttr(c)+'" placeholder="Chip"><span class="mx" data-cidel="'+i+'">✕</span></div>';
-    }).join('') + '<button type="button" class="pc-add-meta" id="btnAddRotaChip">+ chip</button>';
+    }).join('') + '<button type="button" class="pc-add-meta" id="btnAddPlanoChip">+ chip</button>';
     box.querySelectorAll('[data-ci]').forEach(function(inp){
-      inp.addEventListener('input', function(){ rotaEditChips[+inp.getAttribute('data-ci')] = inp.value; });
+      inp.addEventListener('input', function(){ planoEditChips[+inp.getAttribute('data-ci')] = inp.value; });
     });
     box.querySelectorAll('[data-cidel]').forEach(function(x){
-      x.addEventListener('click', function(){ rotaEditChips.splice(+x.getAttribute('data-cidel'), 1); renderRotaChipsEdit(); });
+      x.addEventListener('click', function(){ planoEditChips.splice(+x.getAttribute('data-cidel'), 1); renderPlanoChipsEdit(); });
     });
-    document.getElementById('btnAddRotaChip').addEventListener('click', function(){ rotaEditChips.push(''); renderRotaChipsEdit(); });
+    document.getElementById('btnAddPlanoChip').addEventListener('click', function(){ planoEditChips.push(''); renderPlanoChipsEdit(); });
   }
 
-  var rotaNoteEditing = false;
-  function renderRotaNote(){
-    var box = document.getElementById('rotaNoteBox');
-    if(rotaNoteEditing){
-      box.innerHTML = '<textarea id="rotaNoteInput" style="width:100%;min-height:70px;border:1px solid var(--line-strong);border-radius:8px;padding:8px 10px;font-size:13px;font-family:inherit;">'+escHtml(state.rota.note)+'</textarea>' +
-        '<div class="form-actions" style="justify-content:flex-end;margin-top:8px;"><span style="display:flex;gap:8px;"><button class="btn ghost" id="btnRotaNoteCancel" type="button">Cancelar</button><button class="btn" id="btnRotaNoteSave" type="button">Guardar</button></span></div>';
-      document.getElementById('btnRotaNoteCancel').addEventListener('click', function(){ rotaNoteEditing=false; renderRotaNote(); });
-      document.getElementById('btnRotaNoteSave').addEventListener('click', function(){
-        state.rota.note = document.getElementById('rotaNoteInput').value.trim();
-        saveState(); rotaNoteEditing=false; renderRotaNote();
+  function renderPlanoNote(){
+    var p = currentPlano(); if(!p) return;
+    var box = document.getElementById('planoNoteBox');
+    if(planoNoteEditing){
+      box.innerHTML = '<textarea id="planoNoteInput" style="width:100%;min-height:70px;border:1px solid var(--line-strong);border-radius:8px;padding:8px 10px;font-size:13px;font-family:inherit;">'+escHtml(p.notaEstrategica)+'</textarea>' +
+        '<div class="form-actions" style="justify-content:flex-end;margin-top:8px;"><span style="display:flex;gap:8px;"><button class="btn ghost" id="btnPlanoNoteCancel" type="button">Cancelar</button><button class="btn" id="btnPlanoNoteSave" type="button">Guardar</button></span></div>';
+      document.getElementById('btnPlanoNoteCancel').addEventListener('click', function(){ planoNoteEditing=false; renderPlanoNote(); });
+      document.getElementById('btnPlanoNoteSave').addEventListener('click', function(){
+        p.notaEstrategica = document.getElementById('planoNoteInput').value.trim();
+        saveState(); planoNoteEditing=false; renderPlanoNote();
       });
+    } else if(p.notaEstrategica){
+      box.innerHTML = '<p class="plano-note-text">'+escHtml(p.notaEstrategica)+'</p><button class="ar-icon-btn" id="btnEditPlanoNote" type="button">'+PENCIL_SVG+'</button>';
+      document.getElementById('btnEditPlanoNote').addEventListener('click', function(){ planoNoteEditing=true; renderPlanoNote(); });
     } else {
-      box.innerHTML = '<p class="rota-note-text">'+escHtml(state.rota.note)+'</p><button class="ar-icon-btn" id="btnEditRotaNote" type="button">'+PENCIL_SVG+'</button>';
-      document.getElementById('btnEditRotaNote').addEventListener('click', function(){ rotaNoteEditing=true; renderRotaNote(); });
+      box.innerHTML = '<button class="btn ghost" id="btnEditPlanoNote" type="button">+ Adicionar nota estratégica</button>';
+      document.getElementById('btnEditPlanoNote').addEventListener('click', function(){ planoNoteEditing=true; renderPlanoNote(); });
     }
   }
 
-  var openRotaEdit = null;
-  function renderRotaTimeline(){
-    var box = document.getElementById('rotaTimeline');
-    var years = [];
-    state.rota.timeline.forEach(function(m){ if(years.indexOf(m.year)===-1) years.push(m.year); });
-    years.sort(function(a,b){ return a-b; });
-    box.innerHTML = years.map(function(y){
-      var marcos = state.rota.timeline.filter(function(m){ return m.year===y; });
-      return '<div class="rota-year-group"><h3 class="rota-year">'+y+'</h3>' +
-        marcos.map(function(m){
-          if(m.id === openRotaEdit) return rotaMarcoEditForm(m);
-          return '<div class="rota-marco" data-id="'+m.id+'" style="position:relative;">' +
-            '<button class="cardedit" data-act="edit" type="button" style="position:absolute;top:10px;right:10px;color:var(--ink-faint);background:var(--surface-2);">'+PENCIL_SVG+'</button>' +
-            '<div class="rota-marco-period">'+escHtml(m.period)+(m.tag==='aqui'?' <span class="rota-tag-aqui">ESTÁS AQUI</span>':'')+'</div>' +
-            '<div class="rota-marco-title">'+escHtml(m.title)+'</div>' +
-            (m.detail ? '<div class="rota-marco-detail">'+escHtml(m.detail)+'</div>' : '') +
-            '</div>';
-        }).join('') +
+  function renderPlanoFases(){
+    var p = currentPlano(); if(!p) return;
+    var box = document.getElementById('planoFasesBox');
+    box.innerHTML = (p.fases||[]).map(function(fase){
+      var faseHeadHtml = openFaseEditId === fase.id
+        ? '<input class="plano-fase-input" data-fid="'+fase.id+'" value="'+escAttr(fase.label)+'" placeholder="Nome da fase">' +
+          '<span class="mx" data-fasesave="'+fase.id+'">✓</span><span class="mx" data-fasecancel="'+fase.id+'">✕</span>'
+        : '<h3 class="plano-fase-label">'+escHtml(fase.label)+'</h3>' +
+          '<button class="ar-icon-btn" data-faseedit="'+fase.id+'" type="button">'+PENCIL_SVG+'</button>' +
+          '<button class="ar-icon-btn danger" data-faseremove="'+fase.id+'" type="button">'+TRASH_SVG+'</button>';
+      var marcosHtml = fase.marcos.map(function(m){
+        var key = fase.id+'|'+m.id;
+        if(openMarcoEditKey === key) return marcoEditForm(fase, m);
+        var tipoMeta = MARCO_TIPOS[m.tipo] || MARCO_TIPOS.meta;
+        return '<div class="plano-marco" data-fid="'+fase.id+'" data-mid="'+m.id+'" style="border-left-color:'+tipoMeta.color+';">' +
+          '<button class="cardedit" data-act="editmarco" type="button" style="position:absolute;top:10px;right:10px;color:var(--ink-faint);background:var(--surface-2);">'+PENCIL_SVG+'</button>' +
+          '<div class="plano-marco-top"><span class="plano-marco-tipo" style="background:'+tipoMeta.soft+';color:'+tipoMeta.color+';">'+tipoMeta.icon+escHtml(tipoMeta.label)+'</span>'+(m.quando?'<span class="plano-marco-quando">'+escHtml(m.quando)+'</span>':'')+'</div>' +
+          '<div class="plano-marco-titulo">'+escHtml(m.titulo)+'</div>' +
+          (m.detalhe ? '<div class="plano-marco-detalhe">'+escHtml(m.detalhe)+'</div>' : '') +
+          '</div>';
+      }).join('');
+      return '<div class="plano-fase-group">' +
+        '<div class="plano-fase-head">'+faseHeadHtml+'</div>' +
+        marcosHtml +
+        '<button class="btn ghost" data-addmarco="'+fase.id+'" type="button" style="margin-top:6px;">+ marco</button>' +
         '</div>';
     }).join('');
-    bindRotaTimelineHandlers();
+    bindPlanoFasesHandlers();
   }
-  function rotaMarcoEditForm(m){
-    return '<div class="rota-marco editing" data-id="'+m.id+'">' +
+  function marcoEditForm(fase, m){
+    var options = MARCO_TIPO_KEYS.map(function(k){ return '<option value="'+k+'"'+(m.tipo===k?' selected':'')+'>'+MARCO_TIPOS[k].label+'</option>'; }).join('');
+    return '<div class="plano-marco editing" data-fid="'+fase.id+'" data-mid="'+m.id+'">' +
       '<div class="activity-edit-form" style="padding:12px;">' +
-      '<div class="row2"><input data-f="year" type="number" value="'+m.year+'" placeholder="Ano" style="width:90px;"><input data-f="period" value="'+escAttr(m.period)+'" placeholder="Período" style="flex:1;"></div>' +
-      '<input data-f="title" value="'+escAttr(m.title)+'" placeholder="Título" style="width:100%;margin:6px 0;border:1px solid var(--line-strong);border-radius:6px;padding:6px 8px;font-size:13px;font-weight:600;">' +
-      '<textarea data-f="detail" placeholder="Detalhe" style="width:100%;min-height:56px;border:1px solid var(--line-strong);border-radius:6px;padding:6px 8px;font-size:12.5px;font-family:inherit;">'+escHtml(m.detail)+'</textarea>' +
-      '<div class="form-actions" style="justify-content:space-between;margin-top:8px;"><button class="btn ghost" data-act="del" type="button">Apagar</button><span style="display:flex;gap:8px;"><button class="btn ghost" data-act="cancel" type="button">Cancelar</button><button class="btn" data-act="save" type="button">Guardar</button></span></div>' +
+      '<div class="row2"><input data-f="quando" value="'+escAttr(m.quando)+'" placeholder="Quando (ex.: Jun 2028)" style="flex:1;"><select data-f="tipo" style="flex:1;">'+options+'</select></div>' +
+      '<input data-f="titulo" value="'+escAttr(m.titulo)+'" placeholder="Título" style="width:100%;margin:6px 0;border:1px solid var(--line-strong);border-radius:6px;padding:6px 8px;font-size:13px;font-weight:600;">' +
+      '<textarea data-f="detalhe" placeholder="Detalhe" style="width:100%;min-height:56px;border:1px solid var(--line-strong);border-radius:6px;padding:6px 8px;font-size:12.5px;font-family:inherit;">'+escHtml(m.detalhe)+'</textarea>' +
+      '<div class="form-actions" style="justify-content:space-between;margin-top:8px;"><button class="btn ghost" data-act="delmarco" type="button">Apagar</button><span style="display:flex;gap:8px;"><button class="btn ghost" data-act="cancelmarco" type="button">Cancelar</button><button class="btn" data-act="savemarco" type="button">Guardar</button></span></div>' +
       '</div></div>';
   }
-  function bindRotaTimelineHandlers(){
-    var box = document.getElementById('rotaTimeline');
-    box.querySelectorAll('[data-act="edit"]').forEach(function(btn){
-      btn.addEventListener('click', function(){ openRotaEdit = btn.closest('[data-id]').getAttribute('data-id'); renderRotaTimeline(); });
+  function bindPlanoFasesHandlers(){
+    var p = currentPlano(); if(!p) return;
+    var box = document.getElementById('planoFasesBox');
+    box.querySelectorAll('[data-faseedit]').forEach(function(btn){
+      btn.addEventListener('click', function(){ openFaseEditId = btn.getAttribute('data-faseedit'); renderPlanoFases(); });
     });
-    box.querySelectorAll('[data-act="cancel"]').forEach(function(btn){
-      btn.addEventListener('click', function(){ openRotaEdit=null; renderRotaTimeline(); });
+    box.querySelectorAll('[data-fasesave]').forEach(function(btn){
+      btn.addEventListener('click', function(){
+        var fid = btn.getAttribute('data-fasesave');
+        var input = box.querySelector('.plano-fase-input[data-fid="'+fid+'"]');
+        var fase = p.fases.find(function(f){ return f.id===fid; });
+        fase.label = input.value.trim() || fase.label;
+        saveState(); openFaseEditId=null; renderPlanoFases();
+      });
     });
-    box.querySelectorAll('[data-act="del"]').forEach(function(btn){
+    box.querySelectorAll('[data-fasecancel]').forEach(function(btn){
+      btn.addEventListener('click', function(){ openFaseEditId=null; renderPlanoFases(); });
+    });
+    box.querySelectorAll('[data-faseremove]').forEach(function(btn){
+      btn.addEventListener('click', function(){
+        var fid = btn.getAttribute('data-faseremove');
+        var fase = p.fases.find(function(f){ return f.id===fid; });
+        if(!confirm('Apagar a fase "'+fase.label+'" e todos os seus marcos?')) return;
+        p.fases = p.fases.filter(function(f){ return f.id!==fid; });
+        saveState(); renderPlanoFases();
+      });
+    });
+    box.querySelectorAll('[data-addmarco]').forEach(function(btn){
+      btn.addEventListener('click', function(){
+        var fid = btn.getAttribute('data-addmarco');
+        var fase = p.fases.find(function(f){ return f.id===fid; });
+        var m = { id:'m'+Date.now().toString(36)+Math.random().toString(36).slice(2,5), quando:'', titulo:'Novo marco', detalhe:'', tipo:'meta' };
+        fase.marcos.push(m);
+        saveState(); openMarcoEditKey = fid+'|'+m.id; renderPlanoFases();
+      });
+    });
+    box.querySelectorAll('[data-act="editmarco"]').forEach(function(btn){
+      btn.addEventListener('click', function(){
+        var card = btn.closest('[data-fid]');
+        openMarcoEditKey = card.getAttribute('data-fid')+'|'+card.getAttribute('data-mid');
+        renderPlanoFases();
+      });
+    });
+    box.querySelectorAll('[data-act="cancelmarco"]').forEach(function(btn){
+      btn.addEventListener('click', function(){ openMarcoEditKey=null; renderPlanoFases(); });
+    });
+    box.querySelectorAll('[data-act="delmarco"]').forEach(function(btn){
       btn.addEventListener('click', function(){
         if(!confirm('Apagar este marco?')) return;
-        var id = btn.closest('[data-id]').getAttribute('data-id');
-        state.rota.timeline = state.rota.timeline.filter(function(m){ return m.id!==id; });
-        saveState(); openRotaEdit=null; renderRotaTimeline();
+        var card = btn.closest('[data-fid]');
+        var fase = p.fases.find(function(f){ return f.id===card.getAttribute('data-fid'); });
+        fase.marcos = fase.marcos.filter(function(m){ return m.id!==card.getAttribute('data-mid'); });
+        saveState(); openMarcoEditKey=null; renderPlanoFases();
       });
     });
-    box.querySelectorAll('[data-act="save"]').forEach(function(btn){
+    box.querySelectorAll('[data-act="savemarco"]').forEach(function(btn){
       btn.addEventListener('click', function(){
-        var card = btn.closest('[data-id]');
-        var id = card.getAttribute('data-id');
-        var m = state.rota.timeline.find(function(x){ return x.id===id; });
-        m.year = +card.querySelector('[data-f="year"]').value || m.year;
-        m.period = card.querySelector('[data-f="period"]').value.trim() || m.period;
-        m.title = card.querySelector('[data-f="title"]').value.trim() || m.title;
-        m.detail = card.querySelector('[data-f="detail"]').value.trim();
-        saveState(); openRotaEdit=null; renderRotaTimeline();
+        var card = btn.closest('[data-fid]');
+        var fase = p.fases.find(function(f){ return f.id===card.getAttribute('data-fid'); });
+        var m = fase.marcos.find(function(x){ return x.id===card.getAttribute('data-mid'); });
+        m.quando = card.querySelector('[data-f="quando"]').value.trim();
+        m.titulo = card.querySelector('[data-f="titulo"]').value.trim() || m.titulo;
+        m.detalhe = card.querySelector('[data-f="detalhe"]').value.trim();
+        m.tipo = card.querySelector('[data-f="tipo"]').value;
+        saveState(); openMarcoEditKey=null; renderPlanoFases();
       });
     });
   }
-  document.getElementById('btnAddRotaMarco').addEventListener('click', function(){
-    var m = { id:'rt'+Date.now().toString(36)+Math.random().toString(36).slice(2,5), year:new Date().getFullYear(), period:'Novo marco', title:'Novo marco', detail:'', tag:'' };
-    state.rota.timeline.push(m);
-    saveState(); openRotaEdit = m.id; renderRotaTimeline();
+  document.getElementById('btnAddPlanoFase').addEventListener('click', function(){
+    var p = currentPlano(); if(!p) return;
+    var fase = { id:'f'+Date.now().toString(36)+Math.random().toString(36).slice(2,5), label:'Nova fase', marcos:[] };
+    p.fases.push(fase);
+    saveState(); openFaseEditId = fase.id; renderPlanoFases();
   });
-  function renderRota(){
-    renderRotaHeader();
-    renderRotaNote();
-    renderRotaTimeline();
-  }
 
   /* ================= VIDA (finanças / compras / agenda / pendentes / planos) ================= */
   function fmtMT(n){ return (n<0?'−':'') + Math.abs(n).toLocaleString('pt-PT',{minimumFractionDigits:0, maximumFractionDigits:2}) + ' MT'; }
@@ -1932,72 +2152,13 @@
     }
   }
 
-  /* ---- sistema genérico de notas (título + texto) — reutilizado em vários sítios ---- */
-  var openNoteEditId = {};
-  function notesRowView(note){
-    return '<div class="plano-card" data-id="'+note.id+'">' +
-      '<div class="pl-top"><h3>'+escHtml(note.title)+'</h3>' +
-      '<div class="pl-actions"><button class="ar-icon-btn" data-act="edit" type="button">'+PENCIL_SVG+'</button><button class="ar-icon-btn danger" data-act="del" type="button">'+TRASH_SVG+'</button></div></div>' +
-      (note.body ? '<p>'+escHtml(note.body)+'</p>' : '') + '</div>';
-  }
-  function notesRowEdit(note){
-    return '<div class="plano-card plano-edit" data-id="'+note.id+'">' +
-      '<input data-f="title" type="text" placeholder="Título" value="'+escAttr(note.title)+'">' +
-      '<textarea data-f="body" placeholder="Notas…">'+escHtml(note.body)+'</textarea>' +
-      '<div class="form-actions"><button class="btn ghost" data-act="cancel" type="button">Cancelar</button><button class="btn" data-act="save" type="button">Guardar</button></div></div>';
-  }
-  function renderNotesGroup(arr, containerId){
-    var list = document.getElementById(containerId);
-    if(!list) return;
-    if(!arr.length){
-      list.innerHTML = '<p style="color:var(--ink-faint); font-size:13px; padding:8px 0;">Nada aqui ainda — toca no + para criar.</p>';
-      return;
-    }
-    var openId = openNoteEditId[containerId];
-    list.innerHTML = arr.map(function(n){ return n.id===openId ? notesRowEdit(n) : notesRowView(n); }).join('');
-
-    list.querySelectorAll('[data-act="edit"]').forEach(function(btn){
-      btn.addEventListener('click', function(){ openNoteEditId[containerId] = btn.closest('.plano-card').getAttribute('data-id'); renderNotesGroup(arr, containerId); });
-    });
-    list.querySelectorAll('[data-act="del"]').forEach(function(btn){
-      btn.addEventListener('click', function(){
-        if(!confirm('Apagar isto?')) return;
-        var id = btn.closest('.plano-card').getAttribute('data-id');
-        var idx = arr.findIndex(function(n){ return n.id===id; });
-        if(idx>=0) arr.splice(idx,1);
-        saveState(); renderNotesGroup(arr, containerId);
-      });
-    });
-    list.querySelectorAll('[data-act="cancel"]').forEach(function(btn){
-      btn.addEventListener('click', function(){ openNoteEditId[containerId]=null; renderNotesGroup(arr, containerId); });
-    });
-    list.querySelectorAll('[data-act="save"]').forEach(function(btn){
-      btn.addEventListener('click', function(){
-        var card = btn.closest('.plano-edit');
-        var id = card.getAttribute('data-id');
-        var n = arr.find(function(x){ return x.id===id; });
-        n.title = card.querySelector('[data-f="title"]').value.trim() || 'Sem título';
-        n.body = card.querySelector('[data-f="body"]').value.trim();
-        saveState(); openNoteEditId[containerId]=null; renderNotesGroup(arr, containerId);
-      });
-    });
-  }
-  function addNoteToGroup(arr, containerId, defaultTitle){
-    var n = { id:'n'+Date.now().toString(36)+Math.random().toString(36).slice(2,5), title: defaultTitle||'Novo', body:'' };
-    arr.push(n);
-    saveState();
-    openNoteEditId[containerId] = n.id;
-    renderNotesGroup(arr, containerId);
-  }
-  document.getElementById('btnAddPlano').addEventListener('click', function(){ addNoteToGroup(state.planos, 'planosList', 'Novo plano'); });
 
   function renderVida(){
     renderFinance();
     renderShopping();
     renderChecklist('pendentes', 'pendentesList');
     renderAgenda();
-    renderNotesGroup(state.planos, 'planosList');
-    renderRota();
+    renderPlanosList();
     renderVidaHub();
   }
 
@@ -2009,7 +2170,6 @@
     agenda: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4.5" width="18" height="16" rx="2"></rect><path d="M3 9.5h18M8 2.5v4M16 2.5v4"></path></svg>',
     pendentes: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11l3 3L22 4"></path><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2h11"></path></svg>',
     planos: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2 2 7l10 5 10-5-10-5Z"></path><path d="M2 17l10 5 10-5M2 12l10 5 10-5"></path></svg>',
-    rota: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 20 4 17V7l5 3m0 10 6-3m-6 3V10m6 7 5-3V4l-5 3m0 10V7m0 0L9 4"></path></svg>',
   };
   function renderVidaHub(){
     var mk = TODAY_ISO.slice(0,7);
@@ -2027,15 +2187,12 @@
     var planosCount = state.planos.length;
     var planosSub = planosCount ? (state.planos[0].title + (planosCount>1 ? ' + ' + (planosCount-1) : '')) : 'Nenhum ainda';
 
-    var rotaDays = Math.max(0, daysUntilDate(state.rota.countdownTarget));
-
     var cards = [
       { key:'financas', label:'Finanças', sum:'Saldo do mês', val:fmtMT(saldo), valColor: saldo>=0?'var(--good)':'var(--bad)' },
       { key:'compras', label:'Compras', sum: state.shoppingLists.length + ' lista'+(state.shoppingLists.length===1?'':'s'), count: pendingShopping },
       { key:'agenda', label:'Agenda', sum: upcoming ? upcoming.title : 'Sem eventos', val: upcoming ? dueLabel(daysUntil(upcoming.date)) : '', valColor:'var(--accent-strong)' },
       { key:'pendentes', label:'Pendentes', sum:'Fora da rotina diária', count: pendentesOpen },
       { key:'planos', label:'Planos futuros', sum: planosSub },
-      { key:'rota', label:'Rota', sum:'Até à janela de candidatura', val: rotaDays+' dias', valColor:'var(--accent-strong)' },
     ];
 
     document.getElementById('vidaHubCards').innerHTML = cards.map(function(c){
@@ -2066,7 +2223,7 @@
     window.scrollTo({ top:0, behavior:'instant' in window ? 'instant':'auto' });
   }
   document.querySelectorAll('#view-vida [data-vida-back]').forEach(function(btn){
-    btn.addEventListener('click', function(){ goVida('hub'); });
+    btn.addEventListener('click', function(){ goVida(btn.getAttribute('data-vida-back') || 'hub'); });
   });
   // ao voltar à aba Vida a partir de outra aba, mostra sempre o hub primeiro
   document.querySelector('.tabbtn[data-tab="vida"]').addEventListener('click', function(){ goVida('hub'); });

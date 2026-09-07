@@ -376,17 +376,15 @@ p.lead{ color:var(--ink-soft); font-size:14px; margin:0 0 16px; }
 .today-item .del:hover{ color:var(--bad); }
 .today-item .del svg{ width:14px; height:14px; display:block; }
 
-/* planos futuros (notas) */
-.plano-card{ background:var(--surface); border:1px solid var(--line); border-radius:var(--radius-m); padding:16px; margin-top:12px; box-shadow:var(--shadow-1); }
-.plano-card .pl-top{ display:flex; align-items:flex-start; justify-content:space-between; gap:10px; margin-bottom:6px; }
-.plano-card h3{ font-size:15px; font-family:var(--font-display); font-weight:600; }
-.plano-card p{ font-size:13.5px; color:var(--ink-soft); white-space:pre-wrap; }
-.plano-card .pl-actions{ display:flex; gap:4px; flex-shrink:0; }
-.plano-edit input, .plano-edit textarea{
-  width:100%; border:1px solid var(--line); background:var(--surface-2); border-radius:var(--radius-s);
-  padding:9px 11px; font-size:13.5px; color:var(--ink); font-family:var(--font-body); margin-bottom:8px;
+/* planos futuros: lista de planos (estrutura reutilizável) */
+.plano-list-card{
+  display:flex; align-items:center; gap:10px; width:100%; text-align:left;
+  background:var(--surface); border:1px solid var(--line); border-radius:var(--radius-m);
+  padding:14px 16px; margin-top:10px; box-shadow:var(--shadow-1); cursor:pointer;
 }
-.plano-edit textarea{ min-height:70px; resize:vertical; }
+.plano-list-body{ display:flex; flex-direction:column; gap:2px; min-width:0; flex:1; }
+.plano-list-title{ font-size:14.5px; font-weight:600; font-family:var(--font-display); color:var(--ink); }
+.plano-list-desc{ font-size:12.5px; color:var(--ink-faint); overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
 
 /* contas (finanças) */
 .account-row{
@@ -420,7 +418,6 @@ p.lead{ color:var(--ink-soft); font-size:14px; margin:0 0 16px; }
 .hcard .hicn.agenda{ background:var(--cat-lang-soft); color:var(--cat-lang); }
 .hcard .hicn.pendentes{ background:var(--accent-soft); color:var(--accent-strong); }
 .hcard .hicn.planos{ background:var(--cat-fit-soft); color:var(--cat-fit); }
-.hcard .hicn.rota{ background:var(--accent-soft); color:var(--accent-strong); }
 .hcard .hbody{ flex:1; min-width:0; }
 .hcard .hname{ font-family:var(--font-display); font-weight:600; font-size:16px; }
 .hcard .hsum{ font-size:12.5px; color:var(--ink-faint); margin-top:2px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
@@ -763,20 +760,23 @@ footer.page-footer{ padding:30px 0 10px; text-align:center; color:var(--ink-fain
 .cycle-bar-fill{ height:100%; background:linear-gradient(90deg, var(--accent), var(--accent-strong)); border-radius:999px; }
 .cycle-sub{ display:flex; justify-content:space-between; margin-top:6px; font-size:12px; color:var(--ink-faint); font-family:var(--font-mono); }
 
-/* ============ Rota ============ */
-.rota-countdown{ display:flex; align-items:center; gap:10px; }
-.rota-countdown-n{ font-family:var(--font-display); font-size:34px; font-weight:600; color:var(--ink); }
-.rota-countdown-label{ font-size:12.5px; color:var(--ink-faint); max-width:180px; }
-.rota-chips{ display:flex; flex-wrap:wrap; gap:8px; margin-top:12px; }
-.rota-note-box{ background:var(--accent-soft); border:1px solid var(--accent-soft-line); border-radius:var(--radius-m); padding:14px 16px; display:flex; gap:10px; align-items:flex-start; justify-content:space-between; }
-.rota-note-text{ font-size:13px; color:var(--ink); margin:0; line-height:1.55; }
-.rota-year-group{ margin-bottom:22px; }
-.rota-year{ font-family:var(--font-mono); font-size:12px; font-weight:700; letter-spacing:.06em; color:var(--accent-strong); margin-bottom:10px; }
-.rota-marco{
-  background:var(--surface); border:1px solid var(--line); border-radius:var(--radius-m);
+/* ============ Planos (estrutura reutilizável — a Rota é o primeiro exemplo) ============ */
+.plano-countdown-n{ font-family:var(--font-display); font-size:34px; font-weight:600; color:var(--ink); }
+.plano-countdown-label{ font-size:12.5px; color:var(--ink-faint); max-width:180px; }
+.plano-chips{ display:flex; flex-wrap:wrap; align-items:center; gap:8px; }
+.plano-note-box{ background:var(--accent-soft); border:1px solid var(--accent-soft-line); border-radius:var(--radius-m); padding:14px 16px; display:flex; gap:10px; align-items:flex-start; justify-content:space-between; }
+.plano-note-text{ font-size:13px; color:var(--ink); margin:0; line-height:1.55; flex:1; }
+.plano-fase-group{ margin-bottom:22px; }
+.plano-fase-head{ display:flex; align-items:center; gap:6px; margin-bottom:10px; }
+.plano-fase-label{ font-family:var(--font-mono); font-size:12px; font-weight:700; letter-spacing:.06em; color:var(--accent-strong); }
+.plano-fase-input{ flex:1; border:1px solid var(--line-strong); background:var(--surface-2); border-radius:6px; padding:5px 8px; font-size:12.5px; font-family:var(--font-mono); }
+.plano-marco{
+  position:relative; background:var(--surface); border:1px solid var(--line); border-radius:var(--radius-m);
   padding:14px 16px; margin-bottom:8px; border-left:3px solid var(--accent);
 }
-.rota-marco-period{ font-family:var(--font-mono); font-size:11px; color:var(--ink-faint); margin-bottom:4px; }
-.rota-tag-aqui{ background:var(--accent); color:var(--on-accent); font-weight:700; padding:1px 6px; border-radius:4px; font-size:10px; letter-spacing:.04em; }
-.rota-marco-title{ font-size:14px; font-weight:700; color:var(--ink); }
-.rota-marco-detail{ font-size:12.5px; color:var(--ink-soft); margin-top:4px; line-height:1.5; }
+.plano-marco-top{ display:flex; align-items:center; gap:8px; flex-wrap:wrap; margin-bottom:6px; padding-right:22px; }
+.plano-marco-tipo{ display:inline-flex; align-items:center; gap:4px; font-size:10.5px; font-weight:700; letter-spacing:.03em; padding:2px 8px; border-radius:999px; }
+.plano-marco-tipo svg{ width:11px; height:11px; }
+.plano-marco-quando{ font-family:var(--font-mono); font-size:11px; color:var(--ink-faint); }
+.plano-marco-titulo{ font-size:14px; font-weight:700; color:var(--ink); }
+.plano-marco-detalhe{ font-size:12.5px; color:var(--ink-soft); margin-top:4px; line-height:1.5; }
