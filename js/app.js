@@ -11,6 +11,7 @@
       activityFull: {},
       aif: clone(AIF_LETTERS),
       rota: { timeline: seedRotaTimeline(), note: ROTA_META.note, countdownTarget: ROTA_META.countdownTarget, countdownLabel: ROTA_META.countdownLabel, chips: ROTA_META.chips.slice() },
+      cycle: { start: '2026-09-01', end: '2026-11-29' },
       protocolo: clone(DEFAULT_PROTOCOLO),
       finance: [],
       shoppingLists: [ { id:'default', name:'Compras', items: [] } ],
@@ -80,6 +81,7 @@
     if(s.rota.countdownTarget === undefined) s.rota.countdownTarget = ROTA_META.countdownTarget;
     if(s.rota.countdownLabel === undefined) s.rota.countdownLabel = ROTA_META.countdownLabel;
     if(!s.rota.chips) s.rota.chips = ROTA_META.chips.slice();
+    if(!s.cycle) s.cycle = { start: '2026-09-01', end: '2026-11-29' };
     // remove Mandarim (adiado para jan/2027) e acrescenta as âncoras fixas do dia —
     // só quando ainda não existem, para não tocar em nada que já tenha sido editado.
     WEEKDAYS.forEach(function(day){
@@ -143,6 +145,8 @@
 
   /* ---------------- date helpers ---------------- */
   var WEEKDAYS_PT = ['Domingo','Segunda','Terça','Quarta','Quinta','Sexta','Sábado'];
+  var MONTHS_PT_SHORT = ['jan','fev','mar','abr','mai','jun','jul','ago','set','out','nov','dez'];
+  function fmtDateHuman(d){ return d.getDate()+' '+MONTHS_PT_SHORT[d.getMonth()]+' '+d.getFullYear(); }
   function iso(d){
     var y=d.getFullYear(), m=String(d.getMonth()+1).padStart(2,'0'), day=String(d.getDate()).padStart(2,'0');
     return y+'-'+m+'-'+day;
@@ -1250,6 +1254,52 @@
     renderProtocolo();
   });
 
+  /* ================= CICLO (90 dias) ================= */
+  var cycleEditing = false;
+  function cycleDaysTotal(){
+    return Math.round((new Date(state.cycle.end+'T00:00:00') - new Date(state.cycle.start+'T00:00:00'))/86400000) + 1;
+  }
+  function cycleDayNumber(){
+    var start = new Date(state.cycle.start+'T00:00:00');
+    var n = Math.floor((TODAY - start)/86400000) + 1;
+    return Math.max(1, Math.min(cycleDaysTotal(), n));
+  }
+  function cyclePercent(){
+    var start = new Date(state.cycle.start+'T00:00:00'), end = new Date(state.cycle.end+'T00:00:00');
+    var total = end - start;
+    if(total <= 0) return 100;
+    return Math.max(0, Math.min(100, (TODAY-start)/total*100));
+  }
+  function renderCycleBox(){
+    var box = document.getElementById('cycleBox');
+    if(cycleEditing){
+      box.innerHTML = '<div style="display:flex;gap:6px;margin-bottom:8px;">' +
+        '<input data-f="start" type="date" value="'+state.cycle.start+'" style="border:1px solid var(--line-strong);border-radius:6px;padding:6px 8px;font-size:12px;flex:1;">' +
+        '<input data-f="end" type="date" value="'+state.cycle.end+'" style="border:1px solid var(--line-strong);border-radius:6px;padding:6px 8px;font-size:12px;flex:1;">' +
+        '</div>' +
+        '<div class="form-actions" style="justify-content:flex-end;"><span style="display:flex;gap:8px;"><button class="btn ghost" id="btnCycleCancel" type="button">Cancelar</button><button class="btn" id="btnCycleSave" type="button">Guardar</button></span></div>';
+      document.getElementById('btnCycleCancel').addEventListener('click', function(){ cycleEditing=false; renderCycleBox(); });
+      document.getElementById('btnCycleSave').addEventListener('click', function(){
+        var sVal = box.querySelector('[data-f="start"]').value;
+        var eVal = box.querySelector('[data-f="end"]').value;
+        if(sVal) state.cycle.start = sVal;
+        if(eVal) state.cycle.end = eVal;
+        saveState(); cycleEditing=false; renderCycleBox();
+      });
+    } else {
+      var n = cycleDayNumber(), total = cycleDaysTotal(), pct = cyclePercent();
+      var endLabel = fmtDateHuman(new Date(state.cycle.end+'T00:00:00'));
+      box.innerHTML =
+        '<div style="display:flex;align-items:baseline;justify-content:space-between;">' +
+        '<span class="cycle-day-n">Dia '+n+' de '+total+'</span>' +
+        '<button class="ar-icon-btn" id="btnEditCycle" type="button">'+PENCIL_SVG+'</button>' +
+        '</div>' +
+        '<div class="cycle-bar"><div class="cycle-bar-fill" style="width:'+pct+'%;"></div></div>' +
+        '<div class="cycle-sub"><span>'+Math.round(pct)+'%</span><span>'+escHtml(endLabel)+'</span></div>';
+      document.getElementById('btnEditCycle').addEventListener('click', function(){ cycleEditing=true; renderCycleBox(); });
+    }
+  }
+
   /* ================= AIF: Autenticidade · Intensidade · Fidelidade =================
      Não é um tracker novo — é uma lente sobre a checklist diária que já existe. */
   var FLAME_SVG = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8.5 14.5A2.5 2.5 0 0 0 11 17a2.5 2.5 0 0 0 2.5-2.5c0-1.38-.5-2-1-3 1.5.5 3 2.5 3 5a5.5 5.5 0 1 1-11 0c0-4 3-6 3-10 1.5 1 4 2.5 4 6.5Z"></path></svg>';
@@ -1358,7 +1408,7 @@
 
   function renderAifToday(){
     var pct = aifPercentForDate(TODAY_ISO, TODAY_WEEKDAY);
-    document.getElementById('aifRings').innerHTML = ['f','i','a'].map(function(k){
+    document.getElementById('aifRings').innerHTML = ['a','i','f'].map(function(k){
       var val = Math.round(pct[k]);
       var L = state.aif[k];
       var circ = 97.4;
@@ -1385,22 +1435,7 @@
     }).join('');
   }
 
-  /* ================= ROTA (linha do tempo até à China) ================= */
-  var rotaPreviousTab = 'inicio';
-  function openRota(){
-    var activeBtn = document.querySelector('.tabbtn.active');
-    rotaPreviousTab = activeBtn ? activeBtn.getAttribute('data-tab') : 'inicio';
-    Object.keys(views).forEach(function(k){ document.getElementById(views[k]).classList.remove('active'); });
-    document.getElementById('view-rota').classList.add('active');
-    document.getElementById('pageTitle').textContent = 'Rota';
-    window.scrollTo({top:0, behavior:'instant' in window ? 'instant':'auto'});
-  }
-  function closeRota(){
-    document.getElementById('view-rota').classList.remove('active');
-    goTab(rotaPreviousTab || 'inicio');
-  }
-  document.getElementById('btnGoRota').addEventListener('click', openRota);
-  document.getElementById('btnRotaBack').addEventListener('click', closeRota);
+  /* ================= ROTA (linha do tempo até à China) — vive dentro da Vida ================= */
 
   function daysUntilDate(dateStr){
     return Math.ceil((new Date(dateStr+'T00:00:00') - TODAY) / 86400000);
@@ -1962,6 +1997,7 @@
     renderChecklist('pendentes', 'pendentesList');
     renderAgenda();
     renderNotesGroup(state.planos, 'planosList');
+    renderRota();
     renderVidaHub();
   }
 
@@ -1973,6 +2009,7 @@
     agenda: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4.5" width="18" height="16" rx="2"></rect><path d="M3 9.5h18M8 2.5v4M16 2.5v4"></path></svg>',
     pendentes: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11l3 3L22 4"></path><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2h11"></path></svg>',
     planos: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2 2 7l10 5 10-5-10-5Z"></path><path d="M2 17l10 5 10-5M2 12l10 5 10-5"></path></svg>',
+    rota: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 20 4 17V7l5 3m0 10 6-3m-6 3V10m6 7 5-3V4l-5 3m0 10V7m0 0L9 4"></path></svg>',
   };
   function renderVidaHub(){
     var mk = TODAY_ISO.slice(0,7);
@@ -1990,12 +2027,15 @@
     var planosCount = state.planos.length;
     var planosSub = planosCount ? (state.planos[0].title + (planosCount>1 ? ' + ' + (planosCount-1) : '')) : 'Nenhum ainda';
 
+    var rotaDays = Math.max(0, daysUntilDate(state.rota.countdownTarget));
+
     var cards = [
       { key:'financas', label:'Finanças', sum:'Saldo do mês', val:fmtMT(saldo), valColor: saldo>=0?'var(--good)':'var(--bad)' },
       { key:'compras', label:'Compras', sum: state.shoppingLists.length + ' lista'+(state.shoppingLists.length===1?'':'s'), count: pendingShopping },
       { key:'agenda', label:'Agenda', sum: upcoming ? upcoming.title : 'Sem eventos', val: upcoming ? dueLabel(daysUntil(upcoming.date)) : '', valColor:'var(--accent-strong)' },
       { key:'pendentes', label:'Pendentes', sum:'Fora da rotina diária', count: pendentesOpen },
       { key:'planos', label:'Planos futuros', sum: planosSub },
+      { key:'rota', label:'Rota', sum:'Até à janela de candidatura', val: rotaDays+' dias', valColor:'var(--accent-strong)' },
     ];
 
     document.getElementById('vidaHubCards').innerHTML = cards.map(function(c){
@@ -2082,6 +2122,7 @@
     });
 
     renderProtocolo();
+    renderCycleBox();
     renderAifCards();
     renderAifToday();
     renderAifStreak();
@@ -2142,13 +2183,89 @@
   });
 
   document.getElementById('btnExport').addEventListener('click', function(){
-    var blob = new Blob([JSON.stringify(state, null, 2)], {type:'application/json'});
+    var exportData = clone(state);
+    exportData.exportedAt = new Date().toISOString();
+    exportData.aifHistory = aifHistory();
+    var blob = new Blob([JSON.stringify(exportData, null, 2)], {type:'application/json'});
     var url = URL.createObjectURL(blob);
     var a = document.createElement('a');
     a.href = url; a.download = 'protocolo-backup-' + TODAY_ISO + '.json';
     document.body.appendChild(a); a.click(); a.remove();
     URL.revokeObjectURL(url);
     toast('Backup exportado');
+  });
+
+  function last30Days(){
+    var out = [];
+    for(var i=29;i>=0;i--){
+      var d = addDays(TODAY, -i);
+      var dISO = iso(d);
+      var weekday = WEEKDAYS_PT[d.getDay()];
+      out.push({ date:dISO, weekday:weekday, pct: aifPercentForDate(dISO, weekday) });
+    }
+    return out;
+  }
+  function buildSummaryText(){
+    var days = last30Days();
+    var avg = function(key){ return days.reduce(function(s,d){ return s+d.pct[key]; }, 0) / days.length; };
+    var streak = aifStreakInfo();
+
+    var wStart = FIT_META.startWeight;
+    var wNowEntry = currentWeight();
+    var wNow = wNowEntry ? wNowEntry.kg : null;
+    var rate = weightTrend();
+
+    var failCount = {};
+    days.forEach(function(d){
+      dayActivities(d.weekday).forEach(function(act){
+        if(!isActDone(d.date, act.id)){
+          failCount[act.title] = (failCount[act.title]||0) + 1;
+        }
+      });
+    });
+    var topFails = Object.keys(failCount).map(function(t){ return { title:t, n:failCount[t] }; })
+      .sort(function(a,b){ return b.n-a.n; }).slice(0,3);
+
+    var below80 = days.filter(function(d){ return d.pct.total < 80; });
+    var twoInARow = false;
+    for(var j=1;j<days.length;j++){
+      if(days[j].pct.total<80 && days[j-1].pct.total<80){ twoInARow = true; break; }
+    }
+
+    var lines = [];
+    lines.push('PROTOCOLO — resumo dos últimos 30 dias');
+    lines.push('Dia ' + cycleDayNumber() + ' de ' + cycleDaysTotal() + ' (' + Math.round(cyclePercent()) + '% do ciclo)');
+    lines.push('');
+    lines.push('AIF (médias 30 dias): A ' + Math.round(avg('a')) + '% · I ' + Math.round(avg('i')) + '% · F ' + Math.round(avg('f')) + '%');
+    lines.push('Sequência atual: ' + streak.current + ' dias · Melhor sequência: ' + streak.best + ' dias · Dias cumpridos (total): ' + streak.cumpridos);
+    lines.push('');
+    lines.push('Peso inicial: ' + wStart + ' kg');
+    lines.push('Peso atual: ' + (wNow!==null ? wNow+' kg' : 'sem registo'));
+    if(wNow !== null) lines.push('Variação total: ' + (wNow-wStart>=0?'+':'') + (wNow-wStart).toFixed(1) + ' kg');
+    if(rate !== null) lines.push('Ritmo: ' + (rate>=0?'+':'') + rate.toFixed(2) + ' kg/semana');
+    lines.push('');
+    lines.push('Itens que mais falharam (30 dias):');
+    if(topFails.length) topFails.forEach(function(f){ lines.push('- ' + f.title + ' (' + f.n + 'x)'); });
+    else lines.push('- nenhuma falha registada');
+    lines.push('');
+    lines.push('Dias abaixo de 80%: ' + below80.length + ' em 30' + (twoInARow ? ' — houve 2 dias seguidos' : ' — sem 2 seguidos'));
+    return lines.join('\n');
+  }
+  function fallbackCopy(text){
+    var ta = document.createElement('textarea');
+    ta.value = text; ta.style.position='fixed'; ta.style.opacity='0';
+    document.body.appendChild(ta); ta.focus(); ta.select();
+    try{ document.execCommand('copy'); toast('Resumo copiado'); }
+    catch(e){ toast('Não foi possível copiar'); }
+    document.body.removeChild(ta);
+  }
+  document.getElementById('btnCopySummary').addEventListener('click', function(){
+    var text = buildSummaryText();
+    if(navigator.clipboard && navigator.clipboard.writeText){
+      navigator.clipboard.writeText(text).then(function(){ toast('Resumo copiado'); }).catch(function(){ fallbackCopy(text); });
+    } else {
+      fallbackCopy(text);
+    }
   });
 
   document.getElementById('importFile').addEventListener('change', function(e){
@@ -2188,7 +2305,6 @@
     renderFitStatic();
     renderWorkStatic();
     renderVida();
-    renderRota();
     renderDashboard();
   }
   applyTheme(state.theme);

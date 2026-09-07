@@ -420,6 +420,7 @@ p.lead{ color:var(--ink-soft); font-size:14px; margin:0 0 16px; }
 .hcard .hicn.agenda{ background:var(--cat-lang-soft); color:var(--cat-lang); }
 .hcard .hicn.pendentes{ background:var(--accent-soft); color:var(--accent-strong); }
 .hcard .hicn.planos{ background:var(--cat-fit-soft); color:var(--cat-fit); }
+.hcard .hicn.rota{ background:var(--accent-soft); color:var(--accent-strong); }
 .hcard .hbody{ flex:1; min-width:0; }
 .hcard .hname{ font-family:var(--font-display); font-weight:600; font-size:16px; }
 .hcard .hsum{ font-size:12.5px; color:var(--ink-faint); margin-top:2px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
@@ -756,12 +757,11 @@ footer.page-footer{ padding:30px 0 10px; text-align:center; color:var(--ink-fain
 .today-flame.on{ color:var(--warn); background:var(--warn-soft); }
 .today-flame.disabled{ opacity:.3; cursor:default; pointer-events:none; }
 
-/* ============ Ligação Início → Rota ============ */
-.pc-rota-link{
-  display:flex; align-items:center; gap:6px; margin-top:14px; background:none; border:none;
-  color:rgba(245,241,232,.85); font-size:12.5px; font-weight:600; cursor:pointer; padding:0;
-}
-.pc-rota-link svg{ width:14px; height:14px; }
+/* ============ Ciclo de 90 dias ============ */
+.cycle-day-n{ font-family:var(--font-display); font-size:20px; font-weight:600; color:var(--ink); }
+.cycle-bar{ width:100%; height:10px; background:var(--bar-track); border-radius:999px; margin-top:12px; overflow:hidden; }
+.cycle-bar-fill{ height:100%; background:linear-gradient(90deg, var(--accent), var(--accent-strong)); border-radius:999px; }
+.cycle-sub{ display:flex; justify-content:space-between; margin-top:6px; font-size:12px; color:var(--ink-faint); font-family:var(--font-mono); }
 
 /* ============ Rota ============ */
 .rota-countdown{ display:flex; align-items:center; gap:10px; }

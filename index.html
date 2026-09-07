@@ -41,6 +41,10 @@
   <section class="view active" id="view-inicio">
 
     <section class="blk aif-block">
+      <div class="cycle-box" id="cycleBox"></div>
+    </section>
+
+    <section class="blk aif-block">
       <div class="blk-head"><div><span class="kicker">O que o Protocolo mede</span><h2>Autenticidade · Intensidade · Fidelidade</h2></div></div>
       <div class="aif-cards" id="aifCards"></div>
     </section>
@@ -68,7 +72,6 @@
         <textarea class="pc-edit" id="pcManifestoEdit" hidden></textarea>
         <div class="pc-metas" id="pcMetas"></div>
         <div class="meta-edit-row" id="pcMetaEdit" hidden></div>
-        <button class="pc-rota-link" id="btnGoRota" type="button">Ver a Rota até à China <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 6 6 6-6 6"></path></svg></button>
       </div>
 
       <div class="streak-row">
@@ -396,29 +399,28 @@
       </section>
     </div>
 
-  </section>
+    <!-- Rota até à China -->
+    <div class="subview" id="vida-rota">
+      <div class="detail-head"><button class="backbtn" data-vida-back type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 6-6 6 6 6"></path></svg></button><h2>Rota</h2></div>
+      <section class="blk" style="padding-top:16px;">
+        <div class="rota-countdown" id="rotaCountdown"></div>
+        <div class="rota-chips" id="rotaChips"></div>
+      </section>
+      <section class="blk">
+        <div class="blk-head"><div><span class="kicker">Nota estratégica</span></div></div>
+        <div class="rota-note-box" id="rotaNoteBox"></div>
+      </section>
+      <section class="blk">
+        <div class="blk-head">
+          <div><span class="kicker">Linha do tempo</span><h2>Set 2026 → Set 2029</h2></div>
+          <button class="iconbtn" id="btnAddRotaMarco" aria-label="Novo marco" type="button">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+          </button>
+        </div>
+        <div class="rota-timeline" id="rotaTimeline"></div>
+      </section>
+    </div>
 
-  <!-- ===================== ROTA (linha do tempo até à China) ===================== -->
-  <section class="view" id="view-rota">
-    <div class="detail-head"><button class="backbtn" id="btnRotaBack" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 6-6 6 6 6"></path></svg></button><h2>Rota</h2></div>
-    <section class="blk" style="padding-top:16px;">
-      <div class="rota-countdown" id="rotaCountdown"></div>
-      <div class="rota-chips" id="rotaChips"></div>
-    </section>
-    <section class="blk">
-      <div class="blk-head"><div><span class="kicker">Nota estratégica</span></div></div>
-      <div class="rota-note-box" id="rotaNoteBox"></div>
-    </section>
-    <section class="blk">
-      <div class="blk-head">
-        <div><span class="kicker">Linha do tempo</span><h2>Set 2026 → Set 2029</h2></div>
-        <button class="iconbtn" id="btnAddRotaMarco" aria-label="Novo marco" type="button">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
-        </button>
-      </div>
-      <div class="rota-timeline" id="rotaTimeline"></div>
-    </section>
-    <footer class="page-footer">Rota — o caminho até à candidatura na China.</footer>
   </section>
 
 </main>
@@ -475,8 +477,12 @@
     <div id="tabNameInputs" style="display:flex; flex-direction:column; gap:8px;"></div>
   </div>
   <div class="sheet-row">
-    <div><div class="sl">Exportar dados</div><div class="ss">Guarda uma cópia de segurança (.json)</div></div>
+    <div><div class="sl">Exportar dados (JSON)</div><div class="ss">Tudo — AIF dia a dia, checklist, sequências, pesagens, línguas, negócio, pendentes e datas do ciclo</div></div>
     <button class="btn ghost" id="btnExport" type="button">Exportar</button>
+  </div>
+  <div class="sheet-row">
+    <div><div class="sl">Copiar resumo</div><div class="ss">Texto simples dos últimos 30 dias, para colar num chat</div></div>
+    <button class="btn ghost" id="btnCopySummary" type="button">Copiar</button>
   </div>
   <div class="sheet-row">
     <div><div class="sl">Importar dados</div><div class="ss">Repõe a partir de uma cópia de segurança</div></div>
