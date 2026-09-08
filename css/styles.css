@@ -370,6 +370,11 @@ p.lead{ color:var(--ink-soft); font-size:14px; margin:0 0 16px; }
 .list-row .del{ cursor:pointer; color:var(--ink-faint); flex-shrink:0; }
 .list-row .del:hover{ color:var(--bad); }
 .list-row .del svg{ width:14px; height:14px; display:block; }
+.scroll-list{ max-height:320px; overflow-y:auto; }
+
+.conta-balance{ font-family:var(--font-mono); font-weight:700; font-size:14px; white-space:nowrap; align-self:center; color:var(--ink); }
+.conta-balance.neg{ color:var(--bad); }
+.conta-balance.pos{ color:var(--good); }
 
 .today-item .del{ margin-left:auto; cursor:pointer; color:var(--ink-faint); flex-shrink:0; padding:4px; }
 .today-item .del:hover{ color:var(--bad); }

@@ -1857,15 +1857,22 @@
   /* ================= VIDA (finanças / compras / agenda / pendentes / planos) ================= */
   function fmtMT(n){ return (n<0?'−':'') + Math.abs(n).toLocaleString('pt-PT',{minimumFractionDigits:0, maximumFractionDigits:2}) + ' MT'; }
 
+  function contaBalance(c){
+    return state.finance.filter(function(t){ return t.contaId === c.id; })
+      .reduce(function(s,t){ return s + (t.type==='entrada' ? t.amount : -t.amount); }, 0);
+  }
+
   function renderFinance(){
     var mk = TODAY_ISO.slice(0,7);
     var monthTx = state.finance.filter(function(t){ return t.date.slice(0,7)===mk; });
     var totalIn = monthTx.filter(function(t){ return t.type==='entrada'; }).reduce(function(s,t){ return s+t.amount; },0);
     var totalOut = monthTx.filter(function(t){ return t.type==='saida'; }).reduce(function(s,t){ return s+t.amount; },0);
+    var totalNasContas = state.financeContas.reduce(function(s,c){ return s + contaBalance(c); }, 0);
     document.getElementById('financeStats').innerHTML =
       stat('Entradas', fmtMT(totalIn)) +
       stat('Saídas', fmtMT(totalOut)) +
-      stat('Saldo do mês', fmtMT(totalIn-totalOut), totalIn-totalOut>=0);
+      stat('Saldo do mês', fmtMT(totalIn-totalOut), totalIn-totalOut>=0) +
+      stat('Nas contas', fmtMT(totalNasContas));
 
     var log = document.getElementById('financeLog');
     var list = state.finance.slice().sort(function(a,b){ return a.date<b.date?1:-1; });
@@ -1944,8 +1951,10 @@
     return 'Carteira móvel · ' + (c.provider||'—') + (c.phone ? ' · '+c.phone : '');
   }
   function contaRowView(c){
+    var bal = contaBalance(c);
     return '<div class="activity-row" data-id="'+c.id+'">' +
       '<div class="ar-body"><div class="ar-title">'+escHtml(c.name)+'</div><div class="ar-detail">'+escHtml(contaSummary(c))+'</div></div>' +
+      '<span class="conta-balance '+(bal<0?'neg':(bal>0?'pos':''))+'">'+fmtMT(bal)+'</span>' +
       '<div class="ar-actions">' +
         '<button class="ar-icon-btn" data-act="edit" type="button">'+PENCIL_SVG+'</button>' +
         '<button class="ar-icon-btn danger" data-act="del" type="button">'+TRASH_SVG+'</button>' +

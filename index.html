@@ -331,7 +331,21 @@
 
         <div class="blk-head" style="margin-top:18px;margin-bottom:8px;"><div><span class="kicker">Categorias</span></div></div>
         <div class="plano-chips" id="financeCategoriesBox"></div>
+      </section>
 
+      <section class="blk">
+        <div class="blk-head">
+          <div><span class="kicker">Onde está o dinheiro</span><h2>Contas</h2></div>
+          <button class="iconbtn" id="btnAddFinanceConta" aria-label="Nova conta" type="button">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+          </button>
+        </div>
+        <p class="lead" style="margin-bottom:10px;">Regista as tuas carteiras móveis e contas bancárias — o saldo de cada uma soma sozinho a partir dos registos abaixo.</p>
+        <div id="financeContasBox"></div>
+      </section>
+
+      <section class="blk">
+        <div class="blk-head"><div><span class="kicker">Novo registo</span><h2>Movimentos</h2></div></div>
         <form class="mini-form" id="financeForm">
           <select id="financeType">
             <option value="entrada">Entrada</option>
@@ -343,18 +357,7 @@
           <select id="financeConta"></select>
           <button class="btn" type="submit">Registar</button>
         </form>
-        <div id="financeLog"></div>
-      </section>
-
-      <section class="blk">
-        <div class="blk-head">
-          <div><span class="kicker">Onde está o dinheiro</span><h2>Contas</h2></div>
-          <button class="iconbtn" id="btnAddFinanceConta" aria-label="Nova conta" type="button">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
-          </button>
-        </div>
-        <p class="lead" style="margin-bottom:10px;">Regista as tuas carteiras móveis e contas bancárias para saberes exatamente onde está o dinheiro de cada registo.</p>
-        <div id="financeContasBox"></div>
+        <div id="financeLog" class="scroll-list"></div>
       </section>
     </div>
 
