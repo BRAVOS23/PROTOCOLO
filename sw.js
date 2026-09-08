@@ -1,4 +1,4 @@
-const CACHE = 'protocolo-v9';
+const CACHE = 'protocolo-v10';
 const SHELL = [
   './',
   './index.html',
@@ -10,6 +10,7 @@ const SHELL = [
   './icons/icon-512.png',
   './icons/icon-maskable-512.png',
   './icons/favicon.svg',
+  './icons/favicon-32.png',
 ];
 
 self.addEventListener('install', (event) => {

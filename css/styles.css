@@ -336,6 +336,7 @@ p.lead{ color:var(--ink-soft); font-size:14px; margin:0 0 16px; }
 }
 .activity-edit-form textarea{ resize:vertical; min-height:44px; }
 .activity-edit-form .row2{ display:grid; grid-template-columns:1fr 90px; gap:8px; }
+.activity-edit-form .row2even{ display:grid; grid-template-columns:1fr 1fr; gap:8px; }
 .activity-edit-form .form-actions{ display:flex; justify-content:flex-end; gap:8px; margin-top:2px; }
 
 .btn-add-activity{
@@ -453,6 +454,13 @@ p.lead{ color:var(--ink-soft); font-size:14px; margin:0 0 16px; }
 .itemrow2 input:first-child{ width:70px; flex-shrink:0; }
 .itemrow2 input:nth-child(2){ flex:1; }
 .itemrow2 .mx{ cursor:pointer; color:var(--ink-faint); flex-shrink:0; }
+
+.cat-edit-row{ display:flex; gap:6px; align-items:center; margin-bottom:6px; }
+.cat-edit-row input{ flex:1; border:1px solid var(--line); background:var(--surface-2); border-radius:6px; padding:7px 9px; font-size:13px; font-family:var(--font-body); color:var(--ink); }
+.cat-edit-row .mx{ cursor:pointer; color:var(--ink-faint); flex-shrink:0; display:flex; }
+.cat-edit-row .mx:hover{ color:var(--bad); }
+.chip-add-btn{ font-size:12px; background:none; border:1px dashed var(--line-strong); color:var(--ink-soft); padding:6px 12px; border-radius:999px; cursor:pointer; margin-top:2px; }
+.chip-add-btn:hover{ border-color:var(--accent); color:var(--accent-strong); }
 
 /* ---------------- sub tabs (dentro de Línguas/Forma) ---------------- */
 .subtabs-wrap{ position:relative; }
@@ -602,6 +610,13 @@ table.week td.time{ font-family:var(--font-mono); font-size:12px; color:var(--in
 .weight-trend.warn{ background:var(--warn-soft); color:var(--warn); }
 .weight-trend.flat{ background:var(--surface-2); color:var(--ink-faint); }
 .weight-chart{ margin-top:14px; width:100%; height:120px; }
+.weight-chart-empty{
+  margin-top:14px; height:120px; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:7px;
+  border:1.5px dashed var(--line-strong); border-radius:var(--radius-m); color:var(--ink-faint); text-align:center; padding:0 20px;
+}
+.weight-chart-empty svg{ width:24px; height:24px; opacity:.6; color:var(--ink-faint); }
+.weight-chart-empty .wce-title{ font-family:var(--font-mono); font-size:14px; font-weight:700; color:var(--ink-soft); }
+.weight-chart-empty .wce-sub{ font-size:12px; color:var(--ink-faint); line-height:1.4; }
 .weight-form{ display:flex; gap:8px; margin-top:14px; }
 .weight-form input{
   flex:1; border:1px solid var(--line); background:var(--surface-2); border-radius:var(--radius-s);

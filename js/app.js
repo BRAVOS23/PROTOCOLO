@@ -52,6 +52,8 @@
       cycle: { start: '2026-09-01', end: '2026-11-29' },
       protocolo: clone(DEFAULT_PROTOCOLO),
       finance: [],
+      financeCategories: clone(FINANCE_CATEGORIES),
+      financeContas: [],
       shoppingLists: [ { id:'default', name:'Compras', items: [] } ],
       pendentes: [],
       agenda: [],
@@ -165,6 +167,11 @@
         if(preTiro && preTiro.time==='16h30–17h'){ preTiro.time='17h'; preTiro.note='1h30 antes dos tiros — comida pesada causa enjoo'; }
       }
     })();
+    // v9: categorias de finanças passam a ser editáveis pela interface, e é
+    // possível registar contas (carteira móvel / conta bancária) para saber
+    // exatamente onde está o dinheiro de cada transação.
+    if(!s.financeCategories || !s.financeCategories.length) s.financeCategories = clone(FINANCE_CATEGORIES);
+    if(!s.financeContas) s.financeContas = [];
     return s;
   }
 
@@ -266,6 +273,7 @@
   var CHECK_SVG = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>';
   var TRASH_SVG = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px;"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"></path><path d="M10 11v6M14 11v6"></path></svg>';
   var PENCIL_SVG = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"></path></svg>';
+  var TREND_SVG = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 17l6-6 4 4 8-8"></path><path d="M21 7v6h-6"></path></svg>';
 
   /* ---------------- tabs ---------------- */
   var views = { inicio:'view-inicio', linguas:'view-linguas', forma:'view-forma', trabalho:'view-trabalho', vida:'view-vida' };
@@ -998,10 +1006,11 @@
     var cur = currentWeight();
     var rate = weightTrend();
 
-    [['dashWeightNow','dashWeightTrend','dashWeightChart'], ['fitWeightNow','fitWeightTrend','fitWeightChart']].forEach(function(ids){
+    [['dashWeightNow','dashWeightTrend','dashWeightChart','dashWeightEmpty'], ['fitWeightNow','fitWeightTrend','fitWeightChart','fitWeightEmpty']].forEach(function(ids){
       var nowEl = document.getElementById(ids[0]);
       var trendEl = document.getElementById(ids[1]);
       var chartEl = document.getElementById(ids[2]);
+      var emptyEl = document.getElementById(ids[3]);
       if(cur){
         nowEl.innerHTML = cur.kg.toFixed(1) + ' <span>kg</span>';
       } else {
@@ -1015,7 +1024,7 @@
         var sign = rate<0 ? '−' : '+';
         trendEl.textContent = sign + Math.abs(rate).toFixed(1) + ' kg/sem';
       }
-      drawWeightChart(chartEl, state.weight);
+      drawWeightChart(chartEl, emptyEl, state.weight);
     });
 
     var log = document.getElementById('weightLog');
@@ -1028,12 +1037,17 @@
     });
   }
 
-  function drawWeightChart(svg, entries){
+  function drawWeightChart(svg, emptyEl, entries){
     var W=300, H=120, padX=6, padY=14;
     if(entries.length < 2){
-      svg.innerHTML = '<text x="'+(W/2)+'" y="'+(H/2)+'" text-anchor="middle" fill="var(--ink-faint)" font-size="11" font-family="Inter, sans-serif">'+(entries.length===1 ? entries[0].kg.toFixed(1)+' kg registados' : 'Regista o teu peso para veres o gráfico')+'</text>';
+      svg.hidden = true; svg.innerHTML = '';
+      emptyEl.hidden = false;
+      emptyEl.innerHTML = entries.length===1 ?
+        TREND_SVG + '<div class="wce-title">'+entries[0].kg.toFixed(1)+' kg</div><div class="wce-sub">Primeiro registo — falta mais um para veres a tendência.</div>' :
+        TREND_SVG + '<div class="wce-title">Sem registos ainda</div><div class="wce-sub">Regista o teu peso para veres a tendência aqui.</div>';
       return;
     }
+    svg.hidden = false; emptyEl.hidden = true;
     var xs = entries.map(function(e){ return new Date(e.date).getTime(); });
     var ys = entries.map(function(e){ return e.kg; });
     var minX=Math.min.apply(null,xs), maxX=Math.max.apply(null,xs);
@@ -1857,8 +1871,9 @@
     var list = state.finance.slice().sort(function(a,b){ return a.date<b.date?1:-1; });
     log.innerHTML = list.length ? list.map(function(t){
       var d = new Date(t.date+'T00:00:00');
+      var conta = t.contaId && state.financeContas.find(function(c){ return c.id===t.contaId; });
       return '<div class="list-row"><div class="lr-main"><div class="lr-title">'+escHtml(t.desc)+'</div>' +
-        '<div class="lr-sub">'+fmtDateShort(d)+' · '+t.category+'</div></div>' +
+        '<div class="lr-sub">'+fmtDateShort(d)+' · '+escHtml(t.category)+(conta?' · '+escHtml(conta.name):'')+'</div></div>' +
         '<div class="lr-right"><span class="lr-amount '+(t.type==='entrada'?'in':'out')+'">'+(t.type==='entrada'?'+':'−')+fmtMT(t.amount)+'</span>' +
         '<span class="del" data-id="'+t.id+'">'+TRASH_SVG+'</span></div></div>';
     }).join('') : '<div class="list-row" style="color:var(--ink-faint)">Sem registos ainda.</div>';
@@ -1868,8 +1883,157 @@
         saveState(); renderFinance();
       });
     });
+
+    renderFinanceCategories();
+    renderFinanceContas();
   }
-  document.getElementById('financeCategory').innerHTML = FINANCE_CATEGORIES.map(function(c){ return '<option>'+c+'</option>'; }).join('');
+
+  /* -------- categorias de finanças (editáveis) -------- */
+  var financeCategoriesEditing = false;
+  var editFinanceCategories = [];
+  function populateFinanceCategorySelect(){
+    var sel = document.getElementById('financeCategory');
+    var prev = sel.value;
+    sel.innerHTML = state.financeCategories.map(function(c){ return '<option>'+escHtml(c)+'</option>'; }).join('');
+    if(state.financeCategories.indexOf(prev) !== -1) sel.value = prev;
+  }
+  function renderFinanceCategories(){
+    var box = document.getElementById('financeCategoriesBox');
+    if(financeCategoriesEditing){
+      box.innerHTML = '<div id="financeCategoriesEdit"></div>' +
+        '<div class="form-actions" style="justify-content:flex-end;margin-top:8px;"><span style="display:flex;gap:8px;"><button class="btn ghost" id="btnFinanceCatCancel" type="button">Cancelar</button><button class="btn" id="btnFinanceCatSave" type="button">Guardar</button></span></div>';
+      renderFinanceCategoriesEdit();
+      document.getElementById('btnFinanceCatCancel').addEventListener('click', function(){ financeCategoriesEditing=false; renderFinanceCategories(); });
+      document.getElementById('btnFinanceCatSave').addEventListener('click', function(){
+        var cleaned = editFinanceCategories.map(function(c){ return c.trim(); }).filter(Boolean);
+        if(cleaned.length) state.financeCategories = cleaned;
+        saveState(); financeCategoriesEditing=false;
+        populateFinanceCategorySelect(); renderFinanceCategories();
+      });
+    } else {
+      box.innerHTML = state.financeCategories.map(function(c){ return '<span class="streak-chip">'+escHtml(c)+'</span>'; }).join('') +
+        '<button class="ar-icon-btn" id="btnEditFinanceCat" aria-label="Editar categorias" type="button">'+PENCIL_SVG+'</button>';
+      document.getElementById('btnEditFinanceCat').addEventListener('click', function(){
+        editFinanceCategories = state.financeCategories.slice();
+        financeCategoriesEditing = true; renderFinanceCategories();
+      });
+    }
+  }
+  function renderFinanceCategoriesEdit(){
+    var box = document.getElementById('financeCategoriesEdit');
+    box.innerHTML = editFinanceCategories.map(function(c,i){
+      return '<div class="cat-edit-row" data-i="'+i+'"><input data-ci="'+i+'" value="'+escAttr(c)+'" placeholder="Categoria"><span class="mx" data-cidel="'+i+'">'+TRASH_SVG+'</span></div>';
+    }).join('') + '<button type="button" class="chip-add-btn" id="btnAddFinanceCat">+ categoria</button>';
+    box.querySelectorAll('[data-ci]').forEach(function(inp){
+      inp.addEventListener('input', function(){ editFinanceCategories[+inp.getAttribute('data-ci')] = inp.value; });
+    });
+    box.querySelectorAll('[data-cidel]').forEach(function(x){
+      x.addEventListener('click', function(){
+        if(editFinanceCategories.length<=1) return;
+        editFinanceCategories.splice(+x.getAttribute('data-cidel'),1); renderFinanceCategoriesEdit();
+      });
+    });
+    document.getElementById('btnAddFinanceCat').addEventListener('click', function(){ editFinanceCategories.push(''); renderFinanceCategoriesEdit(); });
+  }
+
+  /* -------- contas financeiras (carteira móvel / conta bancária) -------- */
+  var openContaEditId = null;
+  var FINANCE_WALLET_PROVIDERS = ['Emola', 'M-Pesa', 'Mkesh'];
+  function contaSummary(c){
+    if(c.kind === 'banco') return 'Conta bancária' + (c.nib ? ' · NIB '+c.nib : '') + (c.numeroConta ? ' · nº '+c.numeroConta : '');
+    return 'Carteira móvel · ' + (c.provider||'—') + (c.phone ? ' · '+c.phone : '');
+  }
+  function contaRowView(c){
+    return '<div class="activity-row" data-id="'+c.id+'">' +
+      '<div class="ar-body"><div class="ar-title">'+escHtml(c.name)+'</div><div class="ar-detail">'+escHtml(contaSummary(c))+'</div></div>' +
+      '<div class="ar-actions">' +
+        '<button class="ar-icon-btn" data-act="edit" type="button">'+PENCIL_SVG+'</button>' +
+        '<button class="ar-icon-btn danger" data-act="del" type="button">'+TRASH_SVG+'</button>' +
+      '</div></div>';
+  }
+  function contaRowEdit(c){
+    return '<div class="activity-edit-form" data-id="'+c.id+'">' +
+      '<input data-f="name" type="text" placeholder="Nome da conta (ex.: Carteira principal)" value="'+escAttr(c.name)+'">' +
+      '<select data-f="kind">' +
+        '<option value="movel"'+(c.kind==='movel'?' selected':'')+'>Carteira móvel</option>' +
+        '<option value="banco"'+(c.kind==='banco'?' selected':'')+'>Conta bancária</option>' +
+      '</select>' +
+      '<div class="row2even" data-group="movel"'+(c.kind!=='movel'?' hidden':'')+'>' +
+        '<select data-f="provider">' + FINANCE_WALLET_PROVIDERS.map(function(p){ return '<option'+(c.provider===p?' selected':'')+'>'+p+'</option>'; }).join('') + '</select>' +
+        '<input data-f="phone" type="tel" placeholder="Número de telefone" value="'+escAttr(c.phone||'')+'">' +
+      '</div>' +
+      '<div class="row2even" data-group="banco"'+(c.kind!=='banco'?' hidden':'')+'>' +
+        '<input data-f="nib" type="text" placeholder="NIB" value="'+escAttr(c.nib||'')+'">' +
+        '<input data-f="numeroConta" type="text" placeholder="Número da conta" value="'+escAttr(c.numeroConta||'')+'">' +
+      '</div>' +
+      '<div class="form-actions">' +
+        '<button class="btn ghost" data-act="cancel" type="button">Cancelar</button>' +
+        '<button class="btn" data-act="save" type="button">Guardar</button>' +
+      '</div></div>';
+  }
+  function renderFinanceContas(){
+    var box = document.getElementById('financeContasBox');
+    box.innerHTML = state.financeContas.length ? state.financeContas.map(function(c){
+      return c.id === openContaEditId ? contaRowEdit(c) : contaRowView(c);
+    }).join('') : '<p style="color:var(--ink-faint); font-size:13px;">Nenhuma conta registada ainda.</p>';
+
+    box.querySelectorAll('.activity-row [data-act="edit"]').forEach(function(btn){
+      btn.addEventListener('click', function(){
+        openContaEditId = btn.closest('.activity-row').getAttribute('data-id');
+        renderFinanceContas();
+      });
+    });
+    box.querySelectorAll('.activity-row [data-act="del"]').forEach(function(btn){
+      btn.addEventListener('click', function(){
+        var id = btn.closest('.activity-row').getAttribute('data-id');
+        var c = state.financeContas.find(function(x){ return x.id===id; });
+        showConfirm('Apagar a conta «'+(c?c.name:'')+'»? Esta ação não se desfaz.', function(){
+          state.financeContas = state.financeContas.filter(function(x){ return x.id!==id; });
+          if(openContaEditId===id) openContaEditId = null;
+          saveState(); renderFinanceContas(); populateFinanceContaSelect(); renderFinance();
+        });
+      });
+    });
+    box.querySelectorAll('.activity-edit-form [data-f="kind"]').forEach(function(sel){
+      sel.addEventListener('change', function(){
+        var form = sel.closest('.activity-edit-form');
+        var isMovel = sel.value === 'movel';
+        form.querySelector('[data-group="movel"]').hidden = !isMovel;
+        form.querySelector('[data-group="banco"]').hidden = isMovel;
+      });
+    });
+    box.querySelectorAll('.activity-edit-form [data-act="cancel"]').forEach(function(btn){
+      btn.addEventListener('click', function(){ openContaEditId = null; renderFinanceContas(); });
+    });
+    box.querySelectorAll('.activity-edit-form [data-act="save"]').forEach(function(btn){
+      btn.addEventListener('click', function(){
+        var form = btn.closest('.activity-edit-form');
+        var c = state.financeContas.find(function(x){ return x.id===form.getAttribute('data-id'); });
+        c.name = form.querySelector('[data-f="name"]').value.trim() || 'Conta sem nome';
+        c.kind = form.querySelector('[data-f="kind"]').value;
+        c.provider = form.querySelector('[data-f="provider"]').value;
+        c.phone = form.querySelector('[data-f="phone"]').value.trim();
+        c.nib = form.querySelector('[data-f="nib"]').value.trim();
+        c.numeroConta = form.querySelector('[data-f="numeroConta"]').value.trim();
+        saveState(); openContaEditId = null;
+        renderFinanceContas(); populateFinanceContaSelect(); renderFinance();
+      });
+    });
+  }
+  function populateFinanceContaSelect(){
+    var sel = document.getElementById('financeConta');
+    var prev = sel.value;
+    sel.innerHTML = '<option value="">— sem conta —</option>' + state.financeContas.map(function(c){ return '<option value="'+escAttr(c.id)+'">'+escHtml(c.name)+'</option>'; }).join('');
+    if(state.financeContas.some(function(c){ return c.id===prev; })) sel.value = prev;
+  }
+  document.getElementById('btnAddFinanceConta').addEventListener('click', function(){
+    var c = { id:'ct'+Date.now().toString(36)+Math.random().toString(36).slice(2,5), name:'Nova conta', kind:'movel', provider:'Emola', phone:'', nib:'', numeroConta:'' };
+    state.financeContas.push(c);
+    saveState(); openContaEditId = c.id; renderFinanceContas();
+  });
+
+  populateFinanceCategorySelect();
+  populateFinanceContaSelect();
   document.getElementById('financeForm').addEventListener('submit', function(e){
     e.preventDefault();
     var amount = parseFloat(document.getElementById('financeAmount').value);
@@ -1881,6 +2045,7 @@
       desc: document.getElementById('financeDesc').value.trim() || 'Sem descrição',
       amount: amount,
       category: document.getElementById('financeCategory').value,
+      contaId: document.getElementById('financeConta').value || null,
     });
     saveState();
     document.getElementById('financeForm').reset();
