@@ -2681,7 +2681,18 @@
 
   if('serviceWorker' in navigator){
     window.addEventListener('load', function(){
-      navigator.serviceWorker.register('sw.js').catch(function(){});
+      navigator.serviceWorker.register('sw.js').then(function(reg){
+        reg.update();
+      }).catch(function(){});
+    });
+    // quando uma versão nova assume o controlo, recarrega uma única vez para
+    // garantir que HTML/CSS/JS ficam todos da mesma versão (evita ecrãs a
+    // meio-caminho, com HTML novo a correr por cima de JS antigo em cache).
+    var swRefreshed = false;
+    navigator.serviceWorker.addEventListener('controllerchange', function(){
+      if(swRefreshed) return;
+      swRefreshed = true;
+      window.location.reload();
     });
   }
 })();
