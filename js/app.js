@@ -233,6 +233,35 @@
     toastTimer = setTimeout(function(){ toastEl.classList.remove('show'); }, 2200);
   }
 
+  /* ---------------- confirmação (substitui o confirm() nativo) ---------------- */
+  var confirmOverlay = document.getElementById('confirmOverlay');
+  var confirmActiveCallback = null;
+  function showConfirm(message, onConfirm, opts){
+    opts = opts || {};
+    document.getElementById('confirmKicker').textContent = opts.kicker || 'Apagar';
+    document.getElementById('confirmMessage').textContent = message;
+    document.getElementById('confirmCancelBtn').textContent = opts.cancelLabel || 'Cancelar';
+    document.getElementById('confirmOkBtn').textContent = opts.confirmLabel || 'Apagar';
+    confirmActiveCallback = onConfirm;
+    confirmOverlay.classList.add('open');
+  }
+  function hideConfirm(){
+    confirmOverlay.classList.remove('open');
+    confirmActiveCallback = null;
+  }
+  document.getElementById('confirmCancelBtn').addEventListener('click', hideConfirm);
+  document.getElementById('confirmOkBtn').addEventListener('click', function(){
+    var cb = confirmActiveCallback;
+    hideConfirm();
+    if(cb) cb();
+  });
+  confirmOverlay.addEventListener('click', function(e){
+    if(e.target === confirmOverlay) hideConfirm();
+  });
+  document.addEventListener('keydown', function(e){
+    if(e.key === 'Escape' && confirmOverlay.classList.contains('open')) hideConfirm();
+  });
+
   /* ---------------- icons ---------------- */
   var CHECK_SVG = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>';
   var TRASH_SVG = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px;"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"></path><path d="M10 11v6M14 11v6"></path></svg>';
@@ -361,10 +390,12 @@
     });
     box.querySelectorAll('[data-act="del"]').forEach(function(btn){
       btn.addEventListener('click', function(){
-        if(!confirm('Apagar esta sessão?')) return;
         var id = btn.closest('[data-id]').getAttribute('data-id');
-        state.langNotes.rotina = state.langNotes.rotina.filter(function(r){ return r.id!==id; });
-        saveState(); openRotinaEdit=null; renderRotinaCards();
+        var r = state.langNotes.rotina.find(function(x){ return x.id===id; });
+        showConfirm('Apagar a sessão «'+r.days+'»? Esta ação não se desfaz.', function(){
+          state.langNotes.rotina = state.langNotes.rotina.filter(function(x){ return x.id!==id; });
+          saveState(); openRotinaEdit=null; renderRotinaCards();
+        });
       });
     });
     box.querySelectorAll('[data-act="additem"]').forEach(function(btn){
@@ -438,10 +469,12 @@
     });
     box.querySelectorAll('[data-act="del"]').forEach(function(btn){
       btn.addEventListener('click', function(){
-        if(!confirm('Apagar este recurso?')) return;
         var id = btn.closest('[data-id]').getAttribute('data-id');
-        state.langNotes.recursos = state.langNotes.recursos.filter(function(r){ return r.id!==id; });
-        saveState(); openRecursoEdit=null; renderRecursosGrid();
+        var r = state.langNotes.recursos.find(function(x){ return x.id===id; });
+        showConfirm('Apagar o recurso «'+r.name+'»? Esta ação não se desfaz.', function(){
+          state.langNotes.recursos = state.langNotes.recursos.filter(function(x){ return x.id!==id; });
+          saveState(); openRecursoEdit=null; renderRecursosGrid();
+        });
       });
     });
     box.querySelectorAll('[data-act="save"]').forEach(function(btn){
@@ -640,10 +673,12 @@
     });
     box2.querySelectorAll('[data-act="del"]').forEach(function(btn){
       btn.addEventListener('click', function(){
-        if(!confirm('Apagar este protocolo?')) return;
         var id = btn.closest('[data-id]').getAttribute('data-id');
-        state.fitNotes.protocolos = state.fitNotes.protocolos.filter(function(p){ return p.id!==id; });
-        saveState(); openProtoEdit=null; renderProtocolosGrid();
+        var p = state.fitNotes.protocolos.find(function(x){ return x.id===id; });
+        showConfirm('Apagar o protocolo «'+p.title+'»? Esta ação não se desfaz.', function(){
+          state.fitNotes.protocolos = state.fitNotes.protocolos.filter(function(x){ return x.id!==id; });
+          saveState(); openProtoEdit=null; renderProtocolosGrid();
+        });
       });
     });
     box2.querySelectorAll('[data-act="save"]').forEach(function(btn){
@@ -689,10 +724,12 @@
     });
     box2.querySelectorAll('[data-act="del"]').forEach(function(btn){
       btn.addEventListener('click', function(){
-        if(!confirm('Apagar esta regra?')) return;
         var id = btn.closest('[data-id]').getAttribute('data-id');
-        state.fitNotes.regras = state.fitNotes.regras.filter(function(r){ return r.id!==id; });
-        saveState(); openRegraEdit=null; renderRegrasGrid();
+        var r = state.fitNotes.regras.find(function(x){ return x.id===id; });
+        showConfirm('Apagar a regra «'+r.title+'»? Esta ação não se desfaz.', function(){
+          state.fitNotes.regras = state.fitNotes.regras.filter(function(x){ return x.id!==id; });
+          saveState(); openRegraEdit=null; renderRegrasGrid();
+        });
       });
     });
     box2.querySelectorAll('[data-act="save"]').forEach(function(btn){
@@ -794,10 +831,12 @@
     });
     box2.querySelectorAll('[data-act="delcard"]').forEach(function(el){
       el.addEventListener('click', function(){
-        if(!confirm('Apagar este cartão de refeições?')) return;
         var id = el.closest('[data-id]').getAttribute('data-id');
-        state.fitNotes.refeicoes = state.fitNotes.refeicoes.filter(function(m){ return m.id!==id; });
-        saveState(); openRefeicaoHeadEdit=null; renderRefeicoesCards();
+        var m = state.fitNotes.refeicoes.find(function(x){ return x.id===id; });
+        showConfirm('Apagar o cartão «'+m.title+'»? Esta ação não se desfaz.', function(){
+          state.fitNotes.refeicoes = state.fitNotes.refeicoes.filter(function(x){ return x.id!==id; });
+          saveState(); openRefeicaoHeadEdit=null; renderRefeicoesCards();
+        });
       });
     });
     box2.querySelectorAll('[data-act="savehead"]').forEach(function(el){
@@ -1187,11 +1226,13 @@
     list.querySelectorAll('.activity-row [data-act="del"]').forEach(function(btn){
       btn.addEventListener('click', function(){
         var id = btn.closest('.activity-row').getAttribute('data-id');
-        if(!confirm('Remover esta atividade?')) return;
-        removeActivity(editingDay, id);
-        renderActivityList();
-        renderDashboard();
-        renderFitStatic();
+        var act = dayActivities(editingDay).find(function(a){ return a.id===id; });
+        showConfirm('Remover a atividade «'+(act?act.title:'')+'»? Esta ação não se desfaz.', function(){
+          removeActivity(editingDay, id);
+          renderActivityList();
+          renderDashboard();
+          renderFitStatic();
+        });
       });
     });
     list.querySelectorAll('.activity-edit-form [data-act="cancel"]').forEach(function(btn){
@@ -1540,11 +1581,12 @@
   });
   document.getElementById('btnDeletePlano').addEventListener('click', function(){
     var p = currentPlano(); if(!p) return;
-    if(!confirm('Apagar o plano "'+p.title+'"? Esta ação não pode ser desfeita.')) return;
-    state.planos = state.planos.filter(function(x){ return x.id!==p.id; });
-    saveState();
-    renderPlanosList();
-    goVida('planos');
+    showConfirm('Apagar o plano «'+p.title+'»? Esta ação não se desfaz.', function(){
+      state.planos = state.planos.filter(function(x){ return x.id!==p.id; });
+      saveState();
+      renderPlanosList();
+      goVida('planos');
+    });
   });
 
   var planoHeaderEditing = false;
@@ -1742,9 +1784,10 @@
       btn.addEventListener('click', function(){
         var fid = btn.getAttribute('data-faseremove');
         var fase = p.fases.find(function(f){ return f.id===fid; });
-        if(!confirm('Apagar a fase "'+fase.label+'" e todos os seus marcos?')) return;
-        p.fases = p.fases.filter(function(f){ return f.id!==fid; });
-        saveState(); renderPlanoFases();
+        showConfirm('Apagar a fase «'+fase.label+'» e todos os seus marcos? Esta ação não se desfaz.', function(){
+          p.fases = p.fases.filter(function(f){ return f.id!==fid; });
+          saveState(); renderPlanoFases();
+        });
       });
     });
     box.querySelectorAll('[data-addmarco]').forEach(function(btn){
@@ -1768,11 +1811,13 @@
     });
     box.querySelectorAll('[data-act="delmarco"]').forEach(function(btn){
       btn.addEventListener('click', function(){
-        if(!confirm('Apagar este marco?')) return;
         var card = btn.closest('[data-fid]');
         var fase = p.fases.find(function(f){ return f.id===card.getAttribute('data-fid'); });
-        fase.marcos = fase.marcos.filter(function(m){ return m.id!==card.getAttribute('data-mid'); });
-        saveState(); openMarcoEditKey=null; renderPlanoFases();
+        var marco = fase.marcos.find(function(m){ return m.id===card.getAttribute('data-mid'); });
+        showConfirm('Apagar o marco «'+marco.titulo+'»? Esta ação não se desfaz.', function(){
+          fase.marcos = fase.marcos.filter(function(m){ return m.id!==card.getAttribute('data-mid'); });
+          saveState(); openMarcoEditKey=null; renderPlanoFases();
+        });
       });
     });
     box.querySelectorAll('[data-act="savemarco"]').forEach(function(btn){
@@ -1970,10 +2015,11 @@
       document.getElementById('btnRenameList').addEventListener('click', function(){ renamingShoppingList=true; renderShopping(); });
       var delBtn = document.getElementById('btnDeleteList');
       if(delBtn) delBtn.addEventListener('click', function(){
-        if(!confirm('Apagar a lista "'+list.name+'" e todos os seus itens?')) return;
-        state.shoppingLists = state.shoppingLists.filter(function(l){ return l.id!==list.id; });
-        currentShoppingListId = null;
-        saveState(); renderShopping();
+        showConfirm('Apagar a lista «'+list.name+'» e todos os seus itens? Esta ação não se desfaz.', function(){
+          state.shoppingLists = state.shoppingLists.filter(function(l){ return l.id!==list.id; });
+          currentShoppingListId = null;
+          saveState(); renderShopping();
+        });
       });
     }
 
@@ -2445,13 +2491,14 @@
   });
 
   document.getElementById('btnReset').addEventListener('click', function(){
-    if(!confirm('Apagar todo o progresso guardado neste aparelho? Esta ação não pode ser desfeita.')) return;
-    state = freshDefaultState();
-    saveState();
-    applyTheme(state.theme);
-    renderAll();
-    toast('Progresso reposto');
-    closeSheet();
+    showConfirm('Apagar todo o progresso guardado neste aparelho? Esta ação não se desfaz.', function(){
+      state = freshDefaultState();
+      saveState();
+      applyTheme(state.theme);
+      renderAll();
+      toast('Progresso reposto');
+      closeSheet();
+    }, { kicker:'Repor tudo', confirmLabel:'Repor' });
   });
 
   /* ---------------- boot ---------------- */
