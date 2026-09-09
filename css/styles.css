@@ -799,6 +799,55 @@ footer.page-footer{ padding:30px 0 10px; text-align:center; color:var(--ink-fain
 .plano-marco-titulo{ font-size:14px; font-weight:700; color:var(--ink); }
 .plano-marco-detalhe{ font-size:12.5px; color:var(--ink-soft); margin-top:4px; line-height:1.5; }
 
+/* ============ Estudos (cronómetro/registo manual + tempo por período) ============ */
+.est-timer-card{
+  background:var(--surface-2); border:1px solid var(--line); border-radius:var(--radius-m);
+  padding:16px; text-align:center;
+}
+.est-timer-card select, .est-timer-card input[type="text"]{
+  border:1px solid var(--line-strong); background:var(--surface); border-radius:var(--radius-s);
+  padding:9px 11px; font-size:13.5px; color:var(--ink); font-family:var(--font-body); width:100%;
+}
+.est-timer-card .row2{ display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-bottom:8px; }
+.est-timer-card input[type="text"]{ margin-top:0; }
+.est-timer-info{ margin-bottom:10px; }
+.est-timer-materia{ font-family:var(--font-display); font-size:16px; font-weight:600; }
+.est-timer-tag{ font-family:var(--font-mono); font-size:11px; color:var(--ink-faint); text-transform:uppercase; letter-spacing:.05em; }
+.est-timer-conteudo{ font-size:12.5px; color:var(--ink-soft); margin-top:2px; }
+.est-timer-clock{ font-family:var(--font-mono); font-size:36px; font-weight:700; color:var(--accent-strong); margin:6px 0 14px; font-feature-settings:"tnum" 1; }
+
+.est-period-tabs{ display:flex; gap:6px; overflow-x:auto; scrollbar-width:none; margin-bottom:10px; }
+.est-period-tabs::-webkit-scrollbar{ display:none; }
+.est-period-tabs button{
+  flex-shrink:0; border:1px solid var(--line); background:var(--surface); color:var(--ink-soft);
+  padding:6px 13px; border-radius:999px; font-size:12px; font-weight:600; cursor:pointer;
+}
+.est-period-tabs button.active{ background:var(--ink); color:var(--paper); border-color:var(--ink); }
+.est-period-nav{ display:flex; align-items:center; justify-content:center; gap:10px; }
+.est-period-label{ font-family:var(--font-mono); font-size:12.5px; color:var(--ink-soft); }
+.est-nav-btn{
+  width:28px; height:28px; border-radius:50%; border:1px solid var(--line); background:var(--surface);
+  color:var(--ink-soft); display:flex; align-items:center; justify-content:center; cursor:pointer;
+}
+.est-nav-btn svg{ width:14px; height:14px; }
+.est-period-custom{ gap:8px; }
+.est-period-custom input{ border:1px solid var(--line-strong); background:var(--surface-2); border-radius:6px; padding:6px 8px; font-size:12.5px; }
+
+.est-donut-wrap{ position:relative; width:120px; height:120px; margin:6px auto; }
+.est-donut{ width:120px; height:120px; }
+.est-donut-total{
+  position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center;
+}
+.est-donut-total .n{ font-family:var(--font-mono); font-size:16px; font-weight:700; color:var(--ink); }
+.est-donut-total .lbl{ font-size:10.5px; color:var(--ink-faint); text-transform:uppercase; letter-spacing:.04em; }
+.est-legend{ margin-top:16px; }
+.est-legend-row{ display:flex; align-items:center; gap:8px; padding:7px 2px; border-top:1px solid var(--line); font-size:13px; }
+.est-legend-row:first-child{ border-top:none; }
+.est-legend-row .dot{ width:9px; height:9px; border-radius:50%; flex-shrink:0; }
+.est-legend-name{ flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.est-legend-val{ font-family:var(--font-mono); font-weight:600; white-space:nowrap; }
+.est-legend-val small{ color:var(--ink-faint); font-weight:500; }
+
 /* ============ Confirmação (substitui o confirm() nativo do browser) ============ */
 .confirm-overlay{
   position:fixed; inset:0; background:rgba(20,17,12,.5); z-index:80;

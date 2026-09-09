@@ -454,6 +454,42 @@
       </section>
     </div>
 
+    <!-- Estudos -->
+    <div class="subview" id="vida-estudos">
+      <div class="detail-head"><button class="backbtn" data-vida-back type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 6-6 6 6 6"></path></svg></button><h2>Estudos</h2></div>
+
+      <section class="blk" style="padding-top:16px;">
+        <div class="subtabs-wrap"><div class="subtabs">
+          <button data-anchor="#est-registar">Registar</button>
+          <button data-anchor="#est-tempo">Tempo de estudo</button>
+          <button data-anchor="#est-materias">Matérias</button>
+        </div></div>
+      </section>
+
+      <section class="blk" id="est-registar">
+        <div class="blk-head"><div><span class="kicker">Cronómetro ou registo manual</span><h2>Começar a estudar</h2></div></div>
+        <div id="estudoTimerBox"></div>
+        <div id="estudoManualBox" style="margin-top:10px;"></div>
+      </section>
+
+      <section class="blk" id="est-tempo">
+        <div class="blk-head"><div><span class="kicker">Tempo de estudo</span><h2>Onde foi o tempo</h2></div></div>
+        <div id="estudoPeriodBox"></div>
+        <div id="estTempoChartBox" style="margin-top:16px;"></div>
+        <div class="blk-head" style="margin-top:22px;"><div><span class="kicker">Histórico</span></div></div>
+        <div id="estTempoLog" class="scroll-list"></div>
+      </section>
+
+      <section class="blk" id="est-materias">
+        <div class="blk-head"><div><span class="kicker">Configurar</span><h2>Matérias</h2></div></div>
+        <div class="plano-chips" id="estudoMateriasBox"></div>
+        <div class="blk-head" style="margin-top:22px;"><div><span class="kicker">Tipos de estudo</span></div></div>
+        <div class="plano-chips" id="estudoTiposBox"></div>
+      </section>
+
+      <footer class="page-footer">Protocolo — o tempo que investes a estudar, contado.</footer>
+    </div>
+
   </section>
 
 </main>

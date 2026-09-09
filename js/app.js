@@ -58,6 +58,10 @@
       pendentes: [],
       agenda: [],
       planos: [ rotaStateToPlano(defaultRotaState()) ],
+      estudoMaterias: [],
+      estudoTipos: ['Teoria', 'Exercícios', 'Revisão', 'Vídeo'],
+      estudoLog: [],
+      estudoTimer: null,
       fitNotes: seedFitNotes(),
       langNotes: seedLangNotes(),
       langWeeks: seedLangWeeks(),
@@ -172,6 +176,12 @@
     // exatamente onde está o dinheiro de cada transação.
     if(!s.financeCategories || !s.financeCategories.length) s.financeCategories = clone(FINANCE_CATEGORIES);
     if(!s.financeContas) s.financeContas = [];
+    // v10: novo espaço "Estudos" — matérias/tipos editáveis, sessões (por
+    // cronómetro ou registo manual) e um cronómetro que pode ficar a correr.
+    if(!s.estudoMaterias) s.estudoMaterias = [];
+    if(!s.estudoTipos || !s.estudoTipos.length) s.estudoTipos = ['Teoria', 'Exercícios', 'Revisão', 'Vídeo'];
+    if(!s.estudoLog) s.estudoLog = [];
+    if(s.estudoTimer === undefined) s.estudoTimer = null;
     return s;
   }
 
@@ -274,6 +284,8 @@
   var TRASH_SVG = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width:14px;height:14px;"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"></path><path d="M10 11v6M14 11v6"></path></svg>';
   var PENCIL_SVG = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"></path></svg>';
   var TREND_SVG = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 17l6-6 4 4 8-8"></path><path d="M21 7v6h-6"></path></svg>';
+  var CHEVRON_LEFT_SVG = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 6-6 6 6 6"></path></svg>';
+  var CHEVRON_RIGHT_SVG = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 6 6 6-6 6"></path></svg>';
 
   /* ---------------- tabs ---------------- */
   var views = { inicio:'view-inicio', linguas:'view-linguas', forma:'view-forma', trabalho:'view-trabalho', vida:'view-vida' };
@@ -1854,6 +1866,327 @@
     saveState(); openFaseEditId = fase.id; renderPlanoFases();
   });
 
+  /* ================= ESTUDOS (matérias, cronómetro/registo manual, tempo por período) ================= */
+  var ESTUDO_PALETTE = [
+    'var(--accent)', 'var(--cat-lang)', 'var(--cat-fit)',
+    'var(--warn)', 'var(--bad)', 'var(--good)', 'var(--accent-strong)',
+  ];
+  function estudoColorFor(materia){
+    var idx = state.estudoMaterias.indexOf(materia);
+    if(idx < 0) idx = 0;
+    return ESTUDO_PALETTE[idx % ESTUDO_PALETTE.length];
+  }
+  function estudoFmtDuration(min){
+    min = Math.round(min);
+    var h = Math.floor(min/60), m = min%60;
+    if(h && m) return h+'h '+m+'min';
+    if(h) return h+'h';
+    return m+'min';
+  }
+  function estudoFmtHMS(totalSec){
+    var h = Math.floor(totalSec/3600), m = Math.floor((totalSec%3600)/60), s = totalSec%60;
+    function pad(n){ return String(n).padStart(2,'0'); }
+    return pad(h)+':'+pad(m)+':'+pad(s);
+  }
+  function estudoElapsedSeconds(){
+    if(!state.estudoTimer) return 0;
+    return Math.max(0, Math.floor((Date.now() - new Date(state.estudoTimer.startedAt).getTime())/1000));
+  }
+  function estudoWeekMinutes(){
+    var w = weekDates(TODAY);
+    var s = iso(w[0]), e = iso(w[6]);
+    return state.estudoLog.filter(function(x){ return x.date>=s && x.date<=e; }).reduce(function(sum,x){ return sum+x.minutos; },0);
+  }
+
+  /* -------- listas editáveis genéricas (chips) — usadas por matérias e tipos -------- */
+  function makeChipListEditor(boxId, getItems, setItems, addLabel, onChange){
+    var editing = false;
+    var draft = [];
+    function renderEdit(){
+      var editBox = document.querySelector('#'+boxId+' .chip-edit-list');
+      editBox.innerHTML = draft.map(function(c,i){
+        return '<div class="cat-edit-row" data-i="'+i+'"><input data-ci="'+i+'" value="'+escAttr(c)+'"><span class="mx" data-cidel="'+i+'">'+TRASH_SVG+'</span></div>';
+      }).join('') + '<button type="button" class="chip-add-btn" data-act="add">'+addLabel+'</button>';
+      editBox.querySelectorAll('[data-ci]').forEach(function(inp){
+        inp.addEventListener('input', function(){ draft[+inp.getAttribute('data-ci')] = inp.value; });
+      });
+      editBox.querySelectorAll('[data-cidel]').forEach(function(x){
+        x.addEventListener('click', function(){
+          if(draft.length<=1) return;
+          draft.splice(+x.getAttribute('data-cidel'),1); renderEdit();
+        });
+      });
+      editBox.querySelector('[data-act="add"]').addEventListener('click', function(){ draft.push(''); renderEdit(); });
+    }
+    function render(){
+      var box = document.getElementById(boxId);
+      if(editing){
+        box.innerHTML = '<div class="chip-edit-list"></div>' +
+          '<div class="form-actions" style="justify-content:flex-end;margin-top:8px;"><span style="display:flex;gap:8px;"><button class="btn ghost" data-act="cancel" type="button">Cancelar</button><button class="btn" data-act="save" type="button">Guardar</button></span></div>';
+        renderEdit();
+        box.querySelector('[data-act="cancel"]').addEventListener('click', function(){ editing=false; render(); });
+        box.querySelector('[data-act="save"]').addEventListener('click', function(){
+          var cleaned = draft.map(function(c){ return c.trim(); }).filter(Boolean);
+          if(cleaned.length) setItems(cleaned);
+          editing = false; render();
+          if(onChange) onChange();
+        });
+      } else {
+        var items = getItems();
+        box.innerHTML = (items.length ? items.map(function(c){ return '<span class="streak-chip">'+escHtml(c)+'</span>'; }).join('') : '<span style="color:var(--ink-faint);font-size:12.5px;">Nenhuma ainda.</span>') +
+          '<button class="ar-icon-btn" type="button" data-act="edit" aria-label="Editar">'+PENCIL_SVG+'</button>';
+        box.querySelector('[data-act="edit"]').addEventListener('click', function(){ draft = getItems().slice(); editing=true; render(); });
+      }
+    }
+    return render;
+  }
+  var renderEstudoMaterias = makeChipListEditor('estudoMateriasBox',
+    function(){ return state.estudoMaterias; },
+    function(v){ state.estudoMaterias = v; saveState(); },
+    '+ matéria',
+    function(){ renderEstudos(); renderVidaHub(); }
+  );
+  var renderEstudoTipos = makeChipListEditor('estudoTiposBox',
+    function(){ return state.estudoTipos; },
+    function(v){ state.estudoTipos = v; saveState(); },
+    '+ tipo',
+    function(){ renderEstudos(); }
+  );
+
+  /* -------- cronómetro / registo manual -------- */
+  function renderEstudoTimerBox(){
+    var box = document.getElementById('estudoTimerBox');
+    if(state.estudoTimer){
+      var t = state.estudoTimer;
+      box.innerHTML = '<div class="est-timer-card running">' +
+        '<div class="est-timer-info"><span class="est-timer-materia">'+escHtml(t.materia)+'</span>' +
+          (t.tipo ? ' <span class="est-timer-tag">'+escHtml(t.tipo)+'</span>' : '') +
+          (t.conteudo ? '<div class="est-timer-conteudo">'+escHtml(t.conteudo)+'</div>' : '') +
+        '</div>' +
+        '<div class="est-timer-clock" id="estudoTimerClock">'+estudoFmtHMS(estudoElapsedSeconds())+'</div>' +
+        '<div class="form-actions" style="justify-content:space-between;">' +
+          '<button class="btn ghost" id="btnEstudoTimerCancel" type="button">Cancelar</button>' +
+          '<button class="btn" id="btnEstudoTimerStop" type="button">Parar e guardar</button>' +
+        '</div></div>';
+      document.getElementById('btnEstudoTimerCancel').addEventListener('click', function(){
+        showConfirm('Cancelar o cronómetro em curso? O tempo não será guardado.', function(){
+          state.estudoTimer = null; saveState(); renderEstudoTimerBox(); renderEstudoAddToggle(); renderVidaHub();
+        }, { kicker:'Cronómetro', confirmLabel:'Cancelar' });
+      });
+      document.getElementById('btnEstudoTimerStop').addEventListener('click', function(){
+        var secs = estudoElapsedSeconds();
+        var minutos = Math.max(1, Math.round(secs/60));
+        state.estudoLog.push({
+          id:'es'+Date.now().toString(36)+Math.random().toString(36).slice(2,5),
+          date: iso(new Date(t.startedAt)),
+          materia: t.materia, tipo: t.tipo||'', conteudo: t.conteudo||'',
+          minutos: minutos,
+        });
+        state.estudoTimer = null;
+        saveState(); renderEstudos(); renderVidaHub();
+        toast('Sessão registada — '+estudoFmtDuration(minutos));
+      });
+    } else if(!state.estudoMaterias.length){
+      box.innerHTML = '<p style="color:var(--ink-faint);font-size:13px;">Cria uma matéria em baixo para poderes começar a registar.</p>';
+    } else {
+      box.innerHTML = '<div class="est-timer-card">' +
+        '<div class="row2"><select id="estudoTimerMateria">' + state.estudoMaterias.map(function(m){ return '<option>'+escHtml(m)+'</option>'; }).join('') + '</select>' +
+        '<select id="estudoTimerTipo"><option value="">Tipo (opcional)</option>' + state.estudoTipos.map(function(t){ return '<option>'+escHtml(t)+'</option>'; }).join('') + '</select></div>' +
+        '<input type="text" id="estudoTimerConteudo" placeholder="Conteúdo (opcional)">' +
+        '<button class="btn" id="btnEstudoTimerStart" type="button" style="width:100%;margin-top:10px;">Começar</button>' +
+        '</div>';
+      document.getElementById('btnEstudoTimerStart').addEventListener('click', function(){
+        state.estudoTimer = {
+          materia: document.getElementById('estudoTimerMateria').value,
+          tipo: document.getElementById('estudoTimerTipo').value,
+          conteudo: document.getElementById('estudoTimerConteudo').value.trim(),
+          startedAt: new Date().toISOString(),
+        };
+        saveState(); renderEstudoTimerBox(); renderEstudoAddToggle(); renderVidaHub();
+      });
+    }
+  }
+  setInterval(function(){
+    if(!state.estudoTimer) return;
+    var el = document.getElementById('estudoTimerClock');
+    if(el) el.textContent = estudoFmtHMS(estudoElapsedSeconds());
+  }, 1000);
+
+  var estudoAdding = false;
+  function renderEstudoAddToggle(){
+    var box = document.getElementById('estudoManualBox');
+    if(state.estudoTimer || !state.estudoMaterias.length){ box.innerHTML=''; estudoAdding=false; return; }
+    if(!estudoAdding){
+      box.innerHTML = '<button class="btn-add-activity" id="btnEstudoManualOpen" type="button">+ Registar manualmente (sessão já terminada)</button>';
+      document.getElementById('btnEstudoManualOpen').addEventListener('click', function(){ estudoAdding=true; renderEstudoAddToggle(); });
+      return;
+    }
+    box.innerHTML = '<div class="activity-edit-form">' +
+      '<div class="row2even"><input type="date" id="estNovoData" value="'+TODAY_ISO+'"><select id="estNovoMateria">'+state.estudoMaterias.map(function(m){ return '<option>'+escHtml(m)+'</option>'; }).join('')+'</select></div>' +
+      '<div class="row2even"><select id="estNovoTipo"><option value="">Tipo (opcional)</option>'+state.estudoTipos.map(function(t){ return '<option>'+escHtml(t)+'</option>'; }).join('')+'</select><input type="text" id="estNovoConteudo" placeholder="Conteúdo (opcional)"></div>' +
+      '<div class="row2even"><input type="number" min="0" id="estNovoHoras" placeholder="Horas"><input type="number" min="0" max="59" id="estNovoMinutos" placeholder="Minutos"></div>' +
+      '<div class="form-actions"><button class="btn ghost" id="btnEstNovoCancel" type="button">Cancelar</button><button class="btn" id="btnEstNovoSave" type="button">Guardar</button></div>' +
+      '</div>';
+    document.getElementById('btnEstNovoCancel').addEventListener('click', function(){ estudoAdding=false; renderEstudoAddToggle(); });
+    document.getElementById('btnEstNovoSave').addEventListener('click', function(){
+      var horas = parseFloat(document.getElementById('estNovoHoras').value)||0;
+      var minutosIn = parseFloat(document.getElementById('estNovoMinutos').value)||0;
+      var totalMin = Math.round(horas*60+minutosIn);
+      if(totalMin<=0){ toast('Indica a duração'); return; }
+      state.estudoLog.push({
+        id:'es'+Date.now().toString(36)+Math.random().toString(36).slice(2,5),
+        date: document.getElementById('estNovoData').value || TODAY_ISO,
+        materia: document.getElementById('estNovoMateria').value,
+        tipo: document.getElementById('estNovoTipo').value,
+        conteudo: document.getElementById('estNovoConteudo').value.trim(),
+        minutos: totalMin,
+      });
+      saveState(); estudoAdding=false; renderEstudos(); renderVidaHub();
+      toast('Sessão registada');
+    });
+  }
+
+  /* -------- período (Dia/Semana/Mês/Ano/Total/Custom) -------- */
+  var estudoPeriod = 'semana';
+  var estudoRefDate = todayDate();
+  var estudoCustomStart = TODAY_ISO;
+  var estudoCustomEnd = TODAY_ISO;
+  function estudoRange(){
+    if(estudoPeriod === 'dia') return { start: estudoRefDate, end: estudoRefDate };
+    if(estudoPeriod === 'semana'){ var w = weekDates(estudoRefDate); return { start:w[0], end:w[6] }; }
+    if(estudoPeriod === 'mes') return { start:new Date(estudoRefDate.getFullYear(), estudoRefDate.getMonth(), 1), end:new Date(estudoRefDate.getFullYear(), estudoRefDate.getMonth()+1, 0) };
+    if(estudoPeriod === 'ano') return { start:new Date(estudoRefDate.getFullYear(),0,1), end:new Date(estudoRefDate.getFullYear(),11,31) };
+    if(estudoPeriod === 'custom') return { start:new Date(estudoCustomStart+'T00:00:00'), end:new Date(estudoCustomEnd+'T00:00:00') };
+    return null; // total
+  }
+  function estudoLogInRange(){
+    var r = estudoRange();
+    if(!r) return state.estudoLog.slice();
+    var s = iso(r.start), e = iso(r.end);
+    return state.estudoLog.filter(function(x){ return x.date >= s && x.date <= e; });
+  }
+  function estudoShift(dir){
+    if(estudoPeriod==='dia') estudoRefDate = addDays(estudoRefDate, dir);
+    else if(estudoPeriod==='semana') estudoRefDate = addDays(estudoRefDate, dir*7);
+    else if(estudoPeriod==='mes') estudoRefDate = new Date(estudoRefDate.getFullYear(), estudoRefDate.getMonth()+dir, 1);
+    else if(estudoPeriod==='ano') estudoRefDate = new Date(estudoRefDate.getFullYear()+dir, 0, 1);
+    renderEstudos();
+  }
+  function estudoPeriodLabel(){
+    var r = estudoRange();
+    if(estudoPeriod==='total') return 'Todo o histórico';
+    if(estudoPeriod==='dia') return fmtDateHuman(r.start);
+    if(estudoPeriod==='ano') return String(r.start.getFullYear());
+    if(estudoPeriod==='mes') return MONTHS_PT_SHORT[r.start.getMonth()] + ' ' + r.start.getFullYear();
+    return fmtDateHuman(r.start) + ' – ' + fmtDateHuman(r.end);
+  }
+  function renderEstudoPeriodBar(){
+    var box = document.getElementById('estudoPeriodBox');
+    var tabs = [['dia','Dia'],['semana','Semana'],['mes','Mês'],['ano','Ano'],['total','Total'],['custom','Custom']];
+    var tabsHtml = '<div class="est-period-tabs">' + tabs.map(function(t){
+      return '<button data-p="'+t[0]+'" class="'+(estudoPeriod===t[0]?'active':'')+'" type="button">'+t[1]+'</button>';
+    }).join('') + '</div>';
+
+    var navHtml;
+    if(estudoPeriod === 'total'){
+      navHtml = '<div class="est-period-nav"><span class="est-period-label">Todo o histórico</span></div>';
+    } else if(estudoPeriod === 'custom'){
+      navHtml = '<div class="est-period-nav est-period-custom">' +
+        '<input type="date" id="estudoCustomStartInput" value="'+estudoCustomStart+'">' +
+        '<span>até</span>' +
+        '<input type="date" id="estudoCustomEndInput" value="'+estudoCustomEnd+'">' +
+        '</div>';
+    } else {
+      navHtml = '<div class="est-period-nav">' +
+        '<button class="est-nav-btn" id="estudoNavPrev" type="button">'+CHEVRON_LEFT_SVG+'</button>' +
+        '<span class="est-period-label">'+estudoPeriodLabel()+'</span>' +
+        '<button class="est-nav-btn" id="estudoNavNext" type="button">'+CHEVRON_RIGHT_SVG+'</button>' +
+        '</div>';
+    }
+    box.innerHTML = tabsHtml + navHtml;
+
+    box.querySelectorAll('[data-p]').forEach(function(b){
+      b.addEventListener('click', function(){ estudoPeriod = b.getAttribute('data-p'); renderEstudos(); });
+    });
+    if(estudoPeriod !== 'total' && estudoPeriod !== 'custom'){
+      document.getElementById('estudoNavPrev').addEventListener('click', function(){ estudoShift(-1); });
+      document.getElementById('estudoNavNext').addEventListener('click', function(){ estudoShift(1); });
+    }
+    if(estudoPeriod === 'custom'){
+      document.getElementById('estudoCustomStartInput').addEventListener('change', function(e){ estudoCustomStart = e.target.value; renderEstudos(); });
+      document.getElementById('estudoCustomEndInput').addEventListener('change', function(e){ estudoCustomEnd = e.target.value; renderEstudos(); });
+    }
+  }
+
+  /* -------- donut de tempo por matéria + histórico -------- */
+  function estudoDonutSVG(data){
+    var total = data.reduce(function(s,d){ return s+d.minutes; },0);
+    var r = 46, C = 2*Math.PI*r;
+    var cum = 0;
+    var circles = data.map(function(d){
+      var frac = total>0 ? d.minutes/total : 0;
+      var len = frac*C;
+      var dash = len.toFixed(1)+' '+(C-len).toFixed(1);
+      var offset = (-cum).toFixed(1);
+      cum += len;
+      return '<circle cx="60" cy="60" r="'+r+'" fill="none" stroke="'+estudoColorFor(d.materia)+'" stroke-width="15" stroke-dasharray="'+dash+'" stroke-dashoffset="'+offset+'" transform="rotate(-90 60 60)"></circle>';
+    }).join('');
+    return '<svg viewBox="0 0 120 120" class="est-donut">' +
+      '<circle cx="60" cy="60" r="'+r+'" fill="none" stroke="var(--bar-track)" stroke-width="15"></circle>' +
+      circles + '</svg>';
+  }
+  function renderEstudoTempo(){
+    var log = estudoLogInRange();
+    var byMateria = {};
+    log.forEach(function(e){ byMateria[e.materia] = (byMateria[e.materia]||0) + e.minutos; });
+    var data = Object.keys(byMateria).map(function(m){ return { materia:m, minutes:byMateria[m] }; }).sort(function(a,b){ return b.minutes-a.minutes; });
+    var total = data.reduce(function(s,d){ return s+d.minutes; },0);
+
+    var box = document.getElementById('estTempoChartBox');
+    if(!data.length){
+      box.innerHTML = '<div class="weight-chart-empty" style="height:auto;padding:26px 20px;">'+TREND_SVG+'<div class="wce-title">Sem registos neste período</div><div class="wce-sub">Usa o cronómetro ou regista manualmente em cima.</div></div>';
+      return;
+    }
+    box.innerHTML = '<div class="est-donut-wrap">' + estudoDonutSVG(data) +
+      '<div class="est-donut-total"><span class="n">'+estudoFmtDuration(total)+'</span><span class="lbl">total</span></div></div>' +
+      '<div class="est-legend">' + data.map(function(d){
+        var pct = total ? Math.round(d.minutes/total*100) : 0;
+        return '<div class="est-legend-row"><span class="dot" style="background:'+estudoColorFor(d.materia)+'"></span><span class="est-legend-name">'+escHtml(d.materia)+'</span><span class="est-legend-val">'+estudoFmtDuration(d.minutes)+' <small>('+pct+'%)</small></span></div>';
+      }).join('') + '</div>';
+  }
+  function renderEstudoLog(){
+    var log = estudoLogInRange().slice().sort(function(a,b){ return a.date<b.date?1:-1; });
+    var el = document.getElementById('estTempoLog');
+    el.innerHTML = log.length ? log.map(function(e){
+      var d = new Date(e.date+'T00:00:00');
+      var sub = fmtDateShort(d) + (e.tipo?' · '+escHtml(e.tipo):'') + (e.conteudo?' · '+escHtml(e.conteudo):'');
+      return '<div class="list-row"><div class="lr-main"><div class="lr-title">'+escHtml(e.materia)+'</div>' +
+        '<div class="lr-sub">'+sub+'</div></div>' +
+        '<div class="lr-right"><span class="lr-amount mono">'+estudoFmtDuration(e.minutos)+'</span>' +
+        '<span class="del" data-id="'+e.id+'">'+TRASH_SVG+'</span></div></div>';
+    }).join('') : '<div class="list-row" style="color:var(--ink-faint)">Sem registos ainda.</div>';
+    el.querySelectorAll('.del').forEach(function(btn){
+      btn.addEventListener('click', function(){
+        var id = btn.getAttribute('data-id');
+        var e = state.estudoLog.find(function(x){ return x.id===id; });
+        showConfirm('Apagar o registo de «'+(e?e.materia:'')+'»? Esta ação não se desfaz.', function(){
+          state.estudoLog = state.estudoLog.filter(function(x){ return x.id!==id; });
+          saveState(); renderEstudos(); renderVidaHub();
+        });
+      });
+    });
+  }
+
+  function renderEstudos(){
+    renderEstudoTimerBox();
+    renderEstudoAddToggle();
+    renderEstudoPeriodBar();
+    renderEstudoTempo();
+    renderEstudoLog();
+    renderEstudoMaterias();
+    renderEstudoTipos();
+  }
+
   /* ================= VIDA (finanças / compras / agenda / pendentes / planos) ================= */
   function fmtMT(n){ return (n<0?'−':'') + Math.abs(n).toLocaleString('pt-PT',{minimumFractionDigits:0, maximumFractionDigits:2}) + ' MT'; }
 
@@ -2379,6 +2712,7 @@
     renderChecklist('pendentes', 'pendentesList');
     renderAgenda();
     renderPlanosList();
+    renderEstudos();
     renderVidaHub();
   }
 
@@ -2390,6 +2724,7 @@
     agenda: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4.5" width="18" height="16" rx="2"></rect><path d="M3 9.5h18M8 2.5v4M16 2.5v4"></path></svg>',
     pendentes: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11l3 3L22 4"></path><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2h11"></path></svg>',
     planos: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2 2 7l10 5 10-5-10-5Z"></path><path d="M2 17l10 5 10-5M2 12l10 5 10-5"></path></svg>',
+    estudos: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path><path d="M12 7v5l3 2"></path></svg>',
   };
   function renderVidaHub(){
     var mk = TODAY_ISO.slice(0,7);
@@ -2413,6 +2748,7 @@
       { key:'agenda', label:'Agenda', sum: upcoming ? upcoming.title : 'Sem eventos', val: upcoming ? dueLabel(daysUntil(upcoming.date)) : '', valColor:'var(--accent-strong)' },
       { key:'pendentes', label:'Pendentes', sum:'Fora da rotina diária', count: pendentesOpen },
       { key:'planos', label:'Planos futuros', sum: planosSub },
+      { key:'estudos', label:'Estudos', sum: state.estudoTimer ? 'A estudar: '+state.estudoTimer.materia : (state.estudoMaterias.length ? estudoFmtDuration(estudoWeekMinutes())+' esta semana' : 'Nenhuma matéria ainda') },
     ];
 
     document.getElementById('vidaHubCards').innerHTML = cards.map(function(c){
