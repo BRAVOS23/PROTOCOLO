@@ -1338,6 +1338,7 @@
     editingDay = TODAY_WEEKDAY;
     openEditId = null;
     areasManaging = false;
+    renderAreasManage(); // garante que a folha não reabre presa no ecrã de "Gerir áreas"
     renderDayPicker();
     renderActivityList();
     openSheet(activitySheet);
@@ -1363,6 +1364,15 @@
     renderAreasManageList();
     box.querySelector('[data-act="cancel"]').addEventListener('click', function(){ areasManaging=false; renderAreasManage(); });
     box.querySelector('[data-act="save"]').addEventListener('click', function(){
+      // uma área protegida não pode desaparecer só por o campo ter ficado em
+      // branco (sem passar pelo lixo, que está escondido para estas) — se
+      // isso acontecer, mantém-se com o nome anterior em vez de ser apagada.
+      draftAreas.forEach(function(a){
+        if(!a.label.trim() && PROTECTED_AREA_IDS.indexOf(a.id)!==-1){
+          var original = (state.areas||[]).filter(function(x){ return x.id===a.id; })[0];
+          a.label = original ? original.label : a.id;
+        }
+      });
       var kept = draftAreas.filter(function(a){ return a.label.trim(); });
       if(!kept.length) kept = [{ id:'outro', label:'Outro', color:'var(--ink-faint)' }];
       var keptIds = kept.map(function(a){ return a.id; });
@@ -1382,13 +1392,18 @@
       renderFitStatic();
     });
   }
+  // estas áreas têm lógica própria noutras abas (Forma lê "fitness"/"trabalho",
+  // a sequência de línguas lê "linguas") — apagá-las quebraria essas abas em
+  // silêncio, por isso só se pode renomear/recolorir, nunca apagar.
+  var PROTECTED_AREA_IDS = ['outro', 'fitness', 'linguas', 'trabalho'];
   function renderAreasManageList(){
     var editBox = document.querySelector('#areasManageBox .materia-edit-list');
     editBox.innerHTML = draftAreas.map(function(a,i){
-      var isOutro = a.id === 'outro';
+      var isProtected = PROTECTED_AREA_IDS.indexOf(a.id) !== -1;
       return '<div class="materia-edit-row">' +
         '<div class="cat-edit-row"><input data-ci="'+i+'" value="'+escAttr(a.label)+'" placeholder="Área">' +
-        (isOutro ? '' : '<span class="mx" data-cidel="'+i+'">'+TRASH_SVG+'</span>') + '</div>' +
+        (isProtected ? '' : '<span class="mx" data-cidel="'+i+'">'+TRASH_SVG+'</span>') + '</div>' +
+        (isProtected ? '<div style="font-size:11px;color:var(--ink-faint);margin:-4px 0 4px;">usada por outras abas — só o nome e a cor podem mudar</div>' : '') +
         '<div class="color-swatch-row" data-ri="'+i+'">' + ESTUDO_PALETTE.map(function(col){
           return '<button type="button" class="color-swatch'+(a.color===col?' selected':'')+'" data-color="'+escAttr(col)+'" style="background:'+col+'" aria-label="Escolher cor"></button>';
         }).join('') + '</div>' +
@@ -2825,7 +2840,7 @@
       return '<div class="today-item'+(done?' done':'')+'" data-act="'+act.id+'">' +
         '<span class="today-check'+(done?' on':'')+'">'+CHECK_SVG+'</span>' +
         '<div class="today-txt"><div class="tt">'+escHtml(act.title)+'</div>' +
-        '<div class="ts"><span class="area-tag"><span class="area-dot" style="background:'+area.color+'"></span>'+area.label+'</span>'+(sub?'<span>'+sub+'</span>':'')+'</div></div>' +
+        '<div class="ts"><span class="area-tag"><span class="area-dot" style="background:'+area.color+'"></span>'+escHtml(area.label)+'</span>'+(sub?'<span>'+sub+'</span>':'')+'</div></div>' +
         flameHtml +
         '</div>';
     }).join('') : '<p style="color:var(--ink-faint); font-size:13px;">Sem atividades para hoje — toca no lápis para adicionar.</p>';
