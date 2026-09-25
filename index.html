@@ -106,6 +106,10 @@
     </section>
 
     <footer class="page-footer">Protocolo — feito por medida para o teu inglês e a tua forma física.</footer>
+
+    <button class="fab-quickadd" id="btnQuickAdd" aria-label="Adicionar tarefa ou evento" type="button">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+    </button>
   </section>
 
   <!-- ===================== LÍNGUAS ===================== -->
@@ -534,6 +538,43 @@
     <button class="btn ghost" id="btnManageAreas" type="button" style="white-space:nowrap;">Gerir áreas</button>
   </div>
   <div id="areasManageBox" hidden></div>
+</div>
+
+<div class="sheet" id="itemDetailSheet" role="dialog" aria-label="Detalhe">
+  <div class="grabber"></div>
+  <div style="display:flex;align-items:center;justify-content:space-between;">
+    <h3 id="itemDetailKicker">Detalhe</h3>
+    <button class="iconbtn" id="btnCloseItemDetail" aria-label="Fechar" type="button">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+    </button>
+  </div>
+  <div id="itemDetailBody"></div>
+</div>
+
+<div class="sheet" id="quickAddSheet" role="dialog" aria-label="Adicionar rápido">
+  <div class="grabber"></div>
+  <div style="display:flex;align-items:center;justify-content:space-between;">
+    <h3>Adicionar rápido</h3>
+    <button class="iconbtn" id="btnCloseQuickAdd" aria-label="Fechar" type="button">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+    </button>
+  </div>
+  <div class="seg" id="quickAddSeg" style="margin-bottom:14px;">
+    <button type="button" data-type="pendente" class="active">Tarefa</button>
+    <button type="button" data-type="agenda">Evento</button>
+  </div>
+  <form id="quickAddForm">
+    <input id="quickAddTitle" type="text" placeholder="Título" required style="width:100%;border:1px solid var(--line-strong);border-radius:8px;padding:10px 12px;font-size:14px;">
+    <div class="row2" style="margin-top:8px;">
+      <input id="quickAddDate" type="date">
+      <input id="quickAddTime" type="time">
+    </div>
+    <p class="lead" id="quickAddHint" style="margin-top:6px;font-size:12px;color:var(--ink-faint);">Data e hora são opcionais.</p>
+    <textarea id="quickAddDetail" placeholder="Descrição (opcional)" style="width:100%;min-height:80px;margin-top:8px;border:1px solid var(--line-strong);border-radius:8px;padding:10px 12px;font-size:13.5px;font-family:inherit;"></textarea>
+    <div class="form-actions" style="justify-content:flex-end;margin-top:14px;">
+      <button class="btn" type="submit">Guardar</button>
+    </div>
+  </form>
 </div>
 
 <div class="toast" id="toast"></div>

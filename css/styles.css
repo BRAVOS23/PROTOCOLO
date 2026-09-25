@@ -728,6 +728,15 @@ footer.page-footer{ padding:30px 0 10px; text-align:center; color:var(--ink-fain
 .seg button{ border:none; background:none; padding:6px 12px; border-radius:999px; font-size:12.5px; font-weight:600; color:var(--ink-soft); cursor:pointer; }
 .seg button.active{ background:var(--surface); color:var(--ink); box-shadow:var(--shadow-1); }
 
+.fab-quickadd{
+  position:fixed; right:18px; bottom:calc(var(--tabbar-h) + var(--safe-b) + 18px); z-index:35;
+  width:54px; height:54px; border-radius:50%; border:none; cursor:pointer;
+  background:var(--accent-strong); color:#fff; display:flex; align-items:center; justify-content:center;
+  box-shadow:var(--shadow-3);
+}
+.fab-quickadd svg{ width:24px; height:24px; }
+.fab-quickadd:active{ transform:scale(.94); }
+
 .toast{
   position:fixed; left:50%; bottom:calc(var(--tabbar-h) + var(--safe-b) + 16px); transform:translateX(-50%) translateY(10px);
   background:var(--ink); color:var(--paper); padding:10px 18px; border-radius:999px; font-size:13px; font-weight:600;

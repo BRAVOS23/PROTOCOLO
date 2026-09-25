@@ -208,6 +208,10 @@
         }
       });
     });
+    // v13: pendentes e eventos da agenda passam a funcionar como "pastas" —
+    // ao abrir um, dá para escrever uma descrição mais longa lá dentro.
+    (s.pendentes||[]).forEach(function(it){ if(it.detail===undefined) it.detail = ''; });
+    (s.agenda||[]).forEach(function(ev){ if(ev.detail===undefined) ev.detail = ''; });
     return s;
   }
 
@@ -2453,34 +2457,97 @@
     return it.dueTime ? label+' · '+it.dueTime : label;
   }
 
-  var openPendenteEdit = null;
+  /* ---- "pasta" de detalhe partilhada entre pendentes e agenda: cada item
+     abre como uma página com título, data/hora e uma descrição livre. ---- */
+  function openItemDetail(type, id){
+    var arr = type === 'pendente' ? state.pendentes : state.agenda;
+    var it = arr.find(function(x){ return x.id === id; });
+    if(!it) return;
+    var title = type === 'pendente' ? it.text : it.title;
+    var dateVal = type === 'pendente' ? (it.due || '') : it.date;
+    var timeVal = (type === 'pendente' ? it.dueTime : it.time) || '';
+
+    document.getElementById('itemDetailKicker').textContent = type === 'pendente' ? 'Tarefa' : 'Evento';
+    var body = document.getElementById('itemDetailBody');
+    body.innerHTML =
+      (type === 'pendente' ? '<div class="today-item" id="itemDetailDoneRow" style="cursor:pointer;margin-bottom:10px;">' +
+        '<span class="today-check'+(it.done?' on':'')+'" id="itemDetailDoneCheck">'+CHECK_SVG+'</span>' +
+        '<div class="today-txt"><div class="tt">Concluída</div></div></div>' : '') +
+      '<input id="itemDetailTitle" type="text" value="'+escAttr(title)+'" placeholder="Título" style="width:100%;margin-bottom:8px;border:1px solid var(--line-strong);border-radius:8px;padding:10px 12px;font-size:14px;">' +
+      '<div class="row2" style="margin-bottom:10px;">' +
+        '<input id="itemDetailDate" type="date" value="'+dateVal+'">' +
+        '<input id="itemDetailTime" type="time" value="'+timeVal+'">' +
+      '</div>' +
+      (type === 'pendente' ? '<p class="lead" style="margin:-4px 0 10px;font-size:12px;color:var(--ink-faint);">Prazo opcional — aparece um aviso no Início nas últimas 24h.</p>' : '') +
+      '<textarea id="itemDetailBodyText" placeholder="Descrição — escreve aqui o que precisas de lembrar" style="width:100%;min-height:140px;border:1px solid var(--line-strong);border-radius:8px;padding:10px 12px;font-size:13.5px;font-family:inherit;">'+escHtml(it.detail||'')+'</textarea>' +
+      '<div class="form-actions" style="justify-content:space-between;margin-top:14px;">' +
+        '<button class="btn danger" id="btnItemDetailDelete" type="button">Apagar</button>' +
+        '<button class="btn" id="btnItemDetailSave" type="button">Guardar</button>' +
+      '</div>';
+
+    if(type === 'pendente'){
+      document.getElementById('itemDetailDoneRow').addEventListener('click', function(){
+        document.getElementById('itemDetailDoneCheck').classList.toggle('on');
+      });
+    }
+
+    document.getElementById('btnItemDetailDelete').addEventListener('click', function(){
+      showConfirm('Apagar '+(type==='pendente'?'a tarefa':'o evento')+' «'+title+'»? Esta ação não se desfaz.', function(){
+        if(type === 'pendente') state.pendentes = state.pendentes.filter(function(x){ return x.id!==id; });
+        else state.agenda = state.agenda.filter(function(x){ return x.id!==id; });
+        saveState();
+        closeSheet();
+        if(type === 'pendente'){ renderChecklist('pendentes','pendentesList'); renderDashPendentes(); }
+        else { renderAgenda(); renderDashAgenda(); }
+        renderVidaHub();
+      });
+    });
+
+    document.getElementById('btnItemDetailSave').addEventListener('click', function(){
+      var newTitle = document.getElementById('itemDetailTitle').value.trim();
+      var newDate = document.getElementById('itemDetailDate').value;
+      var newTime = document.getElementById('itemDetailTime').value;
+      var newDetail = document.getElementById('itemDetailBodyText').value.trim();
+      if(type === 'pendente'){
+        if(newTitle) it.text = newTitle;
+        it.due = newDate || null;
+        it.dueTime = newTime || null;
+        it.detail = newDetail;
+        it.done = document.getElementById('itemDetailDoneCheck').classList.contains('on');
+      } else {
+        if(!newDate){ toast('Um evento precisa de data.'); return; }
+        if(newTitle) it.title = newTitle;
+        it.date = newDate;
+        it.time = newTime || '';
+        it.detail = newDetail;
+      }
+      saveState();
+      closeSheet();
+      if(type === 'pendente'){ renderChecklist('pendentes','pendentesList'); renderDashPendentes(); }
+      else { renderAgenda(); renderDashAgenda(); }
+      renderVidaHub();
+    });
+
+    openSheet(itemDetailSheet);
+  }
+
   function renderChecklist(stateKey, containerId){
     var arr = state[stateKey];
     var isPendentes = stateKey === 'pendentes';
     var el = document.getElementById(containerId);
     el.innerHTML = arr.length ? arr.map(function(it){
-      if(isPendentes && it.id === openPendenteEdit){
-        return '<div class="today-item editing-item" data-id="'+it.id+'" style="display:block;padding:12px;">' +
-          '<input data-f="text" value="'+escAttr(it.text)+'" style="width:100%;margin-bottom:6px;border:1px solid var(--line-strong);border-radius:6px;padding:6px 8px;font-size:13px;">' +
-          '<div style="display:flex;gap:6px;margin-bottom:8px;">' +
-          '<input data-f="date" type="date" value="'+(it.due||'')+'" style="border:1px solid var(--line-strong);border-radius:6px;padding:5px 7px;font-size:12px;">' +
-          '<input data-f="time" type="time" value="'+(it.dueTime||'')+'" style="border:1px solid var(--line-strong);border-radius:6px;padding:5px 7px;font-size:12px;">' +
-          '</div>' +
-          '<div class="form-actions" style="justify-content:flex-end;"><span style="display:flex;gap:8px;"><button class="btn ghost" data-act="cancel" type="button">Cancelar</button><button class="btn" data-act="save" type="button">Guardar</button></span></div>' +
-          '</div>';
-      }
       var due = isPendentes && it.due ? pendenteDueDate(it) : null;
       var dueHtml = due ? '<div class="ts" style="color:'+(due-new Date()<0?'var(--bad)':'var(--ink-faint)')+';">'+formatDueFull(it)+' · '+dueHoursLabel(due)+'</div>' : '';
       return '<div class="today-item'+(it.done?' done':'')+'" data-id="'+it.id+'">' +
         '<span class="today-check'+(it.done?' on':'')+'">'+CHECK_SVG+'</span>' +
         '<div class="today-txt"><div class="tt">'+escHtml(it.text)+'</div>'+dueHtml+'</div>' +
-        (isPendentes ? '<button class="ar-icon-btn" data-act="editdue" data-id="'+it.id+'" type="button">'+PENCIL_SVG+'</button>' : '') +
+        (isPendentes ? '<button class="ar-icon-btn" data-act="open" data-id="'+it.id+'" type="button" aria-label="Abrir">'+PENCIL_SVG+'</button>' : '') +
         '<span class="del" data-id="'+it.id+'">'+TRASH_SVG+'</span></div>';
     }).join('') : '<p style="color:var(--ink-faint); font-size:13px;">Nada por aqui ainda.</p>';
 
-    el.querySelectorAll('.today-item:not(.editing-item)').forEach(function(row){
+    el.querySelectorAll('.today-item').forEach(function(row){
       row.addEventListener('click', function(ev){
-        if(ev.target.closest('.del') || ev.target.closest('[data-act="editdue"]')) return;
+        if(ev.target.closest('.del') || ev.target.closest('[data-act="open"]')) return;
         var it = arr.find(function(x){ return x.id===row.getAttribute('data-id'); });
         it.done = !it.done;
         saveState();
@@ -2497,28 +2564,10 @@
         if(isPendentes) renderDashPendentes();
       });
     });
-    el.querySelectorAll('[data-act="editdue"]').forEach(function(btn){
+    el.querySelectorAll('[data-act="open"]').forEach(function(btn){
       btn.addEventListener('click', function(ev){
         ev.stopPropagation();
-        openPendenteEdit = btn.getAttribute('data-id');
-        renderChecklist(stateKey, containerId);
-      });
-    });
-    el.querySelectorAll('[data-act="cancel"]').forEach(function(btn){
-      btn.addEventListener('click', function(){ openPendenteEdit=null; renderChecklist(stateKey, containerId); });
-    });
-    el.querySelectorAll('[data-act="save"]').forEach(function(btn){
-      btn.addEventListener('click', function(){
-        var row = btn.closest('[data-id]');
-        var id = row.getAttribute('data-id');
-        var it = arr.find(function(x){ return x.id===id; });
-        it.text = row.querySelector('[data-f="text"]').value.trim() || it.text;
-        it.due = row.querySelector('[data-f="date"]').value || null;
-        it.dueTime = row.querySelector('[data-f="time"]').value || null;
-        saveState();
-        openPendenteEdit=null;
-        renderChecklist(stateKey, containerId);
-        renderDashPendentes();
+        openItemDetail('pendente', btn.getAttribute('data-id'));
       });
     });
   }
@@ -2616,7 +2665,7 @@
     var v = input.value.trim(); if(!v) return;
     state.pendentes.push({
       id:'p'+Date.now().toString(36)+Math.random().toString(36).slice(2,5), text:v, done:false,
-      due: dateInput.value || null, dueTime: timeInput.value || null,
+      due: dateInput.value || null, dueTime: timeInput.value || null, detail:'',
     });
     saveState();
     document.getElementById('pendentesForm').reset();
@@ -2639,56 +2688,28 @@
       return (a.time||'')<(b.time||'') ? -1 : 1;
     });
   }
-  var openAgendaEdit = null;
   function renderAgenda(){
     var list = document.getElementById('agendaList');
     var arr = sortedAgenda();
     list.innerHTML = arr.length ? arr.map(function(ev){
-      if(ev.id === openAgendaEdit){
-        return '<div class="list-row" data-id="'+ev.id+'" style="display:block;padding:12px 4px;">' +
-          '<input data-f="title" value="'+escAttr(ev.title)+'" style="width:100%;margin-bottom:6px;border:1px solid var(--line-strong);border-radius:6px;padding:6px 8px;font-size:13px;">' +
-          '<div style="display:flex;gap:6px;margin-bottom:8px;">' +
-          '<input data-f="date" type="date" value="'+ev.date+'" style="border:1px solid var(--line-strong);border-radius:6px;padding:5px 7px;font-size:12px;">' +
-          '<input data-f="time" type="time" value="'+escAttr(ev.time||'')+'" style="border:1px solid var(--line-strong);border-radius:6px;padding:5px 7px;font-size:12px;">' +
-          '</div>' +
-          '<div class="form-actions" style="justify-content:flex-end;"><span style="display:flex;gap:8px;"><button class="btn ghost" data-act="cancel" type="button">Cancelar</button><button class="btn" data-act="save" type="button">Guardar</button></span></div>' +
-          '</div>';
-      }
       var d = new Date(ev.date+'T00:00:00');
       var isPast = ev.date < TODAY_ISO;
       var days = daysUntil(ev.date);
       return '<div class="list-row'+(isPast?' past':'')+'" data-id="'+ev.id+'"><div class="lr-main"><div class="lr-title">'+escHtml(ev.title)+'</div>' +
         '<div class="lr-sub">'+d.toLocaleDateString('pt-PT',{day:'2-digit',month:'long',year:'numeric'})+(ev.time?' · '+escHtml(ev.time):'')+(!isPast?' · '+dueLabel(days):'')+'</div></div>' +
-        '<span class="lr-right"><button class="ar-icon-btn" data-act="edit" data-id="'+ev.id+'" type="button">'+PENCIL_SVG+'</button><span class="del" data-id="'+ev.id+'">'+TRASH_SVG+'</span></span></div>';
+        '<span class="lr-right"><button class="ar-icon-btn" data-act="open" data-id="'+ev.id+'" type="button" aria-label="Abrir">'+PENCIL_SVG+'</button><span class="del" data-id="'+ev.id+'">'+TRASH_SVG+'</span></span></div>';
     }).join('') : '<div class="list-row" style="color:var(--ink-faint)">Sem eventos agendados.</div>';
     list.querySelectorAll('.del').forEach(function(btn){
-      btn.addEventListener('click', function(){
+      btn.addEventListener('click', function(ev){
+        ev.stopPropagation();
         state.agenda = state.agenda.filter(function(x){ return x.id!==btn.getAttribute('data-id'); });
         saveState(); renderAgenda(); renderDashAgenda();
       });
     });
-    list.querySelectorAll('[data-act="edit"]').forEach(function(btn){
-      btn.addEventListener('click', function(){
-        openAgendaEdit = btn.getAttribute('data-id');
-        renderAgenda();
-      });
-    });
-    list.querySelectorAll('[data-act="cancel"]').forEach(function(btn){
-      btn.addEventListener('click', function(){ openAgendaEdit=null; renderAgenda(); });
-    });
-    list.querySelectorAll('[data-act="save"]').forEach(function(btn){
-      btn.addEventListener('click', function(){
-        var row = btn.closest('[data-id]');
-        var ev = state.agenda.find(function(x){ return x.id===row.getAttribute('data-id'); });
-        var title = row.querySelector('[data-f="title"]').value.trim();
-        var date = row.querySelector('[data-f="date"]').value;
-        if(title) ev.title = title;
-        if(date) ev.date = date;
-        ev.time = row.querySelector('[data-f="time"]').value || '';
-        saveState();
-        openAgendaEdit=null;
-        renderAgenda();
-        renderDashAgenda();
+    list.querySelectorAll('.list-row[data-id]').forEach(function(row){
+      row.addEventListener('click', function(ev){
+        if(ev.target.closest('.del')) return;
+        openItemDetail('agenda', row.getAttribute('data-id'));
       });
     });
   }
@@ -2698,7 +2719,7 @@
     var time = document.getElementById('agendaTime').value;
     var title = document.getElementById('agendaTitle').value.trim();
     if(!date || !title) return;
-    state.agenda.push({ id:'ag'+Date.now().toString(36)+Math.random().toString(36).slice(2,5), date:date, time:time||'', title:title });
+    state.agenda.push({ id:'ag'+Date.now().toString(36)+Math.random().toString(36).slice(2,5), date:date, time:time||'', title:title, detail:'' });
     saveState();
     document.getElementById('agendaForm').reset();
     renderAgenda();
@@ -2901,6 +2922,8 @@
   /* ---------------- sheets (definições + editor de atividades) ---------------- */
   var settingsSheet = document.getElementById('settingsSheet');
   var activitySheet = document.getElementById('activitySheet');
+  var itemDetailSheet = document.getElementById('itemDetailSheet');
+  var quickAddSheet = document.getElementById('quickAddSheet');
   var backdrop = document.getElementById('sheetBackdrop');
   var currentSheet = null;
   function openSheet(el){ currentSheet = el; el.classList.add('open'); backdrop.classList.add('open'); }
@@ -2908,7 +2931,54 @@
   document.getElementById('btnSettings').addEventListener('click', function(){ openSheet(settingsSheet); });
   document.getElementById('btnCloseSheet').addEventListener('click', closeSheet);
   document.getElementById('btnCloseActivitySheet').addEventListener('click', closeSheet);
+  document.getElementById('btnCloseItemDetail').addEventListener('click', closeSheet);
+  document.getElementById('btnCloseQuickAdd').addEventListener('click', closeSheet);
   backdrop.addEventListener('click', closeSheet);
+
+  /* ---- atalho rápido no Início: cria uma tarefa (pendente) ou um evento (agenda) ---- */
+  var quickAddType = 'pendente';
+  function renderQuickAddType(){
+    document.querySelectorAll('#quickAddSeg button').forEach(function(b){
+      b.classList.toggle('active', b.getAttribute('data-type') === quickAddType);
+    });
+    document.getElementById('quickAddDate').required = quickAddType === 'agenda';
+    document.getElementById('quickAddHint').textContent = quickAddType === 'pendente'
+      ? 'Data e hora são opcionais — se definires, aparece um aviso no Início nas últimas 24h.'
+      : 'A data é obrigatória para um evento.';
+  }
+  document.querySelectorAll('#quickAddSeg button').forEach(function(b){
+    b.addEventListener('click', function(){ quickAddType = b.getAttribute('data-type'); renderQuickAddType(); });
+  });
+  document.getElementById('btnQuickAdd').addEventListener('click', function(){
+    quickAddType = 'pendente';
+    renderQuickAddType();
+    document.getElementById('quickAddForm').reset();
+    openSheet(quickAddSheet);
+  });
+  document.getElementById('quickAddForm').addEventListener('submit', function(e){
+    e.preventDefault();
+    var title = document.getElementById('quickAddTitle').value.trim();
+    var date = document.getElementById('quickAddDate').value;
+    var time = document.getElementById('quickAddTime').value;
+    var detail = document.getElementById('quickAddDetail').value.trim();
+    if(!title) return;
+    if(quickAddType === 'agenda'){
+      if(!date) return;
+      state.agenda.push({ id:'ag'+Date.now().toString(36)+Math.random().toString(36).slice(2,5), date:date, time:time||'', title:title, detail:detail });
+      saveState();
+      renderAgenda();
+      renderDashAgenda();
+      toast('Evento criado.');
+    } else {
+      state.pendentes.push({ id:'p'+Date.now().toString(36)+Math.random().toString(36).slice(2,5), text:title, done:false, due:date||null, dueTime:time||null, detail:detail });
+      saveState();
+      renderChecklist('pendentes','pendentesList');
+      renderDashPendentes();
+      toast('Tarefa criada.');
+    }
+    renderVidaHub();
+    closeSheet();
+  });
 
   function applyTheme(t){
     var root = document.documentElement;
