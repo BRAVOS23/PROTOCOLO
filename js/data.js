@@ -267,18 +267,20 @@ const DAY_TYPE_LABEL = {
   restauracao: 'Dia de restauração',
 };
 
-/* áreas disponíveis para uma atividade — cor + rótulo */
-const AREAS = {
-  trabalho: { label: 'Trabalho', color: 'var(--slate, #3F6472)' },
-  fitness: { label: 'Judo & Tiros', color: 'var(--cat-fit)' },
-  linguas: { label: 'Línguas', color: 'var(--cat-lang)' },
-  leitura: { label: 'Leitura', color: 'var(--warn)' },
-  revisao: { label: 'Revisão', color: 'var(--warn)' },
-  pessoal: { label: 'Cuidados pessoais', color: 'var(--accent)' },
-  domestico: { label: 'Doméstico', color: 'var(--accent)' },
-  diario: { label: 'Diário', color: '#2c757a' },
-  outro: { label: 'Outro', color: 'var(--ink-faint)' },
-};
+/* áreas por defeito para uma atividade (cor + rótulo) — só usadas para semear
+   instalações novas ou utilizadores antigos; a partir daqui a lista vive em
+   state.areas e o próprio utilizador pode renomear/recolorir/apagar/criar. */
+const DEFAULT_AREAS = [
+  { id: 'trabalho', label: 'Trabalho', color: 'var(--slate, #3F6472)' },
+  { id: 'fitness', label: 'Judo & Tiros', color: 'var(--cat-fit)' },
+  { id: 'linguas', label: 'Línguas', color: 'var(--cat-lang)' },
+  { id: 'leitura', label: 'Leitura', color: 'var(--warn)' },
+  { id: 'revisao', label: 'Revisão', color: 'var(--warn)' },
+  { id: 'pessoal', label: 'Cuidados pessoais', color: 'var(--accent)' },
+  { id: 'domestico', label: 'Doméstico', color: 'var(--accent)' },
+  { id: 'diario', label: 'Diário', color: '#2c757a' },
+  { id: 'outro', label: 'Outro', color: 'var(--ink-faint)' },
+];
 
 /* itens fixos do AIF — Autenticidade: entram no fim da checklist de todos os dias */
 const AIF_DIARIO_TITLES = ['Escrevi no diário — incluindo o que correu mal', 'O que fiz hoje foi por mim, não para mostrar'];
@@ -472,9 +474,6 @@ const AIF_LETTERS = {
   },
 };
 
-/* Áreas cujos itens marcados na checklist do dia podem levar o segundo toque
-   ("dei 100%") que alimenta a percentagem de Intensidade. */
-const AIF_INTENSITY_AREAS = ['fitness', 'linguas', 'revisao'];
 
 const AIF_STREAK_RULE_TEXT = 'A regra é uma só: nunca falhar dois dias seguidos. Um dia mau é ruído. Dois seguidos é o início de uma desistência.';
 

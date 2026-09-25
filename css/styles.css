@@ -773,7 +773,6 @@ footer.page-footer{ padding:30px 0 10px; text-align:center; color:var(--ink-fain
 }
 .today-flame svg{ width:14px; height:14px; }
 .today-flame.on{ color:var(--warn); background:var(--warn-soft); }
-.today-flame.disabled{ opacity:.3; cursor:default; pointer-events:none; }
 
 /* ============ Ciclo de 90 dias ============ */
 .cycle-day-n{ font-family:var(--font-display); font-size:20px; font-weight:600; color:var(--ink); }

@@ -189,6 +189,25 @@
         return { id:'em'+i+Date.now().toString(36), name:name, color: ESTUDO_PALETTE[i % ESTUDO_PALETTE.length] };
       });
     }
+    // v12: "área" passa a ser uma lista editável (criar/renomear/recolorir/
+    // apagar) em vez de categorias fixas no código; e o que conta para
+    // Intensidade/Autenticidade deixa de vir da área e passa a ser uma
+    // escolha própria por atividade (act.aif), feita ao criar/editar cada
+    // uma. Aqui só se infere o valor antigo, para não mudar percentagens
+    // já calculadas de ninguém.
+    if(!s.areas || !s.areas.length){
+      s.areas = DEFAULT_AREAS.map(function(a){ return { id:a.id, label:a.label, color:a.color }; });
+    }
+    var oldIntensityAreas = ['fitness', 'linguas', 'revisao'];
+    WEEKDAYS.forEach(function(day){
+      (s.activities[day]||[]).forEach(function(act){
+        if(!act.aif){
+          if(oldIntensityAreas.indexOf(act.area)!==-1) act.aif = 'intensidade';
+          else if(act.area==='diario') act.aif = 'autenticidade';
+          else act.aif = 'fidelidade';
+        }
+      });
+    });
     return s;
   }
 
@@ -644,7 +663,7 @@
       if(!act) return '';
       var dISO = iso(weekdaysThisWeek[i]);
       var isToday = dISO === TODAY_ISO;
-      var area = AREAS.fitness;
+      var area = areaById('fitness');
       if(day === openFitRowDay){
         return '<tr class="editing-row" data-day="'+day+'"><td colspan="5" style="padding:10px 16px;">' +
           '<div style="max-width:min(320px,80vw);">' +
@@ -1090,6 +1109,10 @@
   /* ================= ATIVIDADES (editável) ================= */
   function dayActivities(day){ return state.activities[day] || []; }
   function fitnessActivityForDay(day){ return dayActivities(day).find(function(a){ return a.area==='fitness'; }); }
+  function areaById(id){
+    var a = (state.areas||[]).filter(function(x){ return x.id===id; })[0];
+    return a || { id:'outro', label:'Outro', color:'var(--ink-faint)' };
+  }
   function doneKey(dateISO, actId){ return dateISO + '|' + actId; }
   function isActDone(dateISO, actId){ return !!state.activityDone[doneKey(dateISO, actId)]; }
 
@@ -1113,7 +1136,7 @@
 
   function addActivity(day, obj){
     var id = day + '-' + Date.now().toString(36) + Math.random().toString(36).slice(2,6);
-    var act = { id:id, area:obj.area||'outro', title:obj.title||'Nova atividade', detail:obj.detail||'', time:obj.time||'' };
+    var act = { id:id, area:obj.area||'outro', aif:obj.aif||'fidelidade', title:obj.title||'Nova atividade', detail:obj.detail||'', time:obj.time||'' };
     if(!state.activities[day]) state.activities[day] = [];
     state.activities[day].push(act);
     saveState();
@@ -1211,7 +1234,7 @@
   }
 
   function activityRowView(day, act){
-    var area = AREAS[act.area] || AREAS.outro;
+    var area = areaById(act.area);
     return '<div class="activity-row" data-id="'+act.id+'">' +
       '<span class="area-dot" style="background:'+area.color+'; margin-top:6px;"></span>' +
       '<div class="ar-body">' +
@@ -1224,9 +1247,18 @@
       '</div></div>';
   }
 
+  var AIF_GROUP_LABELS = {
+    fidelidade: 'Fidelidade (padrão — só conta no total)',
+    intensidade: 'Intensidade (mostra a chama)',
+    autenticidade: 'Autenticidade',
+  };
   function activityRowEdit(day, act){
+    var aif = act.aif || 'fidelidade';
     return '<div class="activity-edit-form" data-id="'+act.id+'">' +
-      '<select data-f="area">' + Object.keys(AREAS).map(function(k){ return '<option value="'+k+'"'+(k===act.area?' selected':'')+'>'+AREAS[k].label+'</option>'; }).join('') + '</select>' +
+      '<div class="row2">' +
+      '<select data-f="area">' + (state.areas||[]).map(function(a){ return '<option value="'+a.id+'"'+(a.id===act.area?' selected':'')+'>'+escHtml(a.label)+'</option>'; }).join('') + '</select>' +
+      '<select data-f="aif">' + ['fidelidade','intensidade','autenticidade'].map(function(k){ return '<option value="'+k+'"'+(k===aif?' selected':'')+'>'+AIF_GROUP_LABELS[k]+'</option>'; }).join('') + '</select>' +
+      '</div>' +
       '<div class="row2">' +
         '<input data-f="title" type="text" placeholder="Título" value="'+escAttr(act.title)+'">' +
         '<input data-f="time" type="text" placeholder="Hora" value="'+escAttr(act.time||'')+'">' +
@@ -1277,6 +1309,7 @@
         var id = form.getAttribute('data-id');
         var patch = {
           area: form.querySelector('[data-f="area"]').value,
+          aif: form.querySelector('[data-f="aif"]').value,
           title: form.querySelector('[data-f="title"]').value.trim() || 'Sem título',
           time: form.querySelector('[data-f="time"]').value.trim(),
           detail: form.querySelector('[data-f="detail"]').value.trim(),
@@ -1304,9 +1337,92 @@
   document.getElementById('btnEditDay').addEventListener('click', function(){
     editingDay = TODAY_WEEKDAY;
     openEditId = null;
+    areasManaging = false;
     renderDayPicker();
     renderActivityList();
     openSheet(activitySheet);
+  });
+
+  /* ---- gerir áreas: criar, renomear, recolorir, apagar ---- */
+  var areasManaging = false;
+  var draftAreas = [];
+  function renderAreasManage(){
+    var box = document.getElementById('areasManageBox');
+    var list = document.getElementById('activityList');
+    var addBtn = document.getElementById('btnAddActivity');
+    var manageBtn = document.getElementById('btnManageAreas');
+    box.hidden = !areasManaging;
+    list.hidden = areasManaging;
+    addBtn.hidden = areasManaging;
+    manageBtn.hidden = areasManaging;
+    document.getElementById('dayPicker').hidden = areasManaging;
+    if(!areasManaging){ box.innerHTML = ''; return; }
+
+    box.innerHTML = '<div class="materia-edit-list"></div>' +
+      '<div class="form-actions" style="justify-content:flex-end;margin-top:8px;"><span style="display:flex;gap:8px;"><button class="btn ghost" data-act="cancel" type="button">Cancelar</button><button class="btn" data-act="save" type="button">Guardar</button></span></div>';
+    renderAreasManageList();
+    box.querySelector('[data-act="cancel"]').addEventListener('click', function(){ areasManaging=false; renderAreasManage(); });
+    box.querySelector('[data-act="save"]').addEventListener('click', function(){
+      var kept = draftAreas.filter(function(a){ return a.label.trim(); });
+      if(!kept.length) kept = [{ id:'outro', label:'Outro', color:'var(--ink-faint)' }];
+      var keptIds = kept.map(function(a){ return a.id; });
+      if(keptIds.indexOf('outro')===-1){ kept.push({ id:'outro', label:'Outro', color:'var(--ink-faint)' }); keptIds.push('outro'); }
+      // atividades cuja área foi apagada passam a "Outro" — nada se perde.
+      WEEKDAYS.forEach(function(day){
+        (state.activities[day]||[]).forEach(function(act){
+          if(keptIds.indexOf(act.area)===-1) act.area = 'outro';
+        });
+      });
+      state.areas = kept.map(function(a){ return { id:a.id, label:a.label.trim(), color:a.color }; });
+      saveState();
+      areasManaging = false;
+      renderAreasManage();
+      renderActivityList();
+      renderDashboard();
+      renderFitStatic();
+    });
+  }
+  function renderAreasManageList(){
+    var editBox = document.querySelector('#areasManageBox .materia-edit-list');
+    editBox.innerHTML = draftAreas.map(function(a,i){
+      var isOutro = a.id === 'outro';
+      return '<div class="materia-edit-row">' +
+        '<div class="cat-edit-row"><input data-ci="'+i+'" value="'+escAttr(a.label)+'" placeholder="Área">' +
+        (isOutro ? '' : '<span class="mx" data-cidel="'+i+'">'+TRASH_SVG+'</span>') + '</div>' +
+        '<div class="color-swatch-row" data-ri="'+i+'">' + ESTUDO_PALETTE.map(function(col){
+          return '<button type="button" class="color-swatch'+(a.color===col?' selected':'')+'" data-color="'+escAttr(col)+'" style="background:'+col+'" aria-label="Escolher cor"></button>';
+        }).join('') + '</div>' +
+        '</div>';
+    }).join('') + '<button type="button" class="chip-add-btn" data-act="add">+ área</button>';
+
+    editBox.querySelectorAll('[data-ci]').forEach(function(inp){
+      inp.addEventListener('input', function(){ draftAreas[+inp.getAttribute('data-ci')].label = inp.value; });
+    });
+    editBox.querySelectorAll('[data-cidel]').forEach(function(x){
+      x.addEventListener('click', function(){
+        var idx = +x.getAttribute('data-cidel');
+        var removed = draftAreas[idx];
+        var inUse = WEEKDAYS.some(function(day){ return (state.activities[day]||[]).some(function(act){ return act.area===removed.id; }); });
+        var doRemove = function(){ draftAreas.splice(idx,1); renderAreasManageList(); };
+        if(inUse) showConfirm('Apagar a área «'+removed.label+'»? As atividades que a usam passam a "Outro".', doRemove);
+        else doRemove();
+      });
+    });
+    editBox.querySelectorAll('.color-swatch-row').forEach(function(row){
+      var idx = +row.getAttribute('data-ri');
+      row.querySelectorAll('.color-swatch').forEach(function(btn){
+        btn.addEventListener('click', function(){ draftAreas[idx].color = btn.getAttribute('data-color'); renderAreasManageList(); });
+      });
+    });
+    editBox.querySelector('[data-act="add"]').addEventListener('click', function(){
+      draftAreas.push({ id: rid('ar'), label:'', color: ESTUDO_PALETTE[draftAreas.length % ESTUDO_PALETTE.length] });
+      renderAreasManageList();
+    });
+  }
+  document.getElementById('btnManageAreas').addEventListener('click', function(){
+    draftAreas = (state.areas||[]).map(function(a){ return { id:a.id, label:a.label, color:a.color }; });
+    areasManaging = true;
+    renderAreasManage();
   });
 
   /* ================= PROTOCOLO (identidade + metas) ================= */
@@ -1440,11 +1556,11 @@
     var fDone = acts.filter(function(a){ return isActDone(dateISO, a.id); }).length;
     var fPct = fTotal ? (fDone/fTotal*100) : 0;
 
-    var iDone = acts.filter(function(a){ return AIF_INTENSITY_AREAS.indexOf(a.area)!==-1 && isActDone(dateISO, a.id); });
+    var iDone = acts.filter(function(a){ return a.aif==='intensidade' && isActDone(dateISO, a.id); });
     var iFull = iDone.filter(function(a){ return isActFull(dateISO, a.id); });
     var iPct = iDone.length ? (iFull.length/iDone.length*100) : 0;
 
-    var aActs = acts.filter(function(a){ return a.area==='diario'; });
+    var aActs = acts.filter(function(a){ return a.aif==='autenticidade'; });
     var aDone = aActs.filter(function(a){ return isActDone(dateISO, a.id); }).length;
     var aPct = aActs.length ? (aDone/aActs.length*100) : 0;
 
@@ -2697,12 +2813,14 @@
 
     var acts = dayActivities(TODAY_WEEKDAY);
     document.getElementById('todayList').innerHTML = acts.length ? acts.map(function(act){
-      var area = AREAS[act.area] || AREAS.outro;
+      var area = areaById(act.area);
       var done = isActDone(TODAY_ISO, act.id);
       var sub = escHtml([act.time, act.detail].filter(Boolean).join(' · '));
-      var showFlame = AIF_INTENSITY_AREAS.indexOf(act.area) !== -1;
+      // a chama só aparece depois de concluído — e sempre apagada por defeito,
+      // para não parecer que "já foi marcada" sozinha.
+      var showFlame = act.aif==='intensidade' && done;
       var flameHtml = showFlame
-        ? '<span class="today-flame'+(isActFull(TODAY_ISO, act.id)?' on':'')+(done?'':' disabled')+'" data-flame="'+act.id+'" title="Dei 100%?">'+FLAME_SVG+'</span>'
+        ? '<span class="today-flame'+(isActFull(TODAY_ISO, act.id)?' on':'')+'" data-flame="'+act.id+'" title="Dei 100%?">'+FLAME_SVG+'</span>'
         : '';
       return '<div class="today-item'+(done?' done':'')+'" data-act="'+act.id+'">' +
         '<span class="today-check'+(done?' on':'')+'">'+CHECK_SVG+'</span>' +
@@ -2727,7 +2845,6 @@
     document.querySelectorAll('#todayList .today-flame').forEach(function(el){
       el.addEventListener('click', function(e){
         e.stopPropagation();
-        if(el.classList.contains('disabled')) return;
         toggleActivityFull(TODAY_ISO, el.getAttribute('data-flame'));
         renderDashboard();
       });
