@@ -736,36 +736,25 @@ footer.page-footer{ padding:30px 0 10px; text-align:center; color:var(--ink-fain
 .toast.show{ opacity:1; transform:translateX(-50%) translateY(0); }
 
 /* ============ AIF: Autenticidade · Intensidade · Fidelidade ============ */
-.aif-cards{ display:grid; grid-template-columns:1fr; gap:10px; }
-@media (min-width:560px){ .aif-cards{ grid-template-columns:1fr 1fr 1fr; } }
 .aif-card{
   background:var(--surface); border:1px solid var(--line); border-radius:var(--radius-m);
   padding:16px; border-top:3px solid var(--aif-color);
 }
-.aif-letter{
-  display:inline-flex; align-items:center; justify-content:center; width:26px; height:26px;
-  border-radius:50%; background:var(--aif-color); color:#fff; font-family:var(--font-mono);
-  font-weight:700; font-size:13px; flex-shrink:0;
-}
-.aif-card-toggle{
-  display:flex; align-items:center; gap:10px; width:100%; padding:0; padding-right:30px;
-  background:none; border:none; cursor:pointer; text-align:left;
-}
-.aif-title{ font-size:14px; font-weight:700; margin:0; color:var(--aif-color); }
-.aif-card-chevron{ margin-left:auto; color:var(--ink-faint); flex-shrink:0; display:flex; transition:transform .15s ease; }
-.aif-card-chevron svg{ width:16px; height:16px; }
-.aif-card.expanded .aif-card-chevron{ transform:rotate(180deg); }
-.aif-body{ font-size:12.5px; color:var(--ink-soft); margin:12px 0 8px; }
+.aif-title{ font-size:14px; font-weight:700; margin:0 0 6px; color:var(--aif-color); }
+.aif-body{ font-size:12.5px; color:var(--ink-soft); margin:0 0 8px; }
 .aif-test{ font-size:12px; color:var(--ink-faint); font-style:italic; margin:0; }
 
 .aif-rings{ display:grid; grid-template-columns:1fr 1fr 1fr; gap:10px; }
 .aif-ring-card{
-  background:var(--surface-2); border-radius:var(--radius-m); padding:12px 8px;
-  display:flex; flex-direction:column; align-items:center; gap:2px; text-align:center;
+  background:var(--surface-2); border:1.5px solid transparent; border-radius:var(--radius-m); padding:12px 8px;
+  display:flex; flex-direction:column; align-items:center; gap:2px; text-align:center; cursor:pointer;
 }
+.aif-ring-card.active{ border-color:var(--ink-faint); background:var(--surface); }
 .aif-ring-card svg{ width:48px; height:48px; }
 .aif-ring-letter{ font-family:var(--font-mono); font-weight:700; font-size:12px; margin-top:2px; }
 .aif-ring-pct{ font-size:11.5px; color:var(--ink-faint); }
+.aif-detail-box:empty{ display:none; }
+.aif-detail-box{ margin-top:10px; }
 .aif-total{
   display:flex; align-items:baseline; justify-content:space-between; margin-top:14px;
   padding-top:14px; border-top:1px solid var(--line);

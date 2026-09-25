@@ -1489,71 +1489,60 @@
 
   var openAifEdit = null;
   var openAifExpanded = null;
-  var CHEVRON_DOWN_SVG = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"></path></svg>';
-  function renderAifCards(){
-    var box = document.getElementById('aifCards');
-    box.innerHTML = ['a','i','f'].map(function(k){
-      var L = state.aif[k];
-      if(openAifEdit === k){
-        return '<div class="aif-card editing" data-letter="'+k+'" style="--aif-color:'+L.color+';grid-column:1/-1;">' +
-          '<input data-f="title" value="'+escAttr(L.title)+'" placeholder="Título" style="width:100%;margin-bottom:6px;border:1px solid var(--line-strong);border-radius:6px;padding:6px 8px;font-size:13px;font-weight:600;">' +
-          '<textarea data-f="body" placeholder="Texto" style="width:100%;min-height:56px;border:1px solid var(--line-strong);border-radius:6px;padding:6px 8px;font-size:12.5px;font-family:inherit;margin-bottom:6px;">'+escHtml(L.body)+'</textarea>' +
-          '<input data-f="test" value="'+escAttr(L.test)+'" placeholder="Teste" style="width:100%;border:1px solid var(--line-strong);border-radius:6px;padding:6px 8px;font-size:12.5px;font-style:italic;">' +
-          '<div class="form-actions" style="justify-content:flex-end;margin-top:8px;"><span style="display:flex;gap:8px;"><button class="btn ghost" data-act="cancel" type="button">Cancelar</button><button class="btn" data-act="save" type="button">Guardar</button></span></div>' +
-          '</div>';
-      }
-      var expanded = openAifExpanded === k;
-      return '<div class="aif-card'+(expanded?' expanded':'')+'" data-letter="'+k+'" style="--aif-color:'+L.color+';position:relative;">' +
-        '<button class="cardedit" data-act="edit" data-letter="'+k+'" type="button" style="position:absolute;top:10px;right:10px;color:var(--ink-faint);background:var(--surface-2);">'+PENCIL_SVG+'</button>' +
-        '<button class="aif-card-toggle" data-act="toggle" data-letter="'+k+'" type="button">' +
-          '<span class="aif-letter">'+L.letter+'</span>' +
-          '<h4 class="aif-title">'+escHtml(L.title)+'</h4>' +
-          '<span class="aif-card-chevron">'+CHEVRON_DOWN_SVG+'</span>' +
-        '</button>' +
-        (expanded ? '<p class="aif-body">'+escHtml(L.body)+'</p><p class="aif-test">"'+escHtml(L.test)+'"</p>' : '') +
-        '</div>';
-    }).join('');
-    box.querySelectorAll('[data-act="toggle"]').forEach(function(btn){
-      btn.addEventListener('click', function(){
-        var k = btn.getAttribute('data-letter');
-        openAifExpanded = (openAifExpanded === k) ? null : k;
-        renderAifCards();
-      });
-    });
-    box.querySelectorAll('[data-act="edit"]').forEach(function(btn){
-      btn.addEventListener('click', function(e){ e.stopPropagation(); openAifEdit = btn.getAttribute('data-letter'); renderAifCards(); });
-    });
-    box.querySelectorAll('[data-act="cancel"]').forEach(function(btn){
-      btn.addEventListener('click', function(){ openAifEdit=null; renderAifCards(); });
-    });
-    box.querySelectorAll('[data-act="save"]').forEach(function(btn){
-      btn.addEventListener('click', function(){
-        var card = btn.closest('[data-letter]');
-        var k = card.getAttribute('data-letter');
-        var L = state.aif[k];
-        L.title = card.querySelector('[data-f="title"]').value.trim() || L.title;
-        L.body = card.querySelector('[data-f="body"]').value.trim();
-        L.test = card.querySelector('[data-f="test"]').value.trim();
-        saveState(); openAifEdit=null; renderAifCards();
-      });
-    });
-  }
-
   function renderAifToday(){
     var pct = aifPercentForDate(TODAY_ISO, TODAY_WEEKDAY);
     document.getElementById('aifRings').innerHTML = ['a','i','f'].map(function(k){
       var val = Math.round(pct[k]);
       var L = state.aif[k];
       var circ = 97.4;
-      return '<div class="aif-ring-card">' +
+      var active = openAifExpanded === k;
+      return '<button class="aif-ring-card'+(active?' active':'')+'" data-act="toggle" data-letter="'+k+'" type="button">' +
         '<svg viewBox="0 0 36 36"><circle cx="18" cy="18" r="15.5" fill="none" stroke="'+L.color+'33" stroke-width="4"></circle>' +
         '<circle cx="18" cy="18" r="15.5" fill="none" stroke="'+L.color+'" stroke-width="4" stroke-linecap="round" stroke-dasharray="'+circ+'" stroke-dashoffset="'+(circ-(circ*Math.min(val,100)/100))+'" transform="rotate(-90 18 18)"></circle></svg>' +
         '<span class="aif-ring-letter" style="color:'+L.color+';">'+L.letter+'</span>' +
         '<span class="aif-ring-pct">'+val+'%</span>' +
-        '</div>';
+        '</button>';
     }).join('');
     document.getElementById('aifTotal').innerHTML =
       '<span class="aif-total-label">Total do dia</span><span class="aif-total-val">'+Math.round(pct.total)+'%</span>';
+    document.querySelectorAll('#aifRings [data-act="toggle"]').forEach(function(btn){
+      btn.addEventListener('click', function(){
+        var k = btn.getAttribute('data-letter');
+        openAifExpanded = (openAifExpanded === k) ? null : k;
+        renderAifToday();
+        renderAifDetailBox();
+      });
+    });
+  }
+
+  function renderAifDetailBox(){
+    var box = document.getElementById('aifDetailBox');
+    var k = openAifExpanded;
+    if(!k){ box.innerHTML = ''; return; }
+    var L = state.aif[k];
+    if(openAifEdit === k){
+      box.innerHTML = '<div class="aif-card editing" style="--aif-color:'+L.color+';">' +
+        '<input data-f="title" value="'+escAttr(L.title)+'" placeholder="Título" style="width:100%;margin-bottom:6px;border:1px solid var(--line-strong);border-radius:6px;padding:6px 8px;font-size:13px;font-weight:600;">' +
+        '<textarea data-f="body" placeholder="Texto" style="width:100%;min-height:56px;border:1px solid var(--line-strong);border-radius:6px;padding:6px 8px;font-size:12.5px;font-family:inherit;margin-bottom:6px;">'+escHtml(L.body)+'</textarea>' +
+        '<input data-f="test" value="'+escAttr(L.test)+'" placeholder="Teste" style="width:100%;border:1px solid var(--line-strong);border-radius:6px;padding:6px 8px;font-size:12.5px;font-style:italic;">' +
+        '<div class="form-actions" style="justify-content:flex-end;margin-top:8px;"><span style="display:flex;gap:8px;"><button class="btn ghost" data-act="cancel" type="button">Cancelar</button><button class="btn" data-act="save" type="button">Guardar</button></span></div>' +
+        '</div>';
+      box.querySelector('[data-act="cancel"]').addEventListener('click', function(){ openAifEdit=null; renderAifDetailBox(); });
+      box.querySelector('[data-act="save"]').addEventListener('click', function(){
+        L.title = box.querySelector('[data-f="title"]').value.trim() || L.title;
+        L.body = box.querySelector('[data-f="body"]').value.trim();
+        L.test = box.querySelector('[data-f="test"]').value.trim();
+        saveState(); openAifEdit=null; renderAifDetailBox(); renderAifToday();
+      });
+    } else {
+      box.innerHTML = '<div class="aif-card" style="--aif-color:'+L.color+';position:relative;">' +
+        '<button class="cardedit" data-act="edit" type="button" style="position:absolute;top:10px;right:10px;color:var(--ink-faint);background:var(--surface-2);">'+PENCIL_SVG+'</button>' +
+        '<h4 class="aif-title">'+escHtml(L.title)+'</h4>' +
+        '<p class="aif-body">'+escHtml(L.body)+'</p>' +
+        '<p class="aif-test">"'+escHtml(L.test)+'"</p>' +
+        '</div>';
+      box.querySelector('[data-act="edit"]').addEventListener('click', function(){ openAifEdit = k; renderAifDetailBox(); });
+    }
   }
 
   function renderAifStreak(){
@@ -2746,8 +2735,8 @@
 
     renderProtocolo();
     renderCycleBox();
-    renderAifCards();
     renderAifToday();
+    renderAifDetailBox();
     renderAifStreak();
     renderVocabProgress();
     renderTrainProgress();
