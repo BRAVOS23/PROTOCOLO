@@ -2473,16 +2473,18 @@
       (type === 'pendente' ? '<div class="today-item" id="itemDetailDoneRow" style="cursor:pointer;margin-bottom:10px;">' +
         '<span class="today-check'+(it.done?' on':'')+'" id="itemDetailDoneCheck">'+CHECK_SVG+'</span>' +
         '<div class="today-txt"><div class="tt">Concluída</div></div></div>' : '') +
-      '<input id="itemDetailTitle" type="text" value="'+escAttr(title)+'" placeholder="Título" style="width:100%;margin-bottom:8px;border:1px solid var(--line-strong);border-radius:8px;padding:10px 12px;font-size:14px;">' +
-      '<div class="row2" style="margin-bottom:10px;">' +
-        '<input id="itemDetailDate" type="date" value="'+dateVal+'">' +
-        '<input id="itemDetailTime" type="time" value="'+timeVal+'">' +
-      '</div>' +
-      (type === 'pendente' ? '<p class="lead" style="margin:-4px 0 10px;font-size:12px;color:var(--ink-faint);">Prazo opcional — aparece um aviso no Início nas últimas 24h.</p>' : '') +
-      '<textarea id="itemDetailBodyText" placeholder="Descrição — escreve aqui o que precisas de lembrar" style="width:100%;min-height:140px;border:1px solid var(--line-strong);border-radius:8px;padding:10px 12px;font-size:13.5px;font-family:inherit;">'+escHtml(it.detail||'')+'</textarea>' +
-      '<div class="form-actions" style="justify-content:space-between;margin-top:14px;">' +
-        '<button class="btn danger" id="btnItemDetailDelete" type="button">Apagar</button>' +
-        '<button class="btn" id="btnItemDetailSave" type="button">Guardar</button>' +
+      '<div class="activity-edit-form">' +
+        '<input id="itemDetailTitle" type="text" value="'+escAttr(title)+'" placeholder="Título">' +
+        '<div class="row2">' +
+          '<input id="itemDetailDate" type="date" value="'+dateVal+'">' +
+          '<input id="itemDetailTime" type="time" value="'+timeVal+'">' +
+        '</div>' +
+        (type === 'pendente' ? '<p class="lead" style="margin:0;font-size:12px;color:var(--ink-faint);">Prazo opcional — aparece um aviso no Início nas últimas 24h.</p>' : '') +
+        '<textarea id="itemDetailBodyText" placeholder="Descrição — escreve aqui o que precisas de lembrar" style="min-height:140px;">'+escHtml(it.detail||'')+'</textarea>' +
+        '<div class="form-actions" style="justify-content:space-between;">' +
+          '<button class="btn danger" id="btnItemDetailDelete" type="button">Apagar</button>' +
+          '<button class="btn" id="btnItemDetailSave" type="button">Guardar</button>' +
+        '</div>' +
       '</div>';
 
     if(type === 'pendente'){
