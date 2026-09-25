@@ -372,10 +372,6 @@ p.lead{ color:var(--ink-soft); font-size:14px; margin:0 0 16px; }
 .list-row .del svg{ width:14px; height:14px; display:block; }
 .scroll-list{ max-height:320px; overflow-y:auto; }
 
-.conta-balance{ font-family:var(--font-mono); font-weight:700; font-size:14px; white-space:nowrap; align-self:center; color:var(--ink); }
-.conta-balance.neg{ color:var(--bad); }
-.conta-balance.pos{ color:var(--good); }
-
 .today-item .del{ margin-left:auto; cursor:pointer; color:var(--ink-faint); flex-shrink:0; padding:4px; }
 .today-item .del:hover{ color:var(--bad); }
 .today-item .del svg{ width:14px; height:14px; display:block; }
@@ -417,11 +413,11 @@ p.lead{ color:var(--ink-soft); font-size:14px; margin:0 0 16px; }
 .hcard:hover{ border-color:var(--line-strong); box-shadow:var(--shadow-2); }
 .hcard .hicn{ width:44px; height:44px; border-radius:12px; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
 .hcard .hicn svg{ width:21px; height:21px; }
-.hcard .hicn.financas{ background:var(--good-soft); color:var(--good); }
 .hcard .hicn.compras{ background:var(--warn-soft); color:var(--warn); }
 .hcard .hicn.agenda{ background:var(--cat-lang-soft); color:var(--cat-lang); }
 .hcard .hicn.pendentes{ background:var(--accent-soft); color:var(--accent-strong); }
 .hcard .hicn.planos{ background:var(--cat-fit-soft); color:var(--cat-fit); }
+.hcard .hicn.estudos{ background:var(--bad-soft); color:var(--bad); }
 .hcard .hbody{ flex:1; min-width:0; }
 .hcard .hname{ font-family:var(--font-display); font-weight:600; font-size:16px; }
 .hcard .hsum{ font-size:12.5px; color:var(--ink-faint); margin-top:2px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
@@ -466,6 +462,11 @@ p.lead{ color:var(--ink-soft); font-size:14px; margin:0 0 16px; }
 .cat-edit-row .mx:hover{ color:var(--bad); }
 .chip-add-btn{ font-size:12px; background:none; border:1px dashed var(--line-strong); color:var(--ink-soft); padding:6px 12px; border-radius:999px; cursor:pointer; margin-top:2px; }
 .chip-add-btn:hover{ border-color:var(--accent); color:var(--accent-strong); }
+
+.materia-edit-row{ margin-bottom:14px; }
+.color-swatch-row{ display:flex; gap:8px; margin-top:6px; padding-left:2px; flex-wrap:wrap; }
+.color-swatch{ width:22px; height:22px; border-radius:50%; border:2px solid var(--surface); box-shadow:0 0 0 1px var(--line); cursor:pointer; padding:0; }
+.color-swatch.selected{ box-shadow:0 0 0 2px var(--ink); }
 
 /* ---------------- sub tabs (dentro de Línguas/Forma) ---------------- */
 .subtabs-wrap{ position:relative; }
@@ -799,6 +800,13 @@ footer.page-footer{ padding:30px 0 10px; text-align:center; color:var(--ink-fain
 .plano-marco-titulo{ font-size:14px; font-weight:700; color:var(--ink); }
 .plano-marco-detalhe{ font-size:12.5px; color:var(--ink-soft); margin-top:4px; line-height:1.5; }
 
+.overview-plano-block{ margin-bottom:26px; padding-bottom:22px; border-bottom:1px solid var(--line); }
+.overview-plano-block:last-child{ border-bottom:none; margin-bottom:0; padding-bottom:0; }
+.overview-plano-tag{
+  display:inline-block; font-family:var(--font-mono); font-size:11px; font-weight:700; text-transform:uppercase;
+  letter-spacing:.05em; color:var(--accent-strong); background:var(--accent-soft); padding:4px 10px; border-radius:999px; margin-bottom:16px;
+}
+
 /* ============ Estudos (cronómetro/registo manual + tempo por período) ============ */
 .est-timer-card{
   background:var(--surface-2); border:1px solid var(--line); border-radius:var(--radius-m);
@@ -833,13 +841,15 @@ footer.page-footer{ padding:30px 0 10px; text-align:center; color:var(--ink-fain
 .est-period-custom{ gap:8px; }
 .est-period-custom input{ border:1px solid var(--line-strong); background:var(--surface-2); border-radius:6px; padding:6px 8px; font-size:12.5px; }
 
-.est-donut-wrap{ position:relative; width:120px; height:120px; margin:6px auto; }
-.est-donut{ width:120px; height:120px; }
-.est-donut-total{
-  position:absolute; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center;
-}
-.est-donut-total .n{ font-family:var(--font-mono); font-size:16px; font-weight:700; color:var(--ink); }
-.est-donut-total .lbl{ font-size:10.5px; color:var(--ink-faint); text-transform:uppercase; letter-spacing:.04em; }
+.est-bars-total{ font-family:var(--font-mono); font-size:18px; font-weight:700; color:var(--ink); text-align:center; }
+.est-bars-total span{ font-size:11px; font-weight:500; color:var(--ink-faint); text-transform:uppercase; letter-spacing:.04em; }
+.est-bars-wrap{ overflow-x:auto; scrollbar-width:none; margin-top:12px; }
+.est-bars-wrap::-webkit-scrollbar{ display:none; }
+.est-bars{ display:flex; align-items:flex-end; gap:7px; padding:0 2px 4px; }
+.est-bar-col{ display:flex; flex-direction:column; justify-content:flex-end; align-items:center; flex:0 0 20px; }
+.est-bar-stack{ width:16px; display:flex; flex-direction:column-reverse; border-radius:3px 3px 0 0; overflow:hidden; background:var(--surface-2); }
+.est-bar-seg{ width:100%; flex-shrink:0; }
+.est-bar-label{ font-family:var(--font-mono); font-size:9px; color:var(--ink-faint); margin-top:6px; white-space:nowrap; }
 .est-legend{ margin-top:16px; }
 .est-legend-row{ display:flex; align-items:center; gap:8px; padding:7px 2px; border-top:1px solid var(--line); font-size:13px; }
 .est-legend-row:first-child{ border-top:none; }

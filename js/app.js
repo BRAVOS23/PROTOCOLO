@@ -4,6 +4,13 @@
   /* ---------------- storage ---------------- */
   var STORE_KEY = 'protocolo:v1:state';
 
+  /* paleta de cores para as matérias de Estudos — definida cedo porque a
+     migração (mais abaixo) já precisa dela para converter dados antigos. */
+  var ESTUDO_PALETTE = [
+    'var(--accent)', 'var(--cat-lang)', 'var(--cat-fit)',
+    'var(--warn)', 'var(--bad)', 'var(--good)', 'var(--accent-strong)',
+  ];
+
   /* converte um objeto no formato antigo de "rota" (timeline+note+chips) num
      "plano" genérico — usado tanto para semear instalações novas como para
      migrar quem já tinha o app. */
@@ -51,9 +58,6 @@
       aif: clone(AIF_LETTERS),
       cycle: { start: '2026-09-01', end: '2026-11-29' },
       protocolo: clone(DEFAULT_PROTOCOLO),
-      finance: [],
-      financeCategories: clone(FINANCE_CATEGORIES),
-      financeContas: [],
       shoppingLists: [ { id:'default', name:'Compras', items: [] } ],
       pendentes: [],
       agenda: [],
@@ -171,17 +175,20 @@
         if(preTiro && preTiro.time==='16h30–17h'){ preTiro.time='17h'; preTiro.note='1h30 antes dos tiros — comida pesada causa enjoo'; }
       }
     })();
-    // v9: categorias de finanças passam a ser editáveis pela interface, e é
-    // possível registar contas (carteira móvel / conta bancária) para saber
-    // exatamente onde está o dinheiro de cada transação.
-    if(!s.financeCategories || !s.financeCategories.length) s.financeCategories = clone(FINANCE_CATEGORIES);
-    if(!s.financeContas) s.financeContas = [];
+    delete s.finance; delete s.financeCategories; delete s.financeContas; // secção "Finanças" removida a pedido do utilizador
     // v10: novo espaço "Estudos" — matérias/tipos editáveis, sessões (por
     // cronómetro ou registo manual) e um cronómetro que pode ficar a correr.
     if(!s.estudoMaterias) s.estudoMaterias = [];
     if(!s.estudoTipos || !s.estudoTipos.length) s.estudoTipos = ['Teoria', 'Exercícios', 'Revisão', 'Vídeo'];
     if(!s.estudoLog) s.estudoLog = [];
     if(s.estudoTimer === undefined) s.estudoTimer = null;
+    // v11: matérias de Estudos passam a ter cor própria, escolhida pelo
+    // utilizador (antes a cor vinha automaticamente da posição na lista).
+    if(s.estudoMaterias.length && typeof s.estudoMaterias[0] === 'string'){
+      s.estudoMaterias = s.estudoMaterias.map(function(name, i){
+        return { id:'em'+i+Date.now().toString(36), name:name, color: ESTUDO_PALETTE[i % ESTUDO_PALETTE.length] };
+      });
+    }
     return s;
   }
 
@@ -1588,6 +1595,38 @@
       btn.addEventListener('click', function(){ openPlano(btn.getAttribute('data-id')); });
     });
   }
+  function renderPlanosOverview(){
+    var box = document.getElementById('planosOverviewBox');
+    if(!state.planos.length){
+      box.innerHTML = '<p style="color:var(--ink-faint); font-size:13px;">Ainda não tens nenhum plano.</p>';
+      return;
+    }
+    box.innerHTML = state.planos.map(function(p){
+      var fasesHtml = (p.fases||[]).map(function(fase){
+        var marcosHtml = (fase.marcos||[]).map(function(m){
+          var tipoMeta = MARCO_TIPOS[m.tipo] || MARCO_TIPOS.meta;
+          return '<div class="plano-marco" style="border-left-color:'+tipoMeta.color+';">' +
+            '<div class="plano-marco-top"><span class="plano-marco-tipo" style="background:'+tipoMeta.soft+';color:'+tipoMeta.color+';">'+tipoMeta.icon+escHtml(tipoMeta.label)+'</span>'+(m.quando?'<span class="plano-marco-quando">'+escHtml(m.quando)+'</span>':'')+'</div>' +
+            '<div class="plano-marco-titulo">'+escHtml(m.titulo)+'</div>' +
+            (m.detalhe ? '<div class="plano-marco-detalhe">'+escHtml(m.detalhe)+'</div>' : '') +
+            '</div>';
+        }).join('');
+        if(!marcosHtml) return '';
+        return '<div class="plano-fase-group">' +
+          '<div class="plano-fase-head"><h3 class="plano-fase-label">'+escHtml(fase.label)+'</h3></div>' +
+          marcosHtml +
+          '</div>';
+      }).join('');
+      return '<div class="overview-plano-block">' +
+        '<span class="overview-plano-tag">'+escHtml(p.title)+'</span>' +
+        (fasesHtml || '<p style="color:var(--ink-faint); font-size:12.5px;">Sem fases ou marcos ainda.</p>') +
+        '</div>';
+    }).join('');
+  }
+  document.getElementById('btnPlanosOverview').addEventListener('click', function(){
+    renderPlanosOverview();
+    goVida('planos-overview');
+  });
   function openPlano(id){
     openPlanoId = id;
     resetPlanoEditState();
@@ -1867,14 +1906,9 @@
   });
 
   /* ================= ESTUDOS (matérias, cronómetro/registo manual, tempo por período) ================= */
-  var ESTUDO_PALETTE = [
-    'var(--accent)', 'var(--cat-lang)', 'var(--cat-fit)',
-    'var(--warn)', 'var(--bad)', 'var(--good)', 'var(--accent-strong)',
-  ];
-  function estudoColorFor(materia){
-    var idx = state.estudoMaterias.indexOf(materia);
-    if(idx < 0) idx = 0;
-    return ESTUDO_PALETTE[idx % ESTUDO_PALETTE.length];
+  function estudoColorFor(materiaName){
+    var m = state.estudoMaterias.find(function(x){ return x.name===materiaName; });
+    return m ? m.color : ESTUDO_PALETTE[0];
   }
   function estudoFmtDuration(min){
     min = Math.round(min);
@@ -1940,12 +1974,58 @@
     }
     return render;
   }
-  var renderEstudoMaterias = makeChipListEditor('estudoMateriasBox',
-    function(){ return state.estudoMaterias; },
-    function(v){ state.estudoMaterias = v; saveState(); },
-    '+ matéria',
-    function(){ renderEstudos(); renderVidaHub(); }
-  );
+  var estudoMateriasEditing = false;
+  var draftMaterias = [];
+  function renderEstudoMaterias(){
+    var box = document.getElementById('estudoMateriasBox');
+    if(estudoMateriasEditing){
+      box.innerHTML = '<div class="materia-edit-list"></div>' +
+        '<div class="form-actions" style="justify-content:flex-end;margin-top:8px;"><span style="display:flex;gap:8px;"><button class="btn ghost" data-act="cancel" type="button">Cancelar</button><button class="btn" data-act="save" type="button">Guardar</button></span></div>';
+      renderEstudoMateriasEdit();
+      box.querySelector('[data-act="cancel"]').addEventListener('click', function(){ estudoMateriasEditing=false; renderEstudoMaterias(); });
+      box.querySelector('[data-act="save"]').addEventListener('click', function(){
+        state.estudoMaterias = draftMaterias.filter(function(m){ return m.name.trim(); }).map(function(m){ return { id:m.id, name:m.name.trim(), color:m.color }; });
+        saveState(); estudoMateriasEditing=false; renderEstudos(); renderVidaHub();
+      });
+    } else {
+      box.innerHTML = (state.estudoMaterias.length ? state.estudoMaterias.map(function(m){
+          return '<span class="streak-chip"><span class="dot" style="background:'+m.color+'"></span>'+escHtml(m.name)+'</span>';
+        }).join('') : '<span style="color:var(--ink-faint);font-size:12.5px;">Nenhuma ainda.</span>') +
+        '<button class="ar-icon-btn" type="button" data-act="edit" aria-label="Editar">'+PENCIL_SVG+'</button>';
+      box.querySelector('[data-act="edit"]').addEventListener('click', function(){
+        draftMaterias = state.estudoMaterias.map(function(m){ return { id:m.id, name:m.name, color:m.color }; });
+        estudoMateriasEditing = true; renderEstudoMaterias();
+      });
+    }
+  }
+  function renderEstudoMateriasEdit(){
+    var editBox = document.querySelector('#estudoMateriasBox .materia-edit-list');
+    editBox.innerHTML = draftMaterias.map(function(m,i){
+      return '<div class="materia-edit-row">' +
+        '<div class="cat-edit-row"><input data-ci="'+i+'" value="'+escAttr(m.name)+'" placeholder="Matéria"><span class="mx" data-cidel="'+i+'">'+TRASH_SVG+'</span></div>' +
+        '<div class="color-swatch-row" data-ri="'+i+'">' + ESTUDO_PALETTE.map(function(col){
+          return '<button type="button" class="color-swatch'+(m.color===col?' selected':'')+'" data-color="'+escAttr(col)+'" style="background:'+col+'" aria-label="Escolher cor"></button>';
+        }).join('') + '</div>' +
+        '</div>';
+    }).join('') + '<button type="button" class="chip-add-btn" data-act="add">+ matéria</button>';
+
+    editBox.querySelectorAll('[data-ci]').forEach(function(inp){
+      inp.addEventListener('input', function(){ draftMaterias[+inp.getAttribute('data-ci')].name = inp.value; });
+    });
+    editBox.querySelectorAll('[data-cidel]').forEach(function(x){
+      x.addEventListener('click', function(){ draftMaterias.splice(+x.getAttribute('data-cidel'),1); renderEstudoMateriasEdit(); });
+    });
+    editBox.querySelectorAll('.color-swatch-row').forEach(function(row){
+      var idx = +row.getAttribute('data-ri');
+      row.querySelectorAll('.color-swatch').forEach(function(btn){
+        btn.addEventListener('click', function(){ draftMaterias[idx].color = btn.getAttribute('data-color'); renderEstudoMateriasEdit(); });
+      });
+    });
+    editBox.querySelector('[data-act="add"]').addEventListener('click', function(){
+      draftMaterias.push({ id:'em'+Date.now().toString(36)+Math.random().toString(36).slice(2,5), name:'', color: ESTUDO_PALETTE[draftMaterias.length % ESTUDO_PALETTE.length] });
+      renderEstudoMateriasEdit();
+    });
+  }
   var renderEstudoTipos = makeChipListEditor('estudoTiposBox',
     function(){ return state.estudoTipos; },
     function(v){ state.estudoTipos = v; saveState(); },
@@ -1990,7 +2070,7 @@
       box.innerHTML = '<p style="color:var(--ink-faint);font-size:13px;">Cria uma matéria em baixo para poderes começar a registar.</p>';
     } else {
       box.innerHTML = '<div class="est-timer-card">' +
-        '<div class="row2"><select id="estudoTimerMateria">' + state.estudoMaterias.map(function(m){ return '<option>'+escHtml(m)+'</option>'; }).join('') + '</select>' +
+        '<div class="row2"><select id="estudoTimerMateria">' + state.estudoMaterias.map(function(m){ return '<option>'+escHtml(m.name)+'</option>'; }).join('') + '</select>' +
         '<select id="estudoTimerTipo"><option value="">Tipo (opcional)</option>' + state.estudoTipos.map(function(t){ return '<option>'+escHtml(t)+'</option>'; }).join('') + '</select></div>' +
         '<input type="text" id="estudoTimerConteudo" placeholder="Conteúdo (opcional)">' +
         '<button class="btn" id="btnEstudoTimerStart" type="button" style="width:100%;margin-top:10px;">Começar</button>' +
@@ -2022,7 +2102,7 @@
       return;
     }
     box.innerHTML = '<div class="activity-edit-form">' +
-      '<div class="row2even"><input type="date" id="estNovoData" value="'+TODAY_ISO+'"><select id="estNovoMateria">'+state.estudoMaterias.map(function(m){ return '<option>'+escHtml(m)+'</option>'; }).join('')+'</select></div>' +
+      '<div class="row2even"><input type="date" id="estNovoData" value="'+TODAY_ISO+'"><select id="estNovoMateria">'+state.estudoMaterias.map(function(m){ return '<option>'+escHtml(m.name)+'</option>'; }).join('')+'</select></div>' +
       '<div class="row2even"><select id="estNovoTipo"><option value="">Tipo (opcional)</option>'+state.estudoTipos.map(function(t){ return '<option>'+escHtml(t)+'</option>'; }).join('')+'</select><input type="text" id="estNovoConteudo" placeholder="Conteúdo (opcional)"></div>' +
       '<div class="row2even"><input type="number" min="0" id="estNovoHoras" placeholder="Horas"><input type="number" min="0" max="59" id="estNovoMinutos" placeholder="Minutos"></div>' +
       '<div class="form-actions"><button class="btn ghost" id="btnEstNovoCancel" type="button">Cancelar</button><button class="btn" id="btnEstNovoSave" type="button">Guardar</button></div>' +
@@ -2118,22 +2198,54 @@
     }
   }
 
-  /* -------- donut de tempo por matéria + histórico -------- */
-  function estudoDonutSVG(data){
-    var total = data.reduce(function(s,d){ return s+d.minutes; },0);
-    var r = 46, C = 2*Math.PI*r;
-    var cum = 0;
-    var circles = data.map(function(d){
-      var frac = total>0 ? d.minutes/total : 0;
-      var len = frac*C;
-      var dash = len.toFixed(1)+' '+(C-len).toFixed(1);
-      var offset = (-cum).toFixed(1);
-      cum += len;
-      return '<circle cx="60" cy="60" r="'+r+'" fill="none" stroke="'+estudoColorFor(d.materia)+'" stroke-width="15" stroke-dasharray="'+dash+'" stroke-dashoffset="'+offset+'" transform="rotate(-90 60 60)"></circle>';
+  /* -------- gráfico de desempenho (tempo por dia/mês, por matéria) + histórico -------- */
+  function estudoBuckets(){
+    var log = estudoLogInRange();
+    var r = estudoRange();
+    var useMonthly = estudoPeriod === 'ano' || estudoPeriod === 'total' || (estudoPeriod === 'custom' && r && (r.end - r.start)/86400000 > 62);
+    function keyOf(dateISO){ return useMonthly ? dateISO.slice(0,7) : dateISO; }
+    function labelOf(key){
+      if(useMonthly) return MONTHS_PT_SHORT[+key.slice(5,7)-1];
+      return fmtDateShort(new Date(key+'T00:00:00'));
+    }
+    var map = {};
+    log.forEach(function(e){
+      var k = keyOf(e.date);
+      map[k] = map[k] || {};
+      map[k][e.materia] = (map[k][e.materia]||0) + e.minutos;
+    });
+    var keys;
+    if(!r){
+      keys = Object.keys(map).sort();
+    } else if(useMonthly){
+      keys = [];
+      var cur = new Date(r.start.getFullYear(), r.start.getMonth(), 1);
+      var endM = new Date(r.end.getFullYear(), r.end.getMonth(), 1);
+      while(cur <= endM){ keys.push(iso(cur).slice(0,7)); cur = new Date(cur.getFullYear(), cur.getMonth()+1, 1); }
+    } else {
+      keys = [];
+      var d = new Date(r.start);
+      while(d <= r.end){ keys.push(iso(d)); d = addDays(d,1); }
+    }
+    return keys.map(function(k){ return { key:k, label:labelOf(k), byMateria: map[k]||{} }; });
+  }
+  function estudoBarsHTML(buckets){
+    var CH = 100, COL_H = CH + 22;
+    var totals = buckets.map(function(b){ return Object.keys(b.byMateria).reduce(function(s,k){ return s+b.byMateria[k]; }, 0); });
+    var maxTotal = Math.max(1, totals.length ? Math.max.apply(null, totals) : 0);
+    var cols = buckets.map(function(b, i){
+      var bucketTotal = totals[i];
+      var stackPx = bucketTotal>0 ? Math.max(3, Math.round(bucketTotal/maxTotal*CH)) : 0;
+      var segsHtml = state.estudoMaterias.filter(function(m){ return b.byMateria[m.name]; }).map(function(m){
+        var segPx = Math.max(1, Math.round(b.byMateria[m.name]/bucketTotal*stackPx));
+        return '<div class="est-bar-seg" style="height:'+segPx+'px;background:'+m.color+'"></div>';
+      }).join('');
+      return '<div class="est-bar-col" style="height:'+COL_H+'px;">' +
+        (stackPx ? '<div class="est-bar-stack" style="height:'+stackPx+'px;">'+segsHtml+'</div>' : '') +
+        '<span class="est-bar-label">'+escHtml(b.label)+'</span>' +
+        '</div>';
     }).join('');
-    return '<svg viewBox="0 0 120 120" class="est-donut">' +
-      '<circle cx="60" cy="60" r="'+r+'" fill="none" stroke="var(--bar-track)" stroke-width="15"></circle>' +
-      circles + '</svg>';
+    return '<div class="est-bars-wrap"><div class="est-bars">' + cols + '</div></div>';
   }
   function renderEstudoTempo(){
     var log = estudoLogInRange();
@@ -2147,8 +2259,9 @@
       box.innerHTML = '<div class="weight-chart-empty" style="height:auto;padding:26px 20px;">'+TREND_SVG+'<div class="wce-title">Sem registos neste período</div><div class="wce-sub">Usa o cronómetro ou regista manualmente em cima.</div></div>';
       return;
     }
-    box.innerHTML = '<div class="est-donut-wrap">' + estudoDonutSVG(data) +
-      '<div class="est-donut-total"><span class="n">'+estudoFmtDuration(total)+'</span><span class="lbl">total</span></div></div>' +
+    box.innerHTML =
+      '<div class="est-bars-total">'+estudoFmtDuration(total)+' <span>no total</span></div>' +
+      estudoBarsHTML(estudoBuckets()) +
       '<div class="est-legend">' + data.map(function(d){
         var pct = total ? Math.round(d.minutes/total*100) : 0;
         return '<div class="est-legend-row"><span class="dot" style="background:'+estudoColorFor(d.materia)+'"></span><span class="est-legend-name">'+escHtml(d.materia)+'</span><span class="est-legend-val">'+estudoFmtDuration(d.minutes)+' <small>('+pct+'%)</small></span></div>';
@@ -2187,213 +2300,7 @@
     renderEstudoTipos();
   }
 
-  /* ================= VIDA (finanças / compras / agenda / pendentes / planos) ================= */
-  function fmtMT(n){ return (n<0?'−':'') + Math.abs(n).toLocaleString('pt-PT',{minimumFractionDigits:0, maximumFractionDigits:2}) + ' MT'; }
-
-  function contaBalance(c){
-    return state.finance.filter(function(t){ return t.contaId === c.id; })
-      .reduce(function(s,t){ return s + (t.type==='entrada' ? t.amount : -t.amount); }, 0);
-  }
-
-  function renderFinance(){
-    var mk = TODAY_ISO.slice(0,7);
-    var monthTx = state.finance.filter(function(t){ return t.date.slice(0,7)===mk; });
-    var totalIn = monthTx.filter(function(t){ return t.type==='entrada'; }).reduce(function(s,t){ return s+t.amount; },0);
-    var totalOut = monthTx.filter(function(t){ return t.type==='saida'; }).reduce(function(s,t){ return s+t.amount; },0);
-    var totalNasContas = state.financeContas.reduce(function(s,c){ return s + contaBalance(c); }, 0);
-    document.getElementById('financeStats').innerHTML =
-      stat('Entradas', fmtMT(totalIn)) +
-      stat('Saídas', fmtMT(totalOut)) +
-      stat('Saldo do mês', fmtMT(totalIn-totalOut), totalIn-totalOut>=0) +
-      stat('Nas contas', fmtMT(totalNasContas));
-
-    var log = document.getElementById('financeLog');
-    var list = state.finance.slice().sort(function(a,b){ return a.date<b.date?1:-1; });
-    log.innerHTML = list.length ? list.map(function(t){
-      var d = new Date(t.date+'T00:00:00');
-      var conta = t.contaId && state.financeContas.find(function(c){ return c.id===t.contaId; });
-      return '<div class="list-row"><div class="lr-main"><div class="lr-title">'+escHtml(t.desc)+'</div>' +
-        '<div class="lr-sub">'+fmtDateShort(d)+' · '+escHtml(t.category)+(conta?' · '+escHtml(conta.name):'')+'</div></div>' +
-        '<div class="lr-right"><span class="lr-amount '+(t.type==='entrada'?'in':'out')+'">'+(t.type==='entrada'?'+':'−')+fmtMT(t.amount)+'</span>' +
-        '<span class="del" data-id="'+t.id+'">'+TRASH_SVG+'</span></div></div>';
-    }).join('') : '<div class="list-row" style="color:var(--ink-faint)">Sem registos ainda.</div>';
-    log.querySelectorAll('.del').forEach(function(el){
-      el.addEventListener('click', function(){
-        state.finance = state.finance.filter(function(t){ return t.id!==el.getAttribute('data-id'); });
-        saveState(); renderFinance();
-      });
-    });
-
-    renderFinanceCategories();
-    renderFinanceContas();
-  }
-
-  /* -------- categorias de finanças (editáveis) -------- */
-  var financeCategoriesEditing = false;
-  var editFinanceCategories = [];
-  function populateFinanceCategorySelect(){
-    var sel = document.getElementById('financeCategory');
-    var prev = sel.value;
-    sel.innerHTML = state.financeCategories.map(function(c){ return '<option>'+escHtml(c)+'</option>'; }).join('');
-    if(state.financeCategories.indexOf(prev) !== -1) sel.value = prev;
-  }
-  function renderFinanceCategories(){
-    var box = document.getElementById('financeCategoriesBox');
-    if(financeCategoriesEditing){
-      box.innerHTML = '<div id="financeCategoriesEdit"></div>' +
-        '<div class="form-actions" style="justify-content:flex-end;margin-top:8px;"><span style="display:flex;gap:8px;"><button class="btn ghost" id="btnFinanceCatCancel" type="button">Cancelar</button><button class="btn" id="btnFinanceCatSave" type="button">Guardar</button></span></div>';
-      renderFinanceCategoriesEdit();
-      document.getElementById('btnFinanceCatCancel').addEventListener('click', function(){ financeCategoriesEditing=false; renderFinanceCategories(); });
-      document.getElementById('btnFinanceCatSave').addEventListener('click', function(){
-        var cleaned = editFinanceCategories.map(function(c){ return c.trim(); }).filter(Boolean);
-        if(cleaned.length) state.financeCategories = cleaned;
-        saveState(); financeCategoriesEditing=false;
-        populateFinanceCategorySelect(); renderFinanceCategories();
-      });
-    } else {
-      box.innerHTML = state.financeCategories.map(function(c){ return '<span class="streak-chip">'+escHtml(c)+'</span>'; }).join('') +
-        '<button class="ar-icon-btn" id="btnEditFinanceCat" aria-label="Editar categorias" type="button">'+PENCIL_SVG+'</button>';
-      document.getElementById('btnEditFinanceCat').addEventListener('click', function(){
-        editFinanceCategories = state.financeCategories.slice();
-        financeCategoriesEditing = true; renderFinanceCategories();
-      });
-    }
-  }
-  function renderFinanceCategoriesEdit(){
-    var box = document.getElementById('financeCategoriesEdit');
-    box.innerHTML = editFinanceCategories.map(function(c,i){
-      return '<div class="cat-edit-row" data-i="'+i+'"><input data-ci="'+i+'" value="'+escAttr(c)+'" placeholder="Categoria"><span class="mx" data-cidel="'+i+'">'+TRASH_SVG+'</span></div>';
-    }).join('') + '<button type="button" class="chip-add-btn" id="btnAddFinanceCat">+ categoria</button>';
-    box.querySelectorAll('[data-ci]').forEach(function(inp){
-      inp.addEventListener('input', function(){ editFinanceCategories[+inp.getAttribute('data-ci')] = inp.value; });
-    });
-    box.querySelectorAll('[data-cidel]').forEach(function(x){
-      x.addEventListener('click', function(){
-        if(editFinanceCategories.length<=1) return;
-        editFinanceCategories.splice(+x.getAttribute('data-cidel'),1); renderFinanceCategoriesEdit();
-      });
-    });
-    document.getElementById('btnAddFinanceCat').addEventListener('click', function(){ editFinanceCategories.push(''); renderFinanceCategoriesEdit(); });
-  }
-
-  /* -------- contas financeiras (carteira móvel / conta bancária) -------- */
-  var openContaEditId = null;
-  var FINANCE_WALLET_PROVIDERS = ['Emola', 'M-Pesa', 'Mkesh'];
-  function contaSummary(c){
-    if(c.kind === 'banco') return 'Conta bancária' + (c.nib ? ' · NIB '+c.nib : '') + (c.numeroConta ? ' · nº '+c.numeroConta : '');
-    return 'Carteira móvel · ' + (c.provider||'—') + (c.phone ? ' · '+c.phone : '');
-  }
-  function contaRowView(c){
-    var bal = contaBalance(c);
-    return '<div class="activity-row" data-id="'+c.id+'">' +
-      '<div class="ar-body"><div class="ar-title">'+escHtml(c.name)+'</div><div class="ar-detail">'+escHtml(contaSummary(c))+'</div></div>' +
-      '<span class="conta-balance '+(bal<0?'neg':(bal>0?'pos':''))+'">'+fmtMT(bal)+'</span>' +
-      '<div class="ar-actions">' +
-        '<button class="ar-icon-btn" data-act="edit" type="button">'+PENCIL_SVG+'</button>' +
-        '<button class="ar-icon-btn danger" data-act="del" type="button">'+TRASH_SVG+'</button>' +
-      '</div></div>';
-  }
-  function contaRowEdit(c){
-    return '<div class="activity-edit-form" data-id="'+c.id+'">' +
-      '<input data-f="name" type="text" placeholder="Nome da conta (ex.: Carteira principal)" value="'+escAttr(c.name)+'">' +
-      '<select data-f="kind">' +
-        '<option value="movel"'+(c.kind==='movel'?' selected':'')+'>Carteira móvel</option>' +
-        '<option value="banco"'+(c.kind==='banco'?' selected':'')+'>Conta bancária</option>' +
-      '</select>' +
-      '<div class="row2even" data-group="movel"'+(c.kind!=='movel'?' hidden':'')+'>' +
-        '<select data-f="provider">' + FINANCE_WALLET_PROVIDERS.map(function(p){ return '<option'+(c.provider===p?' selected':'')+'>'+p+'</option>'; }).join('') + '</select>' +
-        '<input data-f="phone" type="tel" placeholder="Número de telefone" value="'+escAttr(c.phone||'')+'">' +
-      '</div>' +
-      '<div class="row2even" data-group="banco"'+(c.kind!=='banco'?' hidden':'')+'>' +
-        '<input data-f="nib" type="text" placeholder="NIB" value="'+escAttr(c.nib||'')+'">' +
-        '<input data-f="numeroConta" type="text" placeholder="Número da conta" value="'+escAttr(c.numeroConta||'')+'">' +
-      '</div>' +
-      '<div class="form-actions">' +
-        '<button class="btn ghost" data-act="cancel" type="button">Cancelar</button>' +
-        '<button class="btn" data-act="save" type="button">Guardar</button>' +
-      '</div></div>';
-  }
-  function renderFinanceContas(){
-    var box = document.getElementById('financeContasBox');
-    box.innerHTML = state.financeContas.length ? state.financeContas.map(function(c){
-      return c.id === openContaEditId ? contaRowEdit(c) : contaRowView(c);
-    }).join('') : '<p style="color:var(--ink-faint); font-size:13px;">Nenhuma conta registada ainda.</p>';
-
-    box.querySelectorAll('.activity-row [data-act="edit"]').forEach(function(btn){
-      btn.addEventListener('click', function(){
-        openContaEditId = btn.closest('.activity-row').getAttribute('data-id');
-        renderFinanceContas();
-      });
-    });
-    box.querySelectorAll('.activity-row [data-act="del"]').forEach(function(btn){
-      btn.addEventListener('click', function(){
-        var id = btn.closest('.activity-row').getAttribute('data-id');
-        var c = state.financeContas.find(function(x){ return x.id===id; });
-        showConfirm('Apagar a conta «'+(c?c.name:'')+'»? Esta ação não se desfaz.', function(){
-          state.financeContas = state.financeContas.filter(function(x){ return x.id!==id; });
-          if(openContaEditId===id) openContaEditId = null;
-          saveState(); renderFinanceContas(); populateFinanceContaSelect(); renderFinance();
-        });
-      });
-    });
-    box.querySelectorAll('.activity-edit-form [data-f="kind"]').forEach(function(sel){
-      sel.addEventListener('change', function(){
-        var form = sel.closest('.activity-edit-form');
-        var isMovel = sel.value === 'movel';
-        form.querySelector('[data-group="movel"]').hidden = !isMovel;
-        form.querySelector('[data-group="banco"]').hidden = isMovel;
-      });
-    });
-    box.querySelectorAll('.activity-edit-form [data-act="cancel"]').forEach(function(btn){
-      btn.addEventListener('click', function(){ openContaEditId = null; renderFinanceContas(); });
-    });
-    box.querySelectorAll('.activity-edit-form [data-act="save"]').forEach(function(btn){
-      btn.addEventListener('click', function(){
-        var form = btn.closest('.activity-edit-form');
-        var c = state.financeContas.find(function(x){ return x.id===form.getAttribute('data-id'); });
-        c.name = form.querySelector('[data-f="name"]').value.trim() || 'Conta sem nome';
-        c.kind = form.querySelector('[data-f="kind"]').value;
-        c.provider = form.querySelector('[data-f="provider"]').value;
-        c.phone = form.querySelector('[data-f="phone"]').value.trim();
-        c.nib = form.querySelector('[data-f="nib"]').value.trim();
-        c.numeroConta = form.querySelector('[data-f="numeroConta"]').value.trim();
-        saveState(); openContaEditId = null;
-        renderFinanceContas(); populateFinanceContaSelect(); renderFinance();
-      });
-    });
-  }
-  function populateFinanceContaSelect(){
-    var sel = document.getElementById('financeConta');
-    var prev = sel.value;
-    sel.innerHTML = '<option value="">— sem conta —</option>' + state.financeContas.map(function(c){ return '<option value="'+escAttr(c.id)+'">'+escHtml(c.name)+'</option>'; }).join('');
-    if(state.financeContas.some(function(c){ return c.id===prev; })) sel.value = prev;
-  }
-  document.getElementById('btnAddFinanceConta').addEventListener('click', function(){
-    var c = { id:'ct'+Date.now().toString(36)+Math.random().toString(36).slice(2,5), name:'Nova conta', kind:'movel', provider:'Emola', phone:'', nib:'', numeroConta:'' };
-    state.financeContas.push(c);
-    saveState(); openContaEditId = c.id; renderFinanceContas();
-  });
-
-  populateFinanceCategorySelect();
-  populateFinanceContaSelect();
-  document.getElementById('financeForm').addEventListener('submit', function(e){
-    e.preventDefault();
-    var amount = parseFloat(document.getElementById('financeAmount').value);
-    if(!amount || amount<=0) return;
-    state.finance.push({
-      id:'f'+Date.now().toString(36)+Math.random().toString(36).slice(2,5),
-      date: TODAY_ISO,
-      type: document.getElementById('financeType').value,
-      desc: document.getElementById('financeDesc').value.trim() || 'Sem descrição',
-      amount: amount,
-      category: document.getElementById('financeCategory').value,
-      contaId: document.getElementById('financeConta').value || null,
-    });
-    saveState();
-    document.getElementById('financeForm').reset();
-    renderFinance();
-    toast('Registado');
-  });
+  /* ================= VIDA (compras / agenda / pendentes / planos) ================= */
 
   function pendenteDueDate(it){
     if(!it || !it.due) return null;
@@ -2707,7 +2614,6 @@
 
 
   function renderVida(){
-    renderFinance();
     renderShopping();
     renderChecklist('pendentes', 'pendentesList');
     renderAgenda();
@@ -2719,7 +2625,6 @@
   /* ---- Vida: hub + navegação por ecrã (evita scroll infinito com tudo junto) ---- */
   var vidaScreen = 'hub';
   var HUB_ICONS = {
-    financas: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="6" width="20" height="12" rx="2"></rect><circle cx="12" cy="12" r="2.5"></circle></svg>',
     compras: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 6h15l-1.5 9h-12z"></path><path d="M6 6 5 2H2"></path><circle cx="9" cy="20" r="1"></circle><circle cx="18" cy="20" r="1"></circle></svg>',
     agenda: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4.5" width="18" height="16" rx="2"></rect><path d="M3 9.5h18M8 2.5v4M16 2.5v4"></path></svg>',
     pendentes: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11l3 3L22 4"></path><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2h11"></path></svg>',
@@ -2727,12 +2632,6 @@
     estudos: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path><path d="M12 7v5l3 2"></path></svg>',
   };
   function renderVidaHub(){
-    var mk = TODAY_ISO.slice(0,7);
-    var monthTx = state.finance.filter(function(t){ return t.date.slice(0,7)===mk; });
-    var totalIn = monthTx.filter(function(t){ return t.type==='entrada'; }).reduce(function(s,t){ return s+t.amount; },0);
-    var totalOut = monthTx.filter(function(t){ return t.type==='saida'; }).reduce(function(s,t){ return s+t.amount; },0);
-    var saldo = totalIn - totalOut;
-
     var pendingShopping = state.shoppingLists.reduce(function(s,l){ return s + l.items.filter(function(it){ return !it.done; }).length; }, 0);
 
     var upcoming = sortedAgenda().filter(function(ev){ return ev.date >= TODAY_ISO; })[0];
@@ -2743,7 +2642,6 @@
     var planosSub = planosCount ? (state.planos[0].title + (planosCount>1 ? ' + ' + (planosCount-1) : '')) : 'Nenhum ainda';
 
     var cards = [
-      { key:'financas', label:'Finanças', sum:'Saldo do mês', val:fmtMT(saldo), valColor: saldo>=0?'var(--good)':'var(--bad)' },
       { key:'compras', label:'Compras', sum: state.shoppingLists.length + ' lista'+(state.shoppingLists.length===1?'':'s'), count: pendingShopping },
       { key:'agenda', label:'Agenda', sum: upcoming ? upcoming.title : 'Sem eventos', val: upcoming ? dueLabel(daysUntil(upcoming.date)) : '', valColor:'var(--accent-strong)' },
       { key:'pendentes', label:'Pendentes', sum:'Fora da rotina diária', count: pendentesOpen },

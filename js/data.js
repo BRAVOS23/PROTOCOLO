@@ -367,8 +367,6 @@ function seedActivitiesWithIds() {
   return data;
 }
 
-const FINANCE_CATEGORIES = ['Negócio', 'Alimentação', 'Transporte', 'Casa', 'Saúde', 'Lazer', 'Estudo', 'Outro'];
-
 /* ---------------- seeds para conteúdo editável (notas) ----------------
    Convertem o conteúdo original em notas título+texto simples, para que
    o utilizador possa editar tudo dentro do app. Só correm uma vez, na
