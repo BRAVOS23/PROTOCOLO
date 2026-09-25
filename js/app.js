@@ -1025,7 +1025,7 @@
     var cur = currentWeight();
     var rate = weightTrend();
 
-    [['dashWeightNow','dashWeightTrend','dashWeightChart','dashWeightEmpty'], ['fitWeightNow','fitWeightTrend','fitWeightChart','fitWeightEmpty']].forEach(function(ids){
+    [['fitWeightNow','fitWeightTrend','fitWeightChart','fitWeightEmpty']].forEach(function(ids){
       var nowEl = document.getElementById(ids[0]);
       var trendEl = document.getElementById(ids[1]);
       var chartEl = document.getElementById(ids[2]);
@@ -1488,6 +1488,8 @@
   }
 
   var openAifEdit = null;
+  var openAifExpanded = null;
+  var CHEVRON_DOWN_SVG = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"></path></svg>';
   function renderAifCards(){
     var box = document.getElementById('aifCards');
     box.innerHTML = ['a','i','f'].map(function(k){
@@ -1500,16 +1502,26 @@
           '<div class="form-actions" style="justify-content:flex-end;margin-top:8px;"><span style="display:flex;gap:8px;"><button class="btn ghost" data-act="cancel" type="button">Cancelar</button><button class="btn" data-act="save" type="button">Guardar</button></span></div>' +
           '</div>';
       }
-      return '<div class="aif-card" data-letter="'+k+'" style="--aif-color:'+L.color+';position:relative;">' +
+      var expanded = openAifExpanded === k;
+      return '<div class="aif-card'+(expanded?' expanded':'')+'" data-letter="'+k+'" style="--aif-color:'+L.color+';position:relative;">' +
         '<button class="cardedit" data-act="edit" data-letter="'+k+'" type="button" style="position:absolute;top:10px;right:10px;color:var(--ink-faint);background:var(--surface-2);">'+PENCIL_SVG+'</button>' +
-        '<span class="aif-letter">'+L.letter+'</span>' +
-        '<h4 class="aif-title">'+escHtml(L.title)+'</h4>' +
-        '<p class="aif-body">'+escHtml(L.body)+'</p>' +
-        '<p class="aif-test">"'+escHtml(L.test)+'"</p>' +
+        '<button class="aif-card-toggle" data-act="toggle" data-letter="'+k+'" type="button">' +
+          '<span class="aif-letter">'+L.letter+'</span>' +
+          '<h4 class="aif-title">'+escHtml(L.title)+'</h4>' +
+          '<span class="aif-card-chevron">'+CHEVRON_DOWN_SVG+'</span>' +
+        '</button>' +
+        (expanded ? '<p class="aif-body">'+escHtml(L.body)+'</p><p class="aif-test">"'+escHtml(L.test)+'"</p>' : '') +
         '</div>';
     }).join('');
+    box.querySelectorAll('[data-act="toggle"]').forEach(function(btn){
+      btn.addEventListener('click', function(){
+        var k = btn.getAttribute('data-letter');
+        openAifExpanded = (openAifExpanded === k) ? null : k;
+        renderAifCards();
+      });
+    });
     box.querySelectorAll('[data-act="edit"]').forEach(function(btn){
-      btn.addEventListener('click', function(){ openAifEdit = btn.getAttribute('data-letter'); renderAifCards(); });
+      btn.addEventListener('click', function(e){ e.stopPropagation(); openAifEdit = btn.getAttribute('data-letter'); renderAifCards(); });
     });
     box.querySelectorAll('[data-act="cancel"]').forEach(function(btn){
       btn.addEventListener('click', function(){ openAifEdit=null; renderAifCards(); });

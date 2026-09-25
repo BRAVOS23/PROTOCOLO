@@ -62,19 +62,6 @@
       <span class="greet" id="dashDate">—</span>
       <h1>Bom trabalho a manter o rumo.</h1>
 
-      <div class="protocolo-card" id="protocoloCard">
-        <div class="pc-top">
-          <span class="pc-eyebrow">O Protocolo</span>
-          <button class="iconbtn" id="btnEditProtocolo" aria-label="Editar protocolo" type="button" style="background:rgba(255,255,255,.08); border-color:rgba(255,255,255,.2); color:#fff;">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"></path></svg>
-          </button>
-        </div>
-        <p class="pc-manifesto" id="pcManifestoText"></p>
-        <textarea class="pc-edit" id="pcManifestoEdit" hidden></textarea>
-        <div class="pc-metas" id="pcMetas"></div>
-        <div class="meta-edit-row" id="pcMetaEdit" hidden></div>
-      </div>
-
       <div class="streak-row">
         <span class="streak-chip"><span class="dot" style="background:var(--cat-lang)"></span>Línguas <span class="n" id="streakLang">0</span> dias</span>
         <span class="streak-chip"><span class="dot" style="background:var(--cat-fit)"></span>Forma <span class="n" id="streakFit">0</span> dias</span>
@@ -98,19 +85,6 @@
       </div>
     </div>
 
-    <section class="blk">
-      <div class="blk-head hoje-head">
-        <div><span class="kicker">Hoje</span><h2 id="hojeTitle">Marca o que fizeste</h2></div>
-        <div style="display:flex; align-items:center; gap:8px;">
-          <span class="daytype-badge" id="daytypeBadge">—</span>
-          <button class="iconbtn" id="btnEditDay" aria-label="Editar atividades" type="button">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"></path></svg>
-          </button>
-        </div>
-      </div>
-      <div class="today-list" id="todayList"></div>
-    </section>
-
     <section class="blk" id="dashAgendaBlk" hidden>
       <div class="blk-head"><div><span class="kicker">Agenda</span><h2>A caminho</h2></div></div>
       <div id="dashAgenda"></div>
@@ -122,18 +96,16 @@
     </section>
 
     <section class="blk">
-      <div class="blk-head"><div><span class="kicker">Peso</span><h2>Tendência</h2></div></div>
-      <div class="card pad">
-        <div class="weight-top">
-          <div class="weight-now">
-            <div class="lbl">Peso atual</div>
-            <div class="val" id="dashWeightNow">— <span>kg</span></div>
-          </div>
-          <span class="weight-trend flat" id="dashWeightTrend">sem dados</span>
+      <div class="blk-head hoje-head">
+        <div><span class="kicker">Hoje</span><h2 id="hojeTitle">Marca o que fizeste</h2></div>
+        <div style="display:flex; align-items:center; gap:8px;">
+          <span class="daytype-badge" id="daytypeBadge">—</span>
+          <button class="iconbtn" id="btnEditDay" aria-label="Editar atividades" type="button">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"></path></svg>
+          </button>
         </div>
-        <svg class="weight-chart" id="dashWeightChart" viewBox="0 0 300 120" preserveAspectRatio="none"></svg>
-        <div class="weight-chart-empty" id="dashWeightEmpty" hidden></div>
       </div>
+      <div class="today-list" id="todayList"></div>
     </section>
 
     <footer class="page-footer">Protocolo — feito por medida para o teu inglês e a tua forma física.</footer>
@@ -377,6 +349,20 @@
         </button>
       </div>
       <section class="blk" style="padding-top:16px;">
+        <div class="protocolo-card" id="protocoloCard">
+          <div class="pc-top">
+            <span class="pc-eyebrow">O Protocolo</span>
+            <button class="iconbtn" id="btnEditProtocolo" aria-label="Editar protocolo" type="button" style="background:rgba(255,255,255,.08); border-color:rgba(255,255,255,.2); color:#fff;">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"></path></svg>
+            </button>
+          </div>
+          <p class="pc-manifesto" id="pcManifestoText"></p>
+          <textarea class="pc-edit" id="pcManifestoEdit" hidden></textarea>
+          <div class="pc-metas" id="pcMetas"></div>
+          <div class="meta-edit-row" id="pcMetaEdit" hidden></div>
+        </div>
+      </section>
+      <section class="blk">
         <button class="plano-list-card" id="btnPlanosOverview" type="button">
           <span class="plano-list-body"><span class="plano-list-title">Visão geral</span><span class="plano-list-desc">Todos os planos juntos, um a seguir ao outro</span></span>
           <span class="hchev"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 6 6 6-6 6"></path></svg></span>
