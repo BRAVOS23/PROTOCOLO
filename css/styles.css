@@ -889,3 +889,86 @@ footer.page-footer{ padding:30px 0 10px; text-align:center; color:var(--ink-fain
 .confirm-actions{ display:flex; justify-content:flex-end; gap:8px; }
 .btn.danger{ background:var(--bad); color:#fff; }
 .btn.danger:hover{ background:var(--accent-strong); }
+
+/* Campos consistentes e confortáveis para edição por toque. */
+input:not([type="checkbox"]):not([type="radio"]):not([type="file"]), select, textarea{
+  min-width:0; max-width:100%; min-height:48px; padding:12px !important;
+  border:1px solid var(--line-strong); border-radius:10px !important;
+  background:var(--surface-2); color:var(--ink); font-family:var(--font-body, inherit);
+  line-height:1.5; box-sizing:border-box;
+}
+textarea{ min-height:132px !important; resize:vertical; white-space:pre-wrap; }
+input:focus-visible, select:focus-visible, textarea:focus-visible, button:focus-visible{
+  outline:2px solid var(--accent-strong); outline-offset:3px;
+}
+.form-actions{ display:flex; flex-wrap:wrap; gap:10px; margin-top:14px !important; }
+.form-actions > span{ display:flex; flex-wrap:wrap; gap:10px !important; }
+.form-actions .btn, .manage-areas-inline{ min-height:48px; }
+.manage-areas-inline{ align-self:flex-start; color:var(--accent-strong); }
+.field-label{ display:flex; flex-direction:column; gap:6px; flex:1; min-width:0; font-size:12px; color:var(--ink-soft); font-weight:600; }
+.field-label input,.field-label select,.field-label textarea{ width:100% !important; }
+.sheet{ max-height:90dvh; overscroll-behavior:contain; scroll-padding-bottom:24px; }
+.line-chart{ width:100%; margin:16px 0; }
+.line-chart svg{ display:block; width:100%; height:auto; min-height:160px; overflow:visible; }
+.line-chart text{ fill:var(--ink-faint); font:12px var(--font-mono); }
+.overview-controls{ display:flex; flex-wrap:wrap; justify-content:space-between; gap:10px; }
+.overview-controls button{ min-height:44px; }
+.overview-stats{ display:flex; gap:16px; flex-wrap:wrap; color:var(--ink-soft); font-size:13px; margin:16px 0; }
+.overview-stats strong{ color:var(--ink); font-size:22px; display:block; }
+.progress-calendar{ display:grid; grid-template-columns:repeat(7,minmax(0,1fr)); gap:5px; }
+.calendar-weekday{ text-align:center; font-size:11px; color:var(--ink-faint); padding:8px 0; }
+.calendar-day{ border:1px solid var(--line); border-radius:10px; min-height:56px; background:var(--surface); color:var(--ink); display:flex; flex-direction:column; align-items:center; justify-content:center; gap:4px; cursor:pointer; }
+.calendar-day small{ font-size:10px; color:var(--ink-soft); }
+.calendar-day.has-records{ background:var(--good-soft); }
+.calendar-day.selected{ outline:2px solid var(--accent-strong); outline-offset:0; }
+.calendar-day.is-today > span{ font-weight:800; text-decoration:underline; text-underline-offset:3px; }
+.habit-scroll{ overflow:auto; max-height:420px; margin:16px 0; }
+.habit-table{ border-collapse:separate; border-spacing:3px; font-size:12px; width:max-content; min-width:100%; }
+.habit-table caption{ text-align:left; color:var(--ink-faint); padding:8px 0; }
+.habit-table th:first-child{ position:sticky; left:0; background:var(--surface); z-index:1; width:130px; max-width:130px; white-space:normal; text-align:left; padding:8px; }
+.habit-table td{ text-align:center; min-width:32px; height:36px; border-radius:5px; background:var(--surface-2); color:var(--ink-faint); }
+.habit-table td.habit-done{ background:var(--good-soft); color:var(--ink); }
+.habit-table button{ min-width:36px; min-height:44px; border:0; background:transparent; color:var(--ink); cursor:pointer; }
+.progress-day-detail{ margin-top:20px; padding:16px; border:1px solid var(--line); border-radius:14px; background:var(--surface); }
+.progress-day-detail h3{ font-size:16px; }
+.progress-day-detail ul{ list-style:none; padding:0; margin:12px 0 0; }
+.progress-day-detail li{ display:flex; align-items:flex-start; gap:10px; padding:10px 0; border-top:1px solid var(--line); font-size:14px; }
+.progress-day-detail small{ display:block; font-size:12px; color:var(--ink-faint); margin-top:4px; }
+.progress-day-detail .completed{ color:var(--good); }
+.overview-note{ font-size:12px; color:var(--ink-faint); line-height:1.6; margin-top:14px; }
+@media(max-width:600px){
+  .activity-edit-form .row2,.activity-edit-form .row2even{ grid-template-columns:minmax(0,1fr); gap:14px; }
+  .activity-edit-form{ gap:14px; }
+  .sheet{ padding-left:16px; padding-right:16px; }
+  .sheet-row{ flex-wrap:wrap; }
+  .editing-row > td > div{ max-width:100% !important; }
+  .editing-row div:has(> input), .editing-row div:has(> .field-label), .mealcard div:has(> input), .mealcard div:has(> .field-label){ flex-direction:column; gap:12px !important; }
+  .form-actions{ justify-content:flex-end !important; }
+  .form-actions > span{ flex:1; }
+  .form-actions .btn{ flex:1; padding:12px; }
+  .mealcard table,.mealcard tbody{ display:block; width:100%; }
+  .mealcard tr{ display:grid; grid-template-columns:85px minmax(0,1fr); border-bottom:1px solid var(--line); padding:12px 16px; }
+  .mealcard td{ border:0; width:auto !important; padding:3px 0; white-space:normal !important; }
+  .mealcard td:nth-child(3){ grid-column:1/-1; margin-top:8px; }
+  .mealcard tr.editing-row,.mealcard tr[data-act="addrow"]{ display:block; }
+  .mealcard tr.editing-row td{ display:block; padding:0 !important; }
+  .tbl-scroll:has(.editing-row) table{ min-width:0; width:100%; }
+  .tbl-scroll:has(.editing-row) tr.editing-row input{ width:100% !important; }
+  .color-swatch{ min-width:32px; min-height:32px; }
+  .cat-edit-row .mx{ padding:12px; }
+}
+.habit-table th small{ display:block; font-weight:400; color:var(--ink-faint); font-size:10px; margin-top:4px; }
+.progress-shortcut{ display:flex; justify-content:center; align-items:center; min-height:48px; margin:0 0 18px; text-align:center; text-decoration:none; }
+#progressOverview{ scroll-margin-top:90px; }
+@media(max-width:600px){
+  .est-period-custom .field-label{ width:100%; flex-basis:100%; }
+  .est-period-custom{ flex-wrap:wrap; }
+}
+@media(max-width:600px){
+  .tbl-scroll:has(.editing-row) table.week,.tbl-scroll:has(.editing-row) table.week tbody{ display:block; width:100%; }
+  .tbl-scroll:has(.editing-row) table.week thead{ display:none; }
+  .tbl-scroll:has(.editing-row) table.week tr{ display:flex; flex-wrap:wrap; border-bottom:1px solid var(--line); }
+  .tbl-scroll:has(.editing-row) table.week td{ white-space:normal; width:auto; border:0; flex:1 1 90px; }
+  .tbl-scroll:has(.editing-row) table.week tr.editing-row{ display:block; }
+  .tbl-scroll:has(.editing-row) table.week tr.editing-row td{ display:block; width:100%; }
+}

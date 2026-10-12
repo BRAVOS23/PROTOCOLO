@@ -54,6 +54,7 @@
       vocab:{}, langDone:{}, workouts:{}, weight:[], theme:'system',
       activities: seedActivitiesWithIds(),
       activityDone: {},
+      activityHistory: {},
       activityFull: {},
       aif: clone(AIF_LETTERS),
       cycle: { start: '2026-09-01', end: '2026-11-29' },
@@ -1134,6 +1135,12 @@
       delete state.activityDone[key];
       delete state.activityFull[fullKey(dateISO, actId)];
     } else state.activityDone[key] = true;
+    if(!state.activityHistory) state.activityHistory = {};
+    var history = state.activityHistory[dateISO] || {};
+    dayActivities(day).forEach(function(act){
+      history[act.id] = { title:act.title, area:act.area, done:isActDone(dateISO, act.id) };
+    });
+    state.activityHistory[dateISO] = history;
     recomputeDerived(dateISO, day);
     saveState();
   }
@@ -1260,9 +1267,10 @@
     var aif = act.aif || 'fidelidade';
     return '<div class="activity-edit-form" data-id="'+act.id+'">' +
       '<div class="row2">' +
-      '<select data-f="area">' + (state.areas||[]).map(function(a){ return '<option value="'+a.id+'"'+(a.id===act.area?' selected':'')+'>'+escHtml(a.label)+'</option>'; }).join('') + '</select>' +
-      '<select data-f="aif">' + ['fidelidade','intensidade','autenticidade'].map(function(k){ return '<option value="'+k+'"'+(k===aif?' selected':'')+'>'+AIF_GROUP_LABELS[k]+'</option>'; }).join('') + '</select>' +
+      '<select data-f="area" aria-label="Área da vida">' + (state.areas||[]).map(function(a){ return '<option value="'+a.id+'"'+(a.id===act.area?' selected':'')+'>'+escHtml(a.label)+'</option>'; }).join('') + '</select>' +
+      '<select data-f="aif" aria-label="Tipo de compromisso">' + ['fidelidade','intensidade','autenticidade'].map(function(k){ return '<option value="'+k+'"'+(k===aif?' selected':'')+'>'+AIF_GROUP_LABELS[k]+'</option>'; }).join('') + '</select>' +
       '</div>' +
+      '<button class="btn ghost manage-areas-inline" data-act="manage-areas" type="button">+ Criar ou editar áreas</button>' +
       '<div class="row2">' +
         '<input data-f="title" type="text" placeholder="Título" value="'+escAttr(act.title)+'">' +
         '<input data-f="time" type="text" placeholder="Hora" value="'+escAttr(act.time||'')+'">' +
@@ -1286,6 +1294,15 @@
       return act.id === openEditId ? activityRowEdit(editingDay, act) : activityRowView(editingDay, act);
     }).join('');
 
+    list.querySelectorAll('[data-act="manage-areas"]').forEach(function(btn){
+      btn.addEventListener('click', function(){
+        var form = btn.closest('.activity-edit-form');
+        areaActivityDraft = { id:form.getAttribute('data-id'), day:editingDay };
+        areaActivityDraft.patch = {};
+        form.querySelectorAll('[data-f]').forEach(function(input){ areaActivityDraft.patch[input.getAttribute('data-f')] = input.value; });
+        beginAreasManage();
+      });
+    });
     list.querySelectorAll('.activity-row [data-act="edit"]').forEach(function(btn){
       btn.addEventListener('click', function(){
         openEditId = btn.closest('.activity-row').getAttribute('data-id');
@@ -1340,6 +1357,7 @@
 
   document.getElementById('btnEditDay').addEventListener('click', function(){
     editingDay = TODAY_WEEKDAY;
+    areaActivityDraft = null;
     openEditId = null;
     areasManaging = false;
     renderAreasManage(); // garante que a folha não reabre presa no ecrã de "Gerir áreas"
@@ -1349,6 +1367,24 @@
   });
 
   /* ---- gerir áreas: criar, renomear, recolorir, apagar ---- */
+  var areaActivityDraft = null;
+  function restoreAreaActivityDraft(){
+    if(!areaActivityDraft) return;
+    var draft = areaActivityDraft;
+    var form = document.querySelector('#activityList .activity-edit-form');
+    if(form && form.getAttribute('data-id')===draft.id){
+      Object.keys(draft.patch).forEach(function(k){
+        var field = form.querySelector('[data-f="'+k+'"]');
+        if(field){ field.value = draft.patch[k]; if(k==='area' && !field.value) field.value='outro'; }
+      });
+    }
+    areaActivityDraft = null;
+  }
+  function beginAreasManage(){
+    draftAreas = (state.areas||[]).map(function(a){ return { id:a.id, label:a.label, color:a.color }; });
+    areasManaging = true;
+    renderAreasManage();
+  }
   var areasManaging = false;
   var draftAreas = [];
   function renderAreasManage(){
@@ -1366,7 +1402,7 @@
     box.innerHTML = '<div class="materia-edit-list"></div>' +
       '<div class="form-actions" style="justify-content:flex-end;margin-top:8px;"><span style="display:flex;gap:8px;"><button class="btn ghost" data-act="cancel" type="button">Cancelar</button><button class="btn" data-act="save" type="button">Guardar</button></span></div>';
     renderAreasManageList();
-    box.querySelector('[data-act="cancel"]').addEventListener('click', function(){ areasManaging=false; renderAreasManage(); });
+    box.querySelector('[data-act="cancel"]').addEventListener('click', function(){ areasManaging=false; renderAreasManage(); restoreAreaActivityDraft(); });
     box.querySelector('[data-act="save"]').addEventListener('click', function(){
       // uma área protegida não pode desaparecer só por o campo ter ficado em
       // branco (sem passar pelo lixo, que está escondido para estas) — se
@@ -1392,14 +1428,14 @@
       areasManaging = false;
       renderAreasManage();
       renderActivityList();
+      restoreAreaActivityDraft();
       renderDashboard();
       renderFitStatic();
     });
   }
-  // estas áreas têm lógica própria noutras abas (Forma lê "fitness"/"trabalho",
-  // a sequência de línguas lê "linguas") — apagá-las quebraria essas abas em
-  // silêncio, por isso só se pode renomear/recolorir, nunca apagar.
-  var PROTECTED_AREA_IDS = ['outro', 'fitness', 'linguas', 'trabalho'];
+  // "Outro" é o destino das tarefas de áreas removidas. Os IDs estáveis
+  // mantêm as ligações entre abas quando uma área é apenas renomeada.
+  var PROTECTED_AREA_IDS = ['outro'];
   function renderAreasManageList(){
     var editBox = document.querySelector('#areasManageBox .materia-edit-list');
     editBox.innerHTML = draftAreas.map(function(a,i){
@@ -1407,7 +1443,7 @@
       return '<div class="materia-edit-row">' +
         '<div class="cat-edit-row"><input data-ci="'+i+'" value="'+escAttr(a.label)+'" placeholder="Área">' +
         (isProtected ? '' : '<span class="mx" data-cidel="'+i+'">'+TRASH_SVG+'</span>') + '</div>' +
-        (isProtected ? '<div style="font-size:11px;color:var(--ink-faint);margin:-4px 0 4px;">usada por outras abas — só o nome e a cor podem mudar</div>' : '') +
+        (isProtected ? '<div style="font-size:11px;color:var(--ink-faint);margin:-4px 0 4px;">Área de destino para tarefas sem categoria — podes mudar o nome e a cor</div>' : '') +
         '<div class="color-swatch-row" data-ri="'+i+'">' + ESTUDO_PALETTE.map(function(col){
           return '<button type="button" class="color-swatch'+(a.color===col?' selected':'')+'" data-color="'+escAttr(col)+'" style="background:'+col+'" aria-label="Escolher cor"></button>';
         }).join('') + '</div>' +
@@ -1438,11 +1474,7 @@
       renderAreasManageList();
     });
   }
-  document.getElementById('btnManageAreas').addEventListener('click', function(){
-    draftAreas = (state.areas||[]).map(function(a){ return { id:a.id, label:a.label, color:a.color }; });
-    areasManaging = true;
-    renderAreasManage();
-  });
+  document.getElementById('btnManageAreas').addEventListener('click', beginAreasManage);
 
   /* ================= PROTOCOLO (identidade + metas) ================= */
   var protocoloEditing = false;
@@ -2338,7 +2370,11 @@
   function estudoBuckets(){
     var log = estudoLogInRange();
     var r = estudoRange();
-    var useMonthly = estudoPeriod === 'ano' || estudoPeriod === 'total' || (estudoPeriod === 'custom' && r && (r.end - r.start)/86400000 > 62);
+    if(!r && log.length){
+      var dates=log.map(function(e){return e.date;}).sort();
+      r={start:new Date(dates[0]+'T00:00:00'),end:new Date(dates[dates.length-1]+'T00:00:00')};
+    }
+    var useMonthly = estudoPeriod === 'ano' || (r && (r.end-r.start)/86400000>62);
     function keyOf(dateISO){ return useMonthly ? dateISO.slice(0,7) : dateISO; }
     function labelOf(key){
       if(useMonthly) return MONTHS_PT_SHORT[+key.slice(5,7)-1];
@@ -2353,6 +2389,11 @@
     var keys;
     if(!r){
       keys = Object.keys(map).sort();
+      if(keys.length && useMonthly){
+        var first = new Date(keys[0]+'-01T00:00:00'), last = new Date(keys[keys.length-1]+'-01T00:00:00');
+        keys = [];
+        while(first <= last){ keys.push(iso(first).slice(0,7)); first = new Date(first.getFullYear(), first.getMonth()+1, 1); }
+      }
     } else if(useMonthly){
       keys = [];
       var cur = new Date(r.start.getFullYear(), r.start.getMonth(), 1);
@@ -2365,23 +2406,33 @@
     }
     return keys.map(function(k){ return { key:k, label:labelOf(k), byMateria: map[k]||{} }; });
   }
-  function estudoBarsHTML(buckets){
-    var CH = 100, COL_H = CH + 22;
-    var totals = buckets.map(function(b){ return Object.keys(b.byMateria).reduce(function(s,k){ return s+b.byMateria[k]; }, 0); });
-    var maxTotal = Math.max(1, totals.length ? Math.max.apply(null, totals) : 0);
-    var cols = buckets.map(function(b, i){
-      var bucketTotal = totals[i];
-      var stackPx = bucketTotal>0 ? Math.max(3, Math.round(bucketTotal/maxTotal*CH)) : 0;
-      var segsHtml = state.estudoMaterias.filter(function(m){ return b.byMateria[m.name]; }).map(function(m){
-        var segPx = Math.max(1, Math.round(b.byMateria[m.name]/bucketTotal*stackPx));
-        return '<div class="est-bar-seg" style="height:'+segPx+'px;background:'+m.color+'"></div>';
-      }).join('');
-      return '<div class="est-bar-col" style="height:'+COL_H+'px;">' +
-        (stackPx ? '<div class="est-bar-stack" style="height:'+stackPx+'px;">'+segsHtml+'</div>' : '') +
-        '<span class="est-bar-label">'+escHtml(b.label)+'</span>' +
-        '</div>';
+  function lineChartHTML(series, labels, format, description){
+    var W=420, H=220, left=55, right=20, top=18, bottom=40;
+    var max = Math.max(1, Math.max.apply(null, series.reduce(function(all,s){ return all.concat(s.values); }, [])));
+    max=Math.max(2,Math.ceil(max/2)*2);
+    function x(i){ return labels.length===1 ? (W+left-right)/2 : left+i*(W-left-right)/Math.max(1,labels.length-1); }
+    function y(v){ return H-bottom-v/max*(H-top-bottom); }
+    var grid = [0,0.5,1].map(function(f){
+      return '<line x1="'+left+'" x2="'+(W-right)+'" y1="'+y(max*f)+'" y2="'+y(max*f)+'" stroke="var(--line)"/><text x="'+(left-7)+'" y="'+(y(max*f)+4)+'" text-anchor="end">'+escHtml(format(max*f))+'</text>';
     }).join('');
-    return '<div class="est-bars-wrap"><div class="est-bars">' + cols + '</div></div>';
+    var tickIndices=[0,1,2,3,4].map(function(n){return Math.round(n*(labels.length-1)/4);});
+    var ticks = labels.map(function(label,i){
+      if(tickIndices.indexOf(i)===-1) return '';
+      return '<text x="'+x(i)+'" y="'+(H-12)+'" text-anchor="middle">'+escHtml(label)+'</text>';
+    }).join('');
+    var lines = series.map(function(s){
+      var path=s.values.map(function(v,i){ return (i?'L':'M')+x(i).toFixed(1)+','+y(v).toFixed(1); }).join(' ');
+      return '<path d="'+path+'" fill="none" stroke="'+s.color+'" stroke-width="2.5" stroke-linejoin="round"/>'+s.values.map(function(v,i){
+        return '<circle cx="'+x(i)+'" cy="'+y(v)+'" r="'+(labels.length>62?2:3.5)+'" fill="'+s.color+'"><title>'+escHtml(s.name+' · '+labels[i]+' · '+format(v))+'</title></circle>';
+      }).join('');
+    }).join('');
+    return '<div class="line-chart"><svg viewBox="0 0 '+W+' '+H+'" role="img" aria-label="'+escAttr(description)+'">'+grid+ticks+lines+'</svg></div>';
+  }
+  function estudoLinesHTML(buckets){
+    var names = [];
+    buckets.forEach(function(b){ Object.keys(b.byMateria).forEach(function(m){ if(names.indexOf(m)===-1) names.push(m); }); });
+    var series = names.map(function(name){ return { name:name, color:estudoColorFor(name), values:buckets.map(function(b){ return b.byMateria[name]||0; }) }; });
+    return lineChartHTML(series, buckets.map(function(b){ return b.key.length===7 ? b.label+' '+b.key.slice(0,4) : b.label; }), function(n){ return Math.round(n)+' min'; }, 'Tempo de estudo por matéria ao longo do período, em minutos');
   }
   function renderEstudoTempo(){
     var log = estudoLogInRange();
@@ -2397,7 +2448,7 @@
     }
     box.innerHTML =
       '<div class="est-bars-total">'+estudoFmtDuration(total)+' <span>no total</span></div>' +
-      estudoBarsHTML(estudoBuckets()) +
+      estudoLinesHTML(estudoBuckets()) +
       '<div class="est-legend">' + data.map(function(d){
         var pct = total ? Math.round(d.minutes/total*100) : 0;
         return '<div class="est-legend-row"><span class="dot" style="background:'+estudoColorFor(d.materia)+'"></span><span class="est-legend-name">'+escHtml(d.materia)+'</span><span class="est-legend-val">'+estudoFmtDuration(d.minutes)+' <small>('+pct+'%)</small></span></div>';
@@ -2837,8 +2888,72 @@
   // ao voltar à aba Vida a partir de outra aba, mostra sempre o hub primeiro
   document.querySelector('.tabbtn[data-tab="vida"]').addEventListener('click', function(){ goVida('hub'); });
 
+  /* Histórico: os registos antigos mantêm-se; novas marcações guardam os nomes. */
+  var progressPeriod = 'mes', progressView = 'calendario';
+  var progressRef = new Date(TODAY), progressSelected = TODAY_ISO;
+  function progressDays(){
+    if(progressPeriod==='semana') return weekDates(progressRef);
+    var first=new Date(progressRef.getFullYear(),progressRef.getMonth(),1), end=new Date(progressRef.getFullYear(),progressRef.getMonth()+1,0), days=[];
+    for(var d=first; d<=end; d=addDays(d,1)) days.push(d);
+    return days;
+  }
+  function progressRecords(date){
+    var records={}, saved=(state.activityHistory||{})[date]||{};
+    Object.keys(saved).forEach(function(id){ records[id]=Object.assign({id:id},saved[id],{done:isActDone(date,id)}); });
+    Object.keys(state.activityDone).forEach(function(key){
+      if(key.slice(0,11)!==date+'|' || !state.activityDone[key]) return;
+      var id=key.slice(11), act=null;
+      WEEKDAYS.forEach(function(day){ var found=dayActivities(day).find(function(a){ return a.id===id; }); if(found) act=found; });
+      if(!records[id]) records[id]={id:id,title:act?act.title:'Atividade antiga removida',area:act?act.area:'outro',done:true};
+    });
+    return Object.keys(records).map(function(id){ return records[id]; });
+  }
+  function renderProgressOverview(){
+    var box=document.getElementById('progressContent');
+    if(!box) return;
+    var days=progressDays();
+    if(!days.some(function(d){ return iso(d)===progressSelected; })) progressSelected=iso(days[0]);
+    var records=days.map(function(d){ return progressRecords(iso(d)); });
+    var counts=records.map(function(list){ return list.filter(function(r){ return r.done; }).length; });
+    var total=counts.reduce(function(sum,n){ return sum+n; },0), active=counts.filter(function(n){ return n>0; }).length;
+    var label=progressPeriod==='mes' ? progressRef.toLocaleDateString('pt-PT',{month:'long',year:'numeric'}) : fmtDateHuman(days[0])+' – '+fmtDateHuman(days[6]);
+    var html='<div class="overview-controls"><div class="seg">'+[['semana','Semana'],['mes','Mês']].map(function(t){ return '<button type="button" data-progress-period="'+t[0]+'" aria-pressed="'+(progressPeriod===t[0])+'" class="'+(progressPeriod===t[0]?'active':'')+'">'+t[1]+'</button>'; }).join('')+'</div><div class="seg">'+[['calendario','Calendário'],['journal','Hábitos']].map(function(t){ return '<button type="button" data-progress-view="'+t[0]+'" aria-pressed="'+(progressView===t[0])+'" class="'+(progressView===t[0]?'active':'')+'">'+t[1]+'</button>'; }).join('')+'</div></div>';
+    html+='<div class="est-period-nav"><button class="est-nav-btn" type="button" data-progress-shift="-1" aria-label="Período anterior">'+CHEVRON_LEFT_SVG+'</button><span class="est-period-label">'+escHtml(label)+'</span><button class="est-nav-btn" type="button" data-progress-shift="1" aria-label="Próximo período">'+CHEVRON_RIGHT_SVG+'</button></div>';
+    html+='<div class="overview-stats"><span><strong>'+total+'</strong> tarefas cumpridas</span><span><strong>'+active+'</strong> dias com atividade</span></div>';
+    html+=lineChartHTML([{name:'Tarefas cumpridas',color:'var(--cat-fit)',values:counts}], days.map(function(d){ return String(d.getDate()); }), function(n){ return String(Math.round(n)); }, 'Tarefas cumpridas por dia no período');
+    if(progressView==='calendario'){
+      html+='<div class="progress-calendar">'+['Seg','Ter','Qua','Qui','Sex','Sáb','Dom'].map(function(d){ return '<span class="calendar-weekday">'+d+'</span>'; }).join('');
+      var offset=(days[0].getDay()+6)%7;
+      for(var i=0;i<offset;i++) html+='<span></span>';
+      html+=days.map(function(d,i){var key=iso(d), future=key>TODAY_ISO;
+        return '<button type="button" data-progress-date="'+key+'" class="calendar-day '+(counts[i]?'has-records ':'')+(key===progressSelected?'selected ':'')+(key===TODAY_ISO?'is-today':'')+'" aria-pressed="'+(key===progressSelected)+'" aria-label="'+fmtDateHuman(d)+': '+(future?'dia futuro':counts[i]+' tarefas cumpridas')+'"><span>'+d.getDate()+'</span><small>'+(!future && counts[i]?counts[i]+' ✓':'·')+'</small></button>';
+      }).join('')+'</div>';
+    }else{
+      var tasks={};
+      records.forEach(function(list){ list.forEach(function(r){
+        var key=JSON.stringify([r.title,r.area]);
+        if(!tasks[key]) tasks[key]={title:r.title,area:r.area,ids:[]};
+        if(tasks[key].ids.indexOf(r.id)===-1) tasks[key].ids.push(r.id);
+      }); });
+      html+='<div class="habit-scroll"><table class="habit-table"><caption>✓ cumprida · — sem marcação · toque na data para ver detalhes</caption><thead><tr><th scope="col">Atividade</th>'+days.map(function(d){ return '<th scope="col"><button type="button" data-progress-date="'+iso(d)+'" aria-label="Ver '+fmtDateHuman(d)+'">'+d.getDate()+'</button></th>'; }).join('')+'</tr></thead><tbody>';
+      html+=Object.keys(tasks).map(function(key){ var task=tasks[key]; return '<tr><th scope="row">'+escHtml(task.title)+'<small>'+escHtml(areaById(task.area).label)+'</small></th>'+days.map(function(d){ var done=task.ids.some(function(id){return isActDone(iso(d),id);}); return '<td class="'+(done?'habit-done':'')+'" aria-label="'+(done?'Cumprida':'Sem marcação')+'">'+(done?'✓':'—')+'</td>'; }).join('')+'</tr>'; }).join('');
+      html+='</tbody></table></div>';
+      if(!Object.keys(tasks).length) html+='<p class="overview-note">Ainda não há marcações neste período.</p>';
+    }
+    if(!days.some(function(d){ return iso(d)===progressSelected; })) progressSelected=iso(days[0]);
+    var selected=progressRecords(progressSelected);
+    html+='<div class="progress-day-detail"><h3>'+fmtDateHuman(new Date(progressSelected+'T00:00:00'))+'</h3>'+(selected.length?'<ul>'+selected.map(function(r){return '<li><span class="'+(r.done?'completed':'')+'">'+(r.done?'✓':'—')+'</span><div>'+escHtml(r.title)+'<small>'+escHtml(areaById(r.area).label)+'</small></div></li>';}).join('')+'</ul>':'<p class="overview-note">'+(progressSelected>TODAY_ISO?'Dia futuro.':'Sem atividades registadas neste dia.')+'</p>')+'</div>';
+    html+='<p class="overview-note">✓ = tarefa cumprida. Sem marcação não significa falha. O histórico antigo contém as conclusões; os nomes de tarefas removidas antes desta atualização podem não estar disponíveis.</p>';
+    box.innerHTML=html;
+    box.querySelectorAll('[data-progress-period]').forEach(function(b){b.addEventListener('click',function(){progressPeriod=b.dataset.progressPeriod;renderProgressOverview();});});
+    box.querySelectorAll('[data-progress-view]').forEach(function(b){b.addEventListener('click',function(){progressView=b.dataset.progressView;renderProgressOverview();});});
+    box.querySelectorAll('[data-progress-shift]').forEach(function(b){b.addEventListener('click',function(){var dir=+b.dataset.progressShift;progressRef=progressPeriod==='mes'?new Date(progressRef.getFullYear(),progressRef.getMonth()+dir,1):addDays(progressRef,dir*7);progressSelected=iso(progressDays()[0]);renderProgressOverview();});});
+    box.querySelectorAll('[data-progress-date]').forEach(function(b){b.addEventListener('click',function(){progressSelected=b.dataset.progressDate;renderProgressOverview();});});
+  }
+
   /* ================= DASHBOARD ================= */
   function renderDashboard(){
+    renderProgressOverview();
     document.getElementById('dashDate').textContent = TODAY.toLocaleDateString('pt-PT',{ weekday:'long', day:'numeric', month:'long' });
     document.getElementById('streakLang').textContent = computeStreak(state.langDone);
     document.getElementById('streakFit').textContent = computeStreak(state.workouts);
@@ -3124,6 +3239,30 @@
     renderVida();
     renderDashboard();
   }
+  // Os mesmos rótulos, foco e espaço de escrita em todos os editores.
+  var fieldNames={title:'Título',name:'Nome',time:'Hora',area:'Área da vida',aif:'Tipo de compromisso',detail:'Detalhes',desc:'Descrição',body:'Texto',days:'Dias',tag:'Cor',date:'Data',grammarNote:'Notas de gramática',milestoneNote:'Notas do checkpoint',detalhe:'Detalhes',titulo:'Título',quando:'Quando',tipo:'Tipo'};
+  function prepareEditorFields(root){
+    root.querySelectorAll('input:not([type="checkbox"]):not([type="radio"]):not([type="file"]),select,textarea').forEach(function(field){
+      if(field.closest('.field-label') || field.closest('label')) return;
+      var key=field.dataset.f||field.dataset.rf;
+      var name=field.getAttribute('aria-label') || fieldNames[key] || field.getAttribute('placeholder') || (field.type==='date'?'Data':field.tagName==='SELECT'?'Selecionar opção':'Nome');
+      if(field.id==='estudoCustomStartInput') name='De';
+      if(field.id==='estudoCustomEndInput') name='Até';
+      var label=document.createElement('label'); label.className='field-label';
+      var text=document.createElement('span');text.textContent=name;label.appendChild(text);
+      field.parentNode.insertBefore(label,field);label.appendChild(field);
+      if(field.tagName==='TEXTAREA'){
+        var grow=function(){field.style.height='auto';field.style.height=Math.min(420,Math.max(132,field.scrollHeight+2))+'px';};
+        field.addEventListener('input',grow);requestAnimationFrame(grow);
+      }
+    });
+  }
+  var editorObserver=new MutationObserver(function(changes){
+    if(changes.some(function(change){return Array.from(change.addedNodes).some(function(node){return node.nodeType===1 && !node.matches('.field-label, .field-label span');});})) prepareEditorFields(document);
+  });
+  editorObserver.observe(document.body,{childList:true,subtree:true});
+  prepareEditorFields(document);
+
   applyTheme(state.theme);
   renderAll();
 
