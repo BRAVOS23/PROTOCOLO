@@ -1,9 +1,10 @@
-const CACHE = 'protocolo-v24';
+const CACHE = 'protocolo-v25';
 const SHELL = [
   './',
   './index.html',
   './css/styles.css',
   './js/logic.js',
+  './js/native-platform.js',
   './js/data.js',
   './js/app.js',
   './manifest.webmanifest',

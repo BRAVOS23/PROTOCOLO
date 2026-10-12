@@ -1,0 +1,39 @@
+plugins { id 'com.android.application' }
+def signingFolder = new File(System.getenv('PROTOCOLO_SIGNING_DIR') ?: new File(rootProject.projectDir.parentFile.parentFile, '.protocolo-android-signing').path)
+def personalKey = new File(signingFolder, 'personal.p12')
+def passwordFile = new File(signingFolder, 'password.txt')
+android {
+    namespace 'app.protocolo.android'
+    compileSdk 35
+    defaultConfig { applicationId 'app.protocolo.android'; minSdk 26; targetSdk 35; versionCode 1; versionName '1.0' }
+    compileOptions { sourceCompatibility JavaVersion.VERSION_1_8; targetCompatibility JavaVersion.VERSION_1_8 }
+    signingConfigs {
+        personal {
+            if (personalKey.exists() && passwordFile.exists()) {
+                storeFile personalKey
+                storePassword passwordFile.text.trim()
+                keyAlias 'protocolo'
+                keyPassword passwordFile.text.trim()
+            }
+        }
+    }
+    buildTypes {
+        release { minifyEnabled false; signingConfig signingConfigs.personal }
+        debug { if (personalKey.exists()) signingConfig signingConfigs.personal }
+    }
+    sourceSets { main { assets.srcDirs = ["$buildDir/generated/assets"]; manifest.srcFile "$buildDir/generated/manifest/AndroidManifest.xml" } }
+}
+tasks.register('copyWebAssets', Copy) {
+    from(rootProject.projectDir.parentFile) { include 'index.html', 'manifest.webmanifest', 'css/**', 'js/**', 'icons/**' }
+    into "$buildDir/generated/assets/web"
+}
+tasks.register('prepareAppManifest') {
+    inputs.file 'src/main/AndroidManifest.xml'
+    outputs.file "$buildDir/generated/manifest/AndroidManifest.xml"
+    doLast {
+        def output = file("$buildDir/generated/manifest/AndroidManifest.xml")
+        output.parentFile.mkdirs()
+        output.text = file('src/main/AndroidManifest.xml').text.replace(' package="app.protocolo.android"', '').replace(' android:debuggable="false"', '')
+    }
+}
+preBuild.dependsOn copyWebAssets, prepareAppManifest

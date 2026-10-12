@@ -1190,3 +1190,11 @@ span.mx[role="button"],span.del[role="button"]{ min-width:44px; min-height:44px;
 .plano-list-title,.hcard .hname{ overflow-wrap:anywhere; }
 .period-card .cycle-sub{ align-items:flex-start; }
 .period-card .cycle-sub span:last-child{ max-width:70%; }
+.native-features{ display:flex; flex-direction:column; gap:14px; padding:18px; margin:16px 0; border:1px solid var(--accent-soft-line); background:var(--accent-soft); border-radius:20px; }
+.native-features h4{ font-size:17px; margin:4px 0 8px; }
+.native-features p{ font-size:13px; line-height:1.6; color:var(--ink-soft); }
+.native-features .kicker{ font-size:11px; font-weight:700; color:var(--accent-strong); text-transform:uppercase; letter-spacing:.06em; }
+.native-features .native-note{ font-size:12px; }
+.native-features .btn{ white-space:normal; }
+.native-widget{ border-top:1px solid var(--accent-soft-line); padding-top:16px; }
+.native-widget .btn{ width:100%; margin-top:12px; }

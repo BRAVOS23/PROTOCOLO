@@ -28,6 +28,10 @@ npx http-server . -p 8080
 
 Não uses `file://` diretamente — o *service worker* e o manifest precisam de `http(s)`.
 
+## Versão Android (APK, sem loja)
+
+A versão Android acrescenta lembretes locais e um widget com os próximos eventos, sem servidor ou mensalidade. A instalação e a transferência dos dados do PWA por backup estão descritas em [android/README.md](android/README.md). Os dados do PWA e do APK são separados; importar o backup substitui os dados no APK.
+
 ## Contadores, progresso e histórico
 
 Os períodos têm uma data de início e uma data de fim editáveis. A contagem inclui ambos os dias: o primeiro é o dia 1 e o último é o dia total. Antes do início, o app mostra quando começa; depois do prazo, mostra que o período terminou. A barra mede a passagem dos dias, não a realização do objetivo.

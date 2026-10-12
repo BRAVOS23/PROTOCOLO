@@ -505,6 +505,21 @@
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
     </button>
   </div>
+  <section id="androidDownload" class="native-features">
+    <div><span class="kicker">Para Android</span><h4>Agenda na tela inicial</h4><p>A versão instalável tem lembretes locais e widget, sem conta ou mensalidade.</p></div>
+    <a class="btn" href="https://github.com/BRAVOS23/PROTOCOLO/releases/download/android-v1.0/Protocolo.apk" download>Baixar APK para Android</a>
+    <p class="native-note">Exporta um backup aqui e importa na versão Android para levar os teus dados.</p>
+  </section>
+  <section id="nativeFeatures" class="native-features" hidden>
+    <div><span class="kicker">Neste celular</span><h4>Lembretes da agenda</h4><p id="nativeReminderStatus" role="status">Os lembretes estão desativados.</p></div>
+    <label class="field-label"><span>Avisar antes do evento</span><select id="nativeLeadMinutes"><option value="10">10 minutos antes</option><option value="30" selected>30 minutos antes</option><option value="60">1 hora antes</option><option value="1440">1 dia antes</option></select></label>
+    <p class="native-note">Eventos sem horário são considerados às 09:00.</p>
+    <button class="btn" id="nativeEnableReminders" type="button" aria-pressed="false">Ativar lembretes</button>
+    <button class="btn ghost" id="nativeExactAlarms" type="button" hidden>Permitir horário exato</button>
+    <button class="btn ghost" id="nativeNotificationSettings" type="button" hidden>Permitir notificações no Android</button>
+    <div class="native-widget"><h4>Agenda na tela inicial</h4><p id="nativeWidgetHint">Mostra os próximos eventos na tela inicial.</p><button class="btn ghost" id="nativeAddWidget" type="button">Adicionar widget</button></div>
+    <p class="native-note">Para trazer os dados do site, exporta lá um backup e importa aqui. Os dados deste app ficam neste celular.</p>
+  </section>
   <div class="sheet-row"><div><div class="sl">Áreas da vida</div><div class="ss">Cria, renomeia ou apaga as tuas áreas</div></div><button class="btn ghost" id="btnSettingsAreas" type="button">Gerir áreas</button></div>
   <div class="sheet-row">
     <div><div class="sl">Tema</div><div class="ss">Segue o sistema por omissão</div></div>
@@ -607,6 +622,7 @@
 
 <script src="js/logic.js"></script>
 <script src="js/data.js"></script>
+<script src="js/native-platform.js"></script>
 <script src="js/app.js"></script>
 </body>
 </html>

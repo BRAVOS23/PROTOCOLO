@@ -255,7 +255,7 @@
     }catch(e){ return migrateNotionImports(freshDefaultState()); }
   }
   function saveState(){
-    try{ localStorage.setItem(STORE_KEY, JSON.stringify(state)); }catch(e){}
+    try{ localStorage.setItem(STORE_KEY, JSON.stringify(state)); if(window.NativePlatform)NativePlatform.syncAgenda(state.agenda); }catch(e){}
   }
   function clone(o){ return JSON.parse(JSON.stringify(o)); }
 
@@ -3264,6 +3264,7 @@
     var root = document.documentElement;
     if(t==='light' || t==='dark') root.setAttribute('data-theme', t);
     else root.removeAttribute('data-theme');
+    if(window.NativePlatform)NativePlatform.setAppearance(getComputedStyle(root).getPropertyValue('--paper').trim(),t==='dark'||(t==='system'&&window.matchMedia('(prefers-color-scheme: dark)').matches));
     document.querySelectorAll('meta[name="theme-color"]').forEach(function(meta){meta.content=t==='system'?(meta.media.indexOf('dark')!==-1?'#0C1427':'#F3F6FF'):getComputedStyle(root).getPropertyValue('--paper').trim();});
     document.querySelectorAll('#themeSeg button').forEach(function(b){
       b.classList.toggle('active', b.getAttribute('data-theme')===t);
@@ -3281,7 +3282,9 @@
     var exportData = clone(state);
     exportData.exportedAt = new Date().toISOString();
     exportData.aifHistory = aifHistory();
-    var blob = new Blob([JSON.stringify(exportData, null, 2)], {type:'application/json'});
+    var backupJSON=JSON.stringify(exportData,null,2);
+    if(window.NativePlatform && NativePlatform.available){NativePlatform.exportBackup(backupJSON);return;}
+    var blob = new Blob([backupJSON], {type:'application/json'});
     var url = URL.createObjectURL(blob);
     var a = document.createElement('a');
     a.href = url; a.download = 'protocolo-backup-' + TODAY_ISO + '.json';
@@ -3456,7 +3459,23 @@
   document.addEventListener('visibilitychange',refreshCalendarDay);
   setInterval(refreshCalendarDay,60000);
 
-  if('serviceWorker' in navigator){
+  window.addEventListener('protocolo-native-message',function(event){toast(String(event.detail));});
+  window.addEventListener('protocolo-open-event',function(event){
+    if(!window.NativePlatform || !NativePlatform.available)return;
+    if(currentSheet)closeSheet();goTab('vida');goVida('agenda');
+    var id=event.detail&&event.detail.id;
+    if(id && state.agenda.some(function(item){return item.id===id;}))openItemDetail('agenda',id);
+  });
+  window.addEventListener('protocolo-native-back',function(){
+    if(confirmOverlay.classList.contains('open')){hideConfirm();return;}
+    if(currentSheet){closeSheet();return;}
+    var active=document.querySelector('.tabbtn.active').getAttribute('data-tab');
+    if(active==='vida' && vidaScreen!=='hub'){goVida('hub');return;}
+    if(active!=='inicio'){goTab('inicio');return;}
+    if(window.ProtocoloNative)ProtocoloNative.exitApp();
+  });
+
+  if('serviceWorker' in navigator && !window.ProtocoloNative){
     window.addEventListener('load', function(){
       navigator.serviceWorker.register('sw.js').then(function(reg){
         reg.update();
