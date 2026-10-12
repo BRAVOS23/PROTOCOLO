@@ -2,6 +2,10 @@
 
 O APK inclui o app web e funciona offline. Não usa Firebase, conta, serviço de push, assinatura mensal, publicidade ou permissão de Internet. Os links externos de estudo abrem o navegador apenas quando são tocados.
 
+Download direto: [Protocolo.apk](https://bravos23.github.io/PROTOCOLO/downloads/Protocolo.apk). A cópia distribuída fica em `downloads/Protocolo.apk`; substitui-a apenas depois de compilar e verificar uma atualização assinada pela mesma chave.
+
+Esta primeira versão passou na compilação/assinatura, nos testes de lógica e na integração da interface com ponte nativa simulada. A entrega de notificações e a inclusão do widget ainda precisam de validação num Android real; o emulador deste ambiente não ficou disponível sem aceleração de hardware.
+
 ## Instalar e trazer os dados existentes
 
 1. No site/PWA atual, abre **Definições → Exportar dados** e guarda o JSON.
