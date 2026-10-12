@@ -255,7 +255,7 @@
     }catch(e){ return migrateNotionImports(freshDefaultState()); }
   }
   function saveState(){
-    try{ localStorage.setItem(STORE_KEY, JSON.stringify(state)); if(window.NativePlatform)NativePlatform.syncAgenda(state.agenda); }catch(e){}
+    try{ localStorage.setItem(STORE_KEY, JSON.stringify(state)); if(window.NativePlatform){NativePlatform.syncAgenda(state.agenda);NativePlatform.syncActivities(state.activities,state.activityDone);} }catch(e){}
   }
   function clone(o){ return JSON.parse(JSON.stringify(o)); }
 
@@ -1401,7 +1401,7 @@
       '<button class="btn ghost manage-areas-inline" data-act="manage-areas" type="button">+ Criar ou editar áreas</button>' +
       '<div class="row2">' +
         '<input data-f="title" type="text" placeholder="Título" value="'+escAttr(act.title)+'">' +
-        '<input data-f="time" type="text" placeholder="Hora" value="'+escAttr(act.time||'')+'">' +
+        '<input data-f="time" type="text" placeholder="Hora · ex.: 05h40" value="'+escAttr(act.time||'')+'">' +
       '</div>' +
       '<textarea data-f="detail" placeholder="Detalhe (opcional)">'+escHtml(act.detail||'')+'</textarea>' +
       '<div class="form-actions">' +
@@ -3462,8 +3462,17 @@
   window.addEventListener('protocolo-native-message',function(event){toast(String(event.detail));});
   window.addEventListener('protocolo-open-event',function(event){
     if(!window.NativePlatform || !NativePlatform.available)return;
-    if(currentSheet)closeSheet();goTab('vida');goVida('agenda');
+    if(currentSheet)closeSheet();
     var id=event.detail&&event.detail.id;
+    var activity=id && /^activity:(\d{4}-\d{2}-\d{2}):(.+)$/.exec(id);
+    if(activity || id==='activities'){
+      refreshCalendarDay();goTab('inicio');
+      var item=activity && Array.from(document.querySelectorAll('#todayList .today-item')).find(function(el){return el.getAttribute('data-act')===activity[2];});
+      if(item && activity[1]===TODAY_ISO){item.scrollIntoView({block:'center'});item.classList.add('native-activity-focus');setTimeout(function(){item.classList.remove('native-activity-focus');},2500);}
+      else document.getElementById('hojeTitle').scrollIntoView({block:'start'});
+      return;
+    }
+    goTab('vida');goVida('agenda');
     if(id && state.agenda.some(function(item){return item.id===id;}))openItemDetail('agenda',id);
   });
   window.addEventListener('protocolo-native-back',function(){

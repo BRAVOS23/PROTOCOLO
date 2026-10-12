@@ -25,13 +25,14 @@ final class AgendaStore {
                 } catch (Exception ignored) { /* An invalid legacy row does not block valid events. */ }
             }
         } catch (Exception ignored) { }
+        result.addAll(ActivityStore.events(context));
         Collections.sort(result, Comparator.comparingLong(event -> event.at));
         return result;
     }
 
     static List<AgendaEvent> upcoming(Context context, long now) {
         List<AgendaEvent> result = new ArrayList<>();
-        for (AgendaEvent event : events(context)) if (event.visibleUntil > now) result.add(event);
+        for (AgendaEvent event : events(context)) if (!event.done && event.visibleUntil > now) result.add(event);
         return result;
     }
 

@@ -28,7 +28,7 @@ manifest.write_text((PROJECT/'app/src/main/AndroidManifest.xml').read_text().rep
 
 def run(*cmd):subprocess.run([str(v) for v in cmd],check=True)
 run(tools/'aapt2','compile','--dir',PROJECT/'app/src/main/res','-o',build/'resources.zip')
-run(tools/'aapt2','link','-o',build/'unsigned.apk','--manifest',manifest,'-I',platform,'--java',build/'generated','--min-sdk-version','26','--target-sdk-version','35','--version-code','1','--version-name','1.0','--auto-add-overlay','-A',build/'assets',build/'resources.zip')
+run(tools/'aapt2','link','-o',build/'unsigned.apk','--manifest',manifest,'-I',platform,'--java',build/'generated','--min-sdk-version','26','--target-sdk-version','35','--version-code','2','--version-name','1.1','--auto-add-overlay','-A',build/'assets',build/'resources.zip')
 sources=list((PROJECT/'app/src/main/java').rglob('*.java'))+list((build/'generated').rglob('*.java'))
 run('java','-m','jdk.compiler/com.sun.tools.javac.Main','-source','8','-target','8','-classpath',platform,'-d',build/'classes',*sources)
 run(tools/'d8','--min-api','26','--lib',platform,'--output',build/'dex',*list((build/'classes').rglob('*.class')))

@@ -1198,3 +1198,4 @@ span.mx[role="button"],span.del[role="button"]{ min-width:44px; min-height:44px;
 .native-features .btn{ white-space:normal; }
 .native-widget{ border-top:1px solid var(--accent-soft-line); padding-top:16px; }
 .native-widget .btn{ width:100%; margin-top:12px; }
+.today-item.native-activity-focus{outline:2px solid var(--accent);outline-offset:3px;}

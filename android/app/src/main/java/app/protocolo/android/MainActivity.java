@@ -237,6 +237,20 @@ public final class MainActivity extends Activity {
                 ReminderController.reschedule(MainActivity.this); AgendaWidget.updateAll(MainActivity.this);
             });
         }
+        @JavascriptInterface public void syncActivities(String json) {
+            if(json==null || json.length()>2000000)return;
+            try {if(new JSONObject(json).getJSONArray("week").length()!=7)return;}catch(Exception e){return;}
+            runOnUiThread(() -> {
+                if(json.equals(AgendaStore.prefs(MainActivity.this).getString("activities","{}")))return;
+                List<AgendaEvent> old=ActivityStore.events(MainActivity.this);
+                AgendaStore.prefs(MainActivity.this).edit().putString("activities",json).apply();
+                java.util.Map<String,String> retained=new java.util.HashMap<>();
+                for(AgendaEvent event:ActivityStore.events(MainActivity.this))if(!event.done)retained.put(event.id,event.key);
+                for(AgendaEvent event:old)if(!event.key.equals(retained.get(event.id)))getSystemService(NotificationManager.class).cancel(event.id,1);
+                AgendaStore.retainFired(MainActivity.this);
+                ReminderController.reschedule(MainActivity.this);AgendaWidget.updateAll(MainActivity.this);
+            });
+        }
         @JavascriptInterface public void requestReminders() { runOnUiThread(() -> enableReminders()); }
         @JavascriptInterface public void disableReminders() {
             runOnUiThread(() -> { AgendaStore.prefs(MainActivity.this).edit().putBoolean("enabled", false).apply(); ReminderController.reschedule(MainActivity.this); signal("status", true, "Lembretes desativados."); });
