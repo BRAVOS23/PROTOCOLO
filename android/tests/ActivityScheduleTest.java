@@ -38,6 +38,12 @@ public final class ActivityScheduleTest {
         check(ActivitySchedule.occurrences(Collections.emptyList(),Collections.emptySet(),monday,1,zone).isEmpty(),"Removed activities disappear");
         long now=Instant.parse("2026-03-08T05:30:00Z").toEpochMilli();
         check(ActivitySchedule.nextMidnight(now,ZoneId.of("America/New_York"))==Instant.parse("2026-03-09T04:00:00Z").toEpochMilli(),"Midnight refresh respects DST rather than adding 24h");
+        List<ActivitySchedule.Template> mixed=Arrays.asList(new ActivitySchedule.Template(1,"blank","Sem hora",""),new ActivitySchedule.Template(1,"six","Seis","06:00"),new ActivitySchedule.Template(1,"five","Cinco","5h"),new ActivitySchedule.Template(1,"tie","Empate","05:00"),new ActivitySchedule.Template(2,"tomorrow","Amanhã","04h"));
+        List<ActivitySchedule.Occurrence> ordered=ActivitySchedule.occurrences(mixed,new HashSet<>(Arrays.asList("2026-10-12|five")),monday,2,zone);
+        check(ordered.get(0).activityId.equals("five") && ordered.get(1).activityId.equals("tie"),"Earlier completed task first, equal times stable");
+        check(ordered.get(2).activityId.equals("six") && ordered.get(3).activityId.equals("blank"),"Widget orders 5h before 6h and untimed last");
+        check(ordered.get(4).date.equals("2026-10-13"),"Tomorrow is after all of today");
+        check(mixed.get(0).id.equals("blank"),"Sorting preserves stored weekly templates");
         System.out.println("PASS "+count+" daily activity/widget checks");
     }
 }

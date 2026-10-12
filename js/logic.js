@@ -34,7 +34,27 @@
     if(result.applicable.length) result.total=result.applicable.reduce(function(sum,k){return sum+result[k];},0)/result.applicable.length;
     return result;
   }
-  var api={dayOrdinal:dayOrdinal,daysBetween:daysBetween,intervalProgress:intervalProgress,aifScores:aifScores};
+  function clockMinutes(value){
+    if(typeof value!=='string')return null;
+    var match=/^(\d{1,2})(?:[hH](\d{2})?|:(\d{2}))(?:\s*(?:[–—-].*|[·].*))?$/.exec(value.trim());
+    if(!match)return null;
+    var hour=Number(match[1]),minute=Number(match[2]||match[3]||0);
+    return hour>23 || minute>59 ? null : hour*60+minute;
+  }
+  function compareScheduled(a,b,dateField,timeField){
+    if(dateField){
+      var first=dayOrdinal(a[dateField]),second=dayOrdinal(b[dateField]);
+      if(first!==second){if(first===null)return 1;if(second===null)return -1;return first-second;}
+    }
+    var firstTime=clockMinutes(a[timeField||'time']),secondTime=clockMinutes(b[timeField||'time']);
+    if(firstTime===secondTime)return 0;
+    if(firstTime===null)return 1;if(secondTime===null)return -1;
+    return firstTime-secondTime;
+  }
+  function sortSchedule(items,dateField,timeField){
+    return (items||[]).map(function(item,index){return {item:item,index:index};}).sort(function(a,b){return compareScheduled(a.item,b.item,dateField,timeField)||a.index-b.index;}).map(function(row){return row.item;});
+  }
+  var api={dayOrdinal:dayOrdinal,daysBetween:daysBetween,intervalProgress:intervalProgress,aifScores:aifScores,clockMinutes:clockMinutes,compareScheduled:compareScheduled,sortSchedule:sortSchedule};
   if(typeof module==='object' && module.exports) module.exports=api;
   else root.ProtocolLogic=api;
 })(typeof globalThis!=='undefined'?globalThis:this);

@@ -48,6 +48,7 @@ public final class ActivitySchedule {
             LocalDate day=first.plusDays(n);
             for(Template item:week)if(item.weekday==day.getDayOfWeek().getValue()%7)rows.add(new Occurrence(item,day,done,zone));
         }
+        rows.sort(java.util.Comparator.comparing((Occurrence row)->row.date).thenComparing(row->row.time.isEmpty()?"99:99":row.time));
         return rows;
     }
     public static long nextMidnight(long now, ZoneId zone) {

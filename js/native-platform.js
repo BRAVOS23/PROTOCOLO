@@ -13,14 +13,14 @@
       function dateKey(d){return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');}
       var from=dateKey(today),until=dateKey(end),marks={};
       Object.keys(done||{}).forEach(function(key){if(done[key] && key.slice(0,10)>=from && key.slice(0,10)<until)marks[key]=true;});
-      var payload=JSON.stringify({week:days.map(function(day){return (activities[day]||[]).slice(0,1000).map(function(act){return {id:act.id,title:String(act.title||'Atividade').slice(0,500),time:String(act.time||'').slice(0,100)};});}),done:marks});
+      var payload=JSON.stringify({week:days.map(function(day){return ProtocolLogic.sortSchedule(activities[day]).slice(0,1000).map(function(act){return {id:act.id,title:String(act.title||'Atividade').slice(0,500),time:String(act.time||'').slice(0,100)};});}),done:marks});
       if(payload===lastActivities)return;
       try{bridge.syncActivities(payload);lastActivities=payload;}catch(e){lastActivities=null;}
     },
     syncAgenda:function(events){
       if(!bridge)return;
       var now=new Date(),today=now.getFullYear()+'-'+String(now.getMonth()+1).padStart(2,'0')+'-'+String(now.getDate()).padStart(2,'0');
-      var upcoming=(events||[]).filter(function(event){return event.date>=today;}).slice().sort(function(a,b){return (a.date+(a.time||'09:00')).localeCompare(b.date+(b.time||'09:00'));}).slice(0,1000);
+      var upcoming=ProtocolLogic.sortSchedule((events||[]).filter(function(event){return event.date>=today;}),'date','time').slice(0,1000);
       var payload=JSON.stringify(upcoming.map(function(event){return {id:event.id,title:String(event.title||'Evento da agenda').slice(0,500),date:event.date,time:event.time||''};}));
       if(payload===lastAgenda)return;
       try{bridge.syncAgenda(payload);lastAgenda=payload;}catch(e){lastAgenda=null;}

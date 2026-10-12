@@ -6,7 +6,7 @@ function platform(){
   const calls=[],elements={};
   const document={getElementById(id){return elements[id]||(elements[id]={hidden:false,setAttribute(){},addEventListener(){}});}};
   const window={ProtocoloNative:{syncActivities:json=>calls.push(JSON.parse(json)),getStatus:()=>JSON.stringify({})},addEventListener(){}};
-  vm.runInNewContext(fs.readFileSync(require.resolve('../js/native-platform.js'),'utf8'),{window,document,Date});
+  vm.runInNewContext(fs.readFileSync(require.resolve('../js/native-platform.js'),'utf8'),{window,document,Date,ProtocolLogic:require('../js/logic.js')});
   return {native:window.NativePlatform,calls};
 }
 test('projects all weekly activities and today completion without private details',()=>{

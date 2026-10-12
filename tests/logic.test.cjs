@@ -32,3 +32,24 @@ test('a chama só contribui quando a tarefa também está concluída',()=>{
  assert.equal(aifScores([{done:false,full:true,aif:'intensidade'}]).i,0);
  const p=aifScores([{done:true,full:true,aif:'intensidade'},{done:true,aif:'autenticidade'}]);assert.equal(p.total,100);
 });
+test('ordena horários portugueses, intervalos e horas sem zero inicial',()=>{
+  const {sortSchedule,clockMinutes}=require('../js/logic.js');
+  const input=[{id:'blank',time:''},{id:'six',time:'06:00'},{id:'five',time:'5h'},{id:'later',time:'18h–19h'},{id:'morning',time:'05h40'}];
+  assert.deepEqual(sortSchedule(input).map(x=>x.id),['five','morning','six','later','blank']);
+  assert.deepEqual(input.map(x=>x.id),['blank','six','five','later','morning']);
+  assert.equal(clockMinutes('5h · God Moment'),300);
+  assert.equal(clockMinutes('25h00'),null);assert.equal(clockMinutes('1h antes'),null);
+});
+test('a data tem prioridade sobre a hora; sem data ou hora fica no fim',()=>{
+  const {sortSchedule}=require('../js/logic.js');
+  const input=[{id:'undated',date:'',time:''},{id:'tomorrow',date:'2026-10-13',time:'05:00'},{id:'today-untimed',date:'2026-10-12',time:''},{id:'today-six',date:'2026-10-12',time:'06:00'},{id:'today-five',date:'2026-10-12',time:'05:00'}];
+  assert.deepEqual(sortSchedule(input,'date').map(x=>x.id),['today-five','today-six','today-untimed','tomorrow','undated']);
+  const tasks=input.map(x=>({id:x.id,due:x.date,dueTime:x.time}));
+  assert.deepEqual(sortSchedule(tasks,'due','dueTime').map(x=>x.id),['today-five','today-six','today-untimed','tomorrow','undated']);
+});
+test('horários iguais conservam a ordem e concluir não muda a cronologia',()=>{
+  const {sortSchedule}=require('../js/logic.js');
+  const items=[{id:'one',time:'5h',done:true},{id:'two',time:'05:00',done:false},{id:'blank',time:''},{id:'unknown',time:'Depois do almoço'}];
+  assert.deepEqual(sortSchedule(items).map(x=>x.id),['one','two','blank','unknown']);
+  items[1].time='04:00';assert.deepEqual(sortSchedule(items).map(x=>x.id),['two','one','blank','unknown']);
+});

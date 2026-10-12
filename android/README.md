@@ -2,7 +2,7 @@
 
 O APK inclui o app web e funciona offline. Não usa Firebase, conta, serviço de push, assinatura mensal, publicidade ou permissão de Internet. Os links externos de estudo abrem o navegador apenas quando são tocados.
 
-Download direto: [Protocolo.apk](https://bravos23.github.io/PROTOCOLO/downloads/Protocolo.apk?v=1.1). A cópia distribuída fica em `downloads/Protocolo.apk`; substitui-a apenas depois de compilar e verificar uma atualização assinada pela mesma chave.
+Download direto: [Protocolo.apk](https://bravos23.github.io/PROTOCOLO/downloads/Protocolo.apk?v=1.2). A cópia distribuída fica em `downloads/Protocolo.apk`; substitui-a apenas depois de compilar e verificar uma atualização assinada pela mesma chave.
 
 Esta versão passou na compilação/assinatura, nos testes de lógica e na integração da interface com ponte nativa simulada. A entrega de notificações e a inclusão do widget ainda precisam de validação num Android real; o emulador deste ambiente não ficou disponível sem aceleração de hardware.
 
@@ -15,7 +15,7 @@ Esta versão passou na compilação/assinatura, nos testes de lógica e na integ
 5. Se aparecer **Permitir horário exato**, abre essa opção e permite alarmes/lembretes para o Protocolo. Sem esse acesso, o Android pode atrasar os avisos.
 6. Usa **Adicionar widget** e confirma no Android. Também podes manter pressionada a tela inicial e escolher **Widgets → Protocolo → Atividades de hoje**.
 
-O widget mostra **todas as atividades do dia no Início**, na mesma ordem: Acordar, God Moment, treinos, leitura, etc. A lista pode ser deslizada e inclui horários, conclusão e progresso do dia. Tocar numa atividade abre o Início e destaca-a. A agenda continua com notificações; o conteúdo do widget agora é a rotina diária.
+O widget mostra **todas as atividades do dia no Início**, por horário, como no Início: Acordar, God Moment, treinos, leitura, etc. A lista pode ser deslizada e inclui horários, conclusão e progresso do dia. O Início, o editor e o widget ordenam as atividades pela hora de início; horários iguais mantêm a ordem existente e atividades sem hora ficam no fim. Agenda e tarefas usam primeiro a data, depois a hora. Editar uma data/hora reposiciona o item sem mudar as suas marcações de conclusão. Tocar numa atividade abre o Início e destaca-a. A agenda continua com notificações; o conteúdo do widget agora é a rotina diária.
 
 A rotina semanal fica guardada no Android para mudar de dia e programar as próximas ocorrências sem abrir o app. Edições, exclusões, importações e marcações de conclusão atualizam o widget e os avisos. Uma atividade concluída cancela o seu aviso; desmarcá-la não repete um aviso já enviado naquele dia. Cada dia/semana tem uma ocorrência independente. O widget é atualizado à meia-noite (o sistema pode atrasar sem a permissão de horário exato), periodicamente e após reinício/mudanças de relógio ou fuso.
 
@@ -25,7 +25,7 @@ A antecedência é configurável: 10 minutos, 30 minutos, 1 hora ou 1 dia. Event
 
 Os lembretes usam o relógio/fuso do celular. Funcionam sem o app aberto, mas o aparelho precisa estar ligado. Se usares **Forçar parada**, o Android bloqueia a execução até reabrires o app. Restrições de bateria e a falta de acesso a alarmes exatos podem afetar o horário.
 
-O mínimo do APK é Android 8.0/API 26. O Android System WebView deve estar atualizado. O APK pessoal distribuído tem depuração desativada. A versão 1.1 tem o mesmo identificador e a mesma assinatura da 1.0: instala-a por cima, **sem desinstalar**, para preservar os dados. Faz um backup antes da atualização.
+O mínimo do APK é Android 8.0/API 26. O Android System WebView deve estar atualizado. O APK pessoal distribuído tem depuração desativada. A versão 1.2 tem o mesmo identificador e a mesma assinatura das versões anteriores: instala-a por cima, **sem desinstalar**, para preservar os dados. Faz um backup antes da atualização.
 
 ## Compilar no Linux/Codex
 

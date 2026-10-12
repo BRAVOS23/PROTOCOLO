@@ -1142,7 +1142,7 @@
   }
 
   /* ================= ATIVIDADES (editável) ================= */
-  function dayActivities(day){ return state.activities[day] || []; }
+  function dayActivities(day){ return ProtocolLogic.sortSchedule(state.activities[day]); }
   function areaActivitiesForDay(day,area){return dayActivities(day).filter(function(a){return a.area===area;});}
   function fitnessActivityForDay(day){ return areaActivitiesForDay(day,'fitness')[0]; }
   function areaById(id){
@@ -2709,6 +2709,7 @@
   function renderChecklist(stateKey, containerId){
     var arr = state[stateKey];
     var isPendentes = stateKey === 'pendentes';
+    if(isPendentes)arr=ProtocolLogic.sortSchedule(arr,'due','dueTime');
     var el = document.getElementById(containerId);
     el.innerHTML = arr.length ? arr.map(function(it){
       var due = isPendentes && it.due ? pendenteDueDate(it) : null;
@@ -2856,12 +2857,7 @@
     return 'em ' + days + ' dias';
   }
   function sortedAgenda(){
-    return state.agenda.slice().sort(function(a,b){
-      var pa = a.date<TODAY_ISO ? 1:0, pb = b.date<TODAY_ISO ? 1:0;
-      if(pa!==pb) return pa-pb;
-      if(a.date!==b.date) return a.date<b.date ? -1 : 1;
-      return (a.time||'')<(b.time||'') ? -1 : 1;
-    });
+    return ProtocolLogic.sortSchedule(state.agenda,'date','time');
   }
   function renderAgenda(){
     var list = document.getElementById('agendaList');
@@ -2923,7 +2919,7 @@
       if(it.done || !it.due) return false;
       var d = pendenteDueDate(it);
       return (d - new Date()) <= 24*3600*1000;
-    }).sort(function(a,b){ return pendenteDueDate(a) - pendenteDueDate(b); });
+    }).sort(function(a,b){ return ProtocolLogic.compareScheduled(a,b,'due','dueTime'); });
   }
   function renderDashPendentes(){
     var soon = pendentesDueSoon();
