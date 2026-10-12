@@ -1263,11 +1263,76 @@
     intensidade: 'Intensidade (mostra a chama)',
     autenticidade: 'Autenticidade',
   };
+  function syncActivityAreaField(form){
+    var input=form.querySelector('[data-f="area"]');
+    var button=form.querySelector('[data-act="pick-area"]');
+    if(input && button){
+      var area=areaById(input.value);
+      button.innerHTML='<span class="area-dot" style="background:'+escAttr(area.color)+'"></span><span>'+escHtml(area.label)+'</span><span aria-hidden="true">▾</span>';
+    }
+  }
+  function areaPickerChanged(form){
+    saveState();
+    syncActivityAreaField(form);
+    renderAreaPicker(form);
+    renderDashboard();
+    renderFitStatic();
+    renderWorkStatic();
+  }
+  function areaNameValid(input, exceptId){
+    var name=input.value.trim();
+    input.setCustomValidity(!name ? 'Escreve o nome da área.' : (state.areas||[]).some(function(a){return a.id!==exceptId && a.label.toLocaleLowerCase()===name.toLocaleLowerCase();}) ? 'Já existe uma área com esse nome.' : '');
+    return input.reportValidity();
+  }
+  function renderAreaPicker(form){
+    var panel=form.querySelector('.area-picker');
+    var current=form.querySelector('[data-f="area"]');
+    panel.innerHTML='<p class="area-picker-hint">Escolhe uma área ou usa o lápis para mudar o nome.</p>'+ (state.areas||[]).map(function(a){
+      return '<div class="area-choice-row" data-area-id="'+escAttr(a.id)+'"><button type="button" class="area-choice" data-area-choose aria-pressed="'+(current.value===a.id)+'"><span class="area-dot" style="background:'+escAttr(a.color)+'"></span><span>'+escHtml(a.label)+'</span>'+(current.value===a.id?'<span aria-hidden="true">✓</span>':'')+'</button><button type="button" class="ar-icon-btn" data-area-rename aria-label="Renomear '+escAttr(a.label)+'">'+PENCIL_SVG+'</button>'+(a.id==='outro'?'':'<button type="button" class="ar-icon-btn danger" data-area-delete aria-label="Apagar '+escAttr(a.label)+'">'+TRASH_SVG+'</button>')+'</div>';
+    }).join('')+'<div class="area-create"><label class="field-label"><span>Nova área</span><input data-area-new placeholder="Ex.: Gym" maxlength="80"></label><button class="btn" type="button" data-area-add>+ Criar área</button></div><button type="button" class="btn ghost area-picker-close" data-area-close>Concluir</button>';
+    panel.querySelectorAll('[data-area-choose]').forEach(function(button){button.addEventListener('click',function(){
+      current.value=button.closest('[data-area-id]').dataset.areaId;
+      syncActivityAreaField(form);
+      panel.hidden=true;
+      form.querySelector('[data-act="pick-area"]').setAttribute('aria-expanded','false');
+      form.querySelector('[data-act="pick-area"]').focus();
+    });});
+    panel.querySelectorAll('[data-area-rename]').forEach(function(button){button.addEventListener('click',function(){
+      var row=button.closest('[data-area-id]'), id=row.dataset.areaId, area=state.areas.find(function(a){return a.id===id;});
+      row.innerHTML='<div class="area-rename-form"><label class="field-label"><span>Nome da área</span><input value="'+escAttr(area.label)+'" data-area-name maxlength="80"></label><div class="form-actions"><button class="btn ghost" type="button" data-area-cancel>Cancelar</button><button class="btn" type="button" data-area-save>Guardar nome</button></div></div>';
+      var input=row.querySelector('[data-area-name]');input.focus();input.select();
+      row.querySelector('[data-area-cancel]').addEventListener('click',function(){renderAreaPicker(form);});
+      var save=function(){if(!areaNameValid(input,id))return; area.label=input.value.trim();areaPickerChanged(form);};
+      input.addEventListener('input',function(){input.setCustomValidity('');});
+      input.addEventListener('keydown',function(e){if(e.key==='Enter'){e.preventDefault();save();}if(e.key==='Escape'){e.preventDefault();renderAreaPicker(form);}});
+      row.querySelector('[data-area-save]').addEventListener('click',save);
+    });});
+    panel.querySelectorAll('[data-area-delete]').forEach(function(button){button.addEventListener('click',function(){
+      var id=button.closest('[data-area-id]').dataset.areaId, area=areaById(id);
+      showConfirm('Apagar a área «'+area.label+'»? As tarefas ficam guardadas e passam para «'+areaById('outro').label+'».',function(){
+        state.areas=state.areas.filter(function(a){return a.id!==id;});
+        WEEKDAYS.forEach(function(day){dayActivities(day).forEach(function(act){if(act.area===id) act.area='outro';});});
+        if(current.value===id) current.value='outro';
+        areaPickerChanged(form);
+      });
+    });});
+    var newInput=panel.querySelector('[data-area-new]');
+    function add(){
+      if(!areaNameValid(newInput,null))return;
+      var area={id:rid('ar'),label:newInput.value.trim(),color:ESTUDO_PALETTE[state.areas.length%ESTUDO_PALETTE.length]};
+      state.areas.push(area);current.value=area.id;areaPickerChanged(form);
+    }
+    newInput.addEventListener('input',function(){newInput.setCustomValidity('');});
+    newInput.addEventListener('keydown',function(e){if(e.key==='Enter'){e.preventDefault();add();}});
+    panel.querySelector('[data-area-add]').addEventListener('click',add);
+    panel.querySelector('[data-area-close]').addEventListener('click',function(){panel.hidden=true;form.querySelector('[data-act="pick-area"]').setAttribute('aria-expanded','false');form.querySelector('[data-act="pick-area"]').focus();});
+  }
+
   function activityRowEdit(day, act){
     var aif = act.aif || 'fidelidade';
     return '<div class="activity-edit-form" data-id="'+act.id+'">' +
       '<div class="row2">' +
-      '<select data-f="area" aria-label="Área da vida">' + (state.areas||[]).map(function(a){ return '<option value="'+a.id+'"'+(a.id===act.area?' selected':'')+'>'+escHtml(a.label)+'</option>'; }).join('') + '</select>' +
+      '<div class="area-field"><span class="area-field-label">Área da vida</span><input type="hidden" data-f="area" value="'+escAttr(act.area)+'"><button type="button" class="area-picker-trigger" data-act="pick-area" aria-expanded="false" aria-label="Selecionar, criar ou editar área da vida"><span class="area-dot" style="background:'+escAttr(areaById(act.area).color)+'"></span><span>'+escHtml(areaById(act.area).label)+'</span><span aria-hidden="true">▾</span></button><div class="area-picker" hidden></div></div>' +
       '<select data-f="aif" aria-label="Tipo de compromisso">' + ['fidelidade','intensidade','autenticidade'].map(function(k){ return '<option value="'+k+'"'+(k===aif?' selected':'')+'>'+AIF_GROUP_LABELS[k]+'</option>'; }).join('') + '</select>' +
       '</div>' +
       '<button class="btn ghost manage-areas-inline" data-act="manage-areas" type="button">+ Criar ou editar áreas</button>' +
@@ -1294,6 +1359,13 @@
       return act.id === openEditId ? activityRowEdit(editingDay, act) : activityRowView(editingDay, act);
     }).join('');
 
+    list.querySelectorAll('[data-act="pick-area"]').forEach(function(button){
+      button.addEventListener('click',function(){
+        var form=button.closest('.activity-edit-form'), panel=form.querySelector('.area-picker');
+        panel.hidden=!panel.hidden;button.setAttribute('aria-expanded',String(!panel.hidden));
+        if(!panel.hidden) renderAreaPicker(form);
+      });
+    });
     list.querySelectorAll('[data-act="manage-areas"]').forEach(function(btn){
       btn.addEventListener('click', function(){
         var form = btn.closest('.activity-edit-form');
@@ -1378,6 +1450,7 @@
         if(field){ field.value = draft.patch[k]; if(k==='area' && !field.value) field.value='outro'; }
       });
     }
+    if(form) syncActivityAreaField(form);
     areaActivityDraft = null;
   }
   function beginAreasManage(){
@@ -1475,6 +1548,16 @@
     });
   }
   document.getElementById('btnManageAreas').addEventListener('click', beginAreasManage);
+  document.getElementById('btnSettingsAreas').addEventListener('click',function(){
+    closeSheet();
+    areaActivityDraft=null;
+    editingDay=TODAY_WEEKDAY;
+    openEditId=null;
+    renderActivityList();
+    beginAreasManage();
+    openSheet(activitySheet);
+    activitySheet.scrollTop=0;
+  });
 
   /* ================= PROTOCOLO (identidade + metas) ================= */
   var protocoloEditing = false;
@@ -3242,7 +3325,7 @@
   // Os mesmos rótulos, foco e espaço de escrita em todos os editores.
   var fieldNames={title:'Título',name:'Nome',time:'Hora',area:'Área da vida',aif:'Tipo de compromisso',detail:'Detalhes',desc:'Descrição',body:'Texto',days:'Dias',tag:'Cor',date:'Data',grammarNote:'Notas de gramática',milestoneNote:'Notas do checkpoint',detalhe:'Detalhes',titulo:'Título',quando:'Quando',tipo:'Tipo'};
   function prepareEditorFields(root){
-    root.querySelectorAll('input:not([type="checkbox"]):not([type="radio"]):not([type="file"]),select,textarea').forEach(function(field){
+    root.querySelectorAll('input:not([type="hidden"]):not([type="checkbox"]):not([type="radio"]):not([type="file"]),select,textarea').forEach(function(field){
       if(field.closest('.field-label') || field.closest('label')) return;
       var key=field.dataset.f||field.dataset.rf;
       var name=field.getAttribute('aria-label') || fieldNames[key] || field.getAttribute('placeholder') || (field.type==='date'?'Data':field.tagName==='SELECT'?'Selecionar opção':'Nome');

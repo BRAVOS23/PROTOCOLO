@@ -972,3 +972,19 @@ input:focus-visible, select:focus-visible, textarea:focus-visible, button:focus-
   .tbl-scroll:has(.editing-row) table.week tr.editing-row{ display:block; }
   .tbl-scroll:has(.editing-row) table.week tr.editing-row td{ display:block; width:100%; }
 }
+/* Seletor próprio: gerir áreas no mesmo espaço em que são escolhidas. */
+.activity-edit-form .row2:has(.area-field){ grid-template-columns:minmax(0,1fr); }
+.area-field-label{ display:block; font-size:12px; font-weight:600; color:var(--ink-soft); margin-bottom:6px; }
+.area-picker-trigger{ display:flex; align-items:center; gap:10px; width:100%; min-height:48px; text-align:left; padding:12px; border:1px solid var(--line-strong); border-radius:10px; background:var(--surface-2); color:var(--ink); font:inherit; cursor:pointer; }
+.area-picker-trigger span:nth-child(2){ flex:1; overflow-wrap:anywhere; }
+.area-picker{ margin-top:10px; border:1px solid var(--line-strong); border-radius:14px; background:var(--surface); padding:12px; }
+.area-picker-hint{ color:var(--ink-faint); font-size:12px; margin:0 0 10px; }
+.area-choice-row{ display:flex; align-items:center; gap:6px; padding:6px 0; border-bottom:1px solid var(--line); }
+.area-choice{ flex:1; min-width:0; display:flex; align-items:center; gap:9px; min-height:48px; background:transparent; border:0; color:var(--ink); text-align:left; font:inherit; padding:8px 4px; cursor:pointer; }
+.area-choice span:nth-child(2){ flex:1; overflow-wrap:anywhere; }
+.area-choice[aria-pressed="true"]{ color:var(--accent-strong); font-weight:700; }
+.area-choice-row .ar-icon-btn{ width:44px; height:44px; flex-shrink:0; }
+.area-rename-form{ width:100%; }
+.area-create{ display:flex; flex-direction:column; gap:10px; margin-top:16px; }
+.area-create .btn,.area-picker-close{ min-height:48px; }
+.area-picker-close{ width:100%; margin-top:12px; }
