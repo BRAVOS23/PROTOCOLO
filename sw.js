@@ -1,8 +1,9 @@
-const CACHE = 'protocolo-v23';
+const CACHE = 'protocolo-v24';
 const SHELL = [
   './',
   './index.html',
   './css/styles.css',
+  './js/logic.js',
   './js/data.js',
   './js/app.js',
   './manifest.webmanifest',

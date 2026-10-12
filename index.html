@@ -7,8 +7,8 @@
 <meta name="description" content="O teu plano de inglês (Rota para B1) e de judo, tiros e emagrecimento, num único app com trackers.">
 
 <link rel="manifest" href="manifest.webmanifest">
-<meta name="theme-color" content="#F7F5EE" media="(prefers-color-scheme: light)">
-<meta name="theme-color" content="#171511" media="(prefers-color-scheme: dark)">
+<meta name="theme-color" content="#F3F6FF" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#0C1427" media="(prefers-color-scheme: dark)">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Protocolo">
@@ -18,7 +18,7 @@
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@500;600&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="css/styles.css">
 </head>
 <body>
@@ -40,25 +40,12 @@
 
   <!-- ===================== INÍCIO ===================== -->
   <section class="view active" id="view-inicio">
-
-    <section class="blk aif-block">
-      <div class="cycle-box" id="cycleBox"></div>
-    </section>
-
-    <section class="blk aif-block">
-      <div class="blk-head"><div><span class="kicker">O que o Protocolo mede</span><h2>Autenticidade · Intensidade · Fidelidade</h2></div></div>
-      <div class="aif-rings" id="aifRings"></div>
-      <div class="aif-detail-box" id="aifDetailBox"></div>
-      <div class="aif-total" id="aifTotal"></div>
-      <div class="aif-streak-row" id="aifStreakStats"></div>
-      <div class="aif-strip" id="aifStrip"></div>
-      <p class="aif-rule-text">A regra é uma só: nunca falhar dois dias seguidos. Um dia mau é ruído. Dois seguidos é o início de uma desistência.</p>
-    </section>
-
     <div class="hero">
       <span class="greet" id="dashDate">—</span>
-      <h1>Bom trabalho a manter o rumo.</h1>
+      <h1>O teu dia, com intenção.</h1>
 
+      <p class="hero-subtitle">Um passo de cada vez. O que vais cumprir hoje?</p>
+      <div class="day-progress"><strong id="dayProgressText"></strong><div class="day-progress-track"><span id="dayProgressFill"></span></div></div>
       <div class="streak-row">
         <span class="streak-chip"><span class="dot" style="background:var(--cat-lang)"></span>Línguas <span class="n" id="streakLang">0</span> dias</span>
         <span class="streak-chip"><span class="dot" style="background:var(--cat-fit)"></span>Forma <span class="n" id="streakFit">0</span> dias</span>
@@ -82,6 +69,14 @@
       </div>
     </div>
 
+    <section class="blk aif-block">
+      <div class="cycle-box" id="cycleBox"></div>
+    </section>
+
+
+
+
+
     <a class="btn ghost progress-shortcut" href="#progressOverview">Ver o meu histórico · semana e mês ↓</a>
 
     <section class="blk" id="dashAgendaBlk" hidden>
@@ -96,7 +91,7 @@
 
     <section class="blk">
       <div class="blk-head hoje-head">
-        <div><span class="kicker">Hoje</span><h2 id="hojeTitle">Marca o que fizeste</h2></div>
+        <div><span class="kicker">Hoje</span><h2 id="hojeTitle">Marca o que fizeste</h2><span id="todayCount" class="today-count"></span></div>
         <div style="display:flex; align-items:center; gap:8px;">
           <span class="daytype-badge" id="daytypeBadge">—</span>
           <button class="iconbtn" id="btnEditDay" aria-label="Editar atividades" type="button">
@@ -106,6 +101,18 @@
       </div>
       <div class="today-list" id="todayList"></div>
     </section>
+
+    <details class="dashboard-insights"><summary><span>O teu progresso · AIF</span><small>Autenticidade, intensidade e fidelidade</small></summary>
+    <section class="blk aif-block">
+      <div class="blk-head"><div><span class="kicker">O que o Protocolo mede</span><h2>Autenticidade · Intensidade · Fidelidade</h2></div></div>
+      <div class="aif-rings" id="aifRings"></div>
+      <div class="aif-detail-box" id="aifDetailBox"></div>
+      <div class="aif-total" id="aifTotal"></div>
+      <div class="aif-streak-row" id="aifStreakStats"></div>
+      <div class="aif-strip" id="aifStrip"></div>
+      <p class="aif-rule-text">A regra é uma só: nunca falhar dois dias seguidos. Um dia mau é ruído. Dois seguidos é o início de uma desistência.</p>
+    </section>
+    </details>
 
     <section class="blk" id="progressOverview">
       <div class="blk-head"><div><span class="kicker">O teu percurso</span><h2>Visão geral</h2></div></div>
@@ -490,7 +497,7 @@
 </div>
 
 <div class="sheet-backdrop" id="sheetBackdrop"></div>
-<div class="sheet" id="settingsSheet" role="dialog" aria-label="Definições">
+<div class="sheet" id="settingsSheet" role="dialog" aria-modal="true" aria-label="Definições">
   <div class="grabber"></div>
   <div style="display:flex;align-items:center;justify-content:space-between;">
     <h3>Definições</h3>
@@ -531,7 +538,7 @@
   </div>
 </div>
 
-<div class="sheet" id="activitySheet" role="dialog" aria-label="Editar atividades">
+<div class="sheet" id="activitySheet" role="dialog" aria-modal="true" aria-label="Editar atividades">
   <div class="grabber"></div>
   <div style="display:flex;align-items:center;justify-content:space-between;">
     <h3>Editar atividades</h3>
@@ -548,7 +555,7 @@
   <div id="areasManageBox" hidden></div>
 </div>
 
-<div class="sheet" id="itemDetailSheet" role="dialog" aria-label="Detalhe">
+<div class="sheet" id="itemDetailSheet" role="dialog" aria-modal="true" aria-label="Detalhe">
   <div class="grabber"></div>
   <div style="display:flex;align-items:center;justify-content:space-between;">
     <h3 id="itemDetailKicker">Detalhe</h3>
@@ -559,7 +566,7 @@
   <div id="itemDetailBody"></div>
 </div>
 
-<div class="sheet" id="quickAddSheet" role="dialog" aria-label="Adicionar rápido">
+<div class="sheet" id="quickAddSheet" role="dialog" aria-modal="true" aria-label="Adicionar rápido">
   <div class="grabber"></div>
   <div style="display:flex;align-items:center;justify-content:space-between;">
     <h3>Adicionar rápido</h3>
@@ -585,7 +592,7 @@
   </form>
 </div>
 
-<div class="toast" id="toast"></div>
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
 
 <div class="confirm-overlay" id="confirmOverlay">
   <div class="confirm-panel" role="alertdialog" aria-modal="true" aria-labelledby="confirmMessage">
@@ -598,6 +605,7 @@
   </div>
 </div>
 
+<script src="js/logic.js"></script>
 <script src="js/data.js"></script>
 <script src="js/app.js"></script>
 </body>

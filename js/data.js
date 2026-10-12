@@ -278,7 +278,7 @@ const DEFAULT_AREAS = [
   { id: 'revisao', label: 'Revisão', color: 'var(--warn)' },
   { id: 'pessoal', label: 'Cuidados pessoais', color: 'var(--accent)' },
   { id: 'domestico', label: 'Doméstico', color: 'var(--accent)' },
-  { id: 'diario', label: 'Diário', color: '#2c757a' },
+  { id: 'diario', label: 'Diário', color: 'var(--cat-fit)' },
   { id: 'outro', label: 'Outro', color: 'var(--ink-faint)' },
 ];
 
@@ -455,19 +455,19 @@ const DEFAULT_PROTOCOLO = {
    o texto de cada letra é editável pelo utilizador dentro do app. */
 const AIF_LETTERS = {
   a: {
-    letter: 'A', color: '#2c757a',
+    letter: 'A', color: 'var(--cat-fit)',
     title: 'Autenticidade que inspira',
     body: 'Não ser cópia. O problema nunca é a ideia vir de fora — tudo vem de fora. O problema é adotar sem testar.',
     test: 'De onde veio isto, e quando testo contra a minha vida, aguenta?',
   },
   i: {
-    letter: 'I', color: '#b8471f',
+    letter: 'I', color: 'var(--accent)',
     title: 'Intensidade que marca',
     body: 'Presença não é entrega. Intensidade não é espalhar esforço por muitas frentes — é o que dou àquilo que amo.',
     test: 'Dei tudo, ou só marquei presença?',
   },
   f: {
-    letter: 'F', color: '#966b18',
+    letter: 'F', color: 'var(--cat-lang)',
     title: 'Fidelidade que define',
     body: 'Cumprir o combinado quando ninguém vê e ninguém saberia.',
     test: 'Faria isto na mesma se ninguém ficasse a saber?',
@@ -479,6 +479,7 @@ const AIF_STREAK_RULE_TEXT = 'A regra é uma só: nunca falhar dois dias seguido
 
 /* ---------------- Rota: linha do tempo até à candidatura na China ---------------- */
 const ROTA_META = {
+  countdownStart: '2026-09-01',
   countdownTarget: '2028-12-01',
   countdownLabel: 'até à abertura da janela de candidatura',
   chips: ['2º ano · 2º semestre', 'Meta: HSK 4', '22 anos na candidatura'],
