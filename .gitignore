@@ -10,3 +10,8 @@ android/local.properties
 *.p12
 *-assinatura-privada.zip
 *-chaves-privadas.zip
+**/password.txt
+**/ANDROID_KEYSTORE_BASE64.txt
+**/ANDROID_KEYSTORE_PASSWORD.txt
+*-GitHub-privada.zip
+__pycache__/

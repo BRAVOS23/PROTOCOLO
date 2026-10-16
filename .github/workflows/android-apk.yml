@@ -1,0 +1,59 @@
+name: Gerar APK para o meu celular
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: protocolo-apk-signing
+  cancel-in-progress: false
+
+jobs:
+  apk:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+      - name: Preparar pasta temporária fora do código
+        run: echo "PROTOCOLO_SIGNING_DIR=$RUNNER_TEMP/protocolo-novo-signing" >> "$GITHUB_ENV"
+      - name: Restaurar assinatura protegida e conferir a identidade
+        env:
+          ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+          ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+        run: python3 android/tools/signing.py restore
+      - name: Testar lógica web e Android
+        run: |
+          node --test tests/*.test.cjs
+          python3 android/tools/test_logic.py
+          python3 android/tests/test_release_tools.py
+      - name: Instalar SDK oficial com verificação de integridade
+        run: python3 android/tools/install_sdk.py --sdk "$RUNNER_TEMP/protocolo-sdk"
+      - name: Compilar e verificar APK assinado
+        run: |
+          python3 android/tools/build.py --sdk "$RUNNER_TEMP/protocolo-sdk"
+          python3 android/tools/verify_apk.py android/dist/Protocolo-Novo.apk --sdk "$RUNNER_TEMP/protocolo-sdk" --previous downloads/Protocolo-Novo.apk --output android/dist/release-info.json
+      - name: Apagar os ficheiros temporários de assinatura
+        if: always()
+        run: |
+          if [ -n "${PROTOCOLO_SIGNING_DIR:-}" ]; then
+            rm -rf -- "$PROTOCOLO_SIGNING_DIR"
+          fi
+      - name: Disponibilizar apenas o APK e a verificação pública
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: Protocolo-Novo-${{ github.run_number }}
+          path: |
+            android/dist/Protocolo-Novo.apk
+            android/dist/Protocolo-Novo.apk.sha256
+            android/dist/release-info.json
+          if-no-files-found: error
+          retention-days: 7
+      - name: Explicar a instalação
+        run: |
+          echo '### APK pronto' >> "$GITHUB_STEP_SUMMARY"
+          echo 'Descarrega o artefacto Protocolo-Novo, extrai o APK e instala por cima do Protocolo Novo existente. Não desinstales o app. O ZIP contém apenas o APK e metadados públicos; as chaves foram apagadas do runner.' >> "$GITHUB_STEP_SUMMARY"

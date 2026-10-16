@@ -1,11 +1,12 @@
 plugins { id 'com.android.application' }
+def releaseVersion = new groovy.json.JsonSlurper().parse(file('../release.json'))
 def signingFolder = new File(System.getenv('PROTOCOLO_SIGNING_DIR') ?: new File(rootProject.projectDir.parentFile.parentFile, '.protocolo-novo-signing').path)
 def personalKey = new File(signingFolder, 'personal.p12')
 def passwordFile = new File(signingFolder, 'password.txt')
 android {
     namespace 'app.protocolo.android'
     compileSdk 35
-    defaultConfig { applicationId 'app.protocolo.mobile'; minSdk 26; targetSdk 35; versionCode 1; versionName '2.0' }
+    defaultConfig { applicationId 'app.protocolo.mobile'; minSdk 26; targetSdk 35; versionCode releaseVersion.version_code; versionName releaseVersion.version_name }
     compileOptions { sourceCompatibility JavaVersion.VERSION_1_8; targetCompatibility JavaVersion.VERSION_1_8 }
     signingConfigs {
         personal {

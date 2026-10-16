@@ -1,6 +1,6 @@
-# Protocolo — Línguas & Forma
+# Protocolo
 
-Um único PWA que junta dois planos pessoais num só app instalável:
+Aplicativo pessoal de atividades, agenda, estudos e treino, com versão web instalável (PWA) e APK Android. Inclui dois planos pessoais:
 
 - **Rota para B1** — plano de inglês de 13 semanas (A2 → B1), com tracker de vocabulário.
 - **Judo, Tiros e Emagrecimento** — plano de treino e alimentação, com tracker de peso e de treinos.
@@ -22,7 +22,7 @@ Sem backend, sem contas, sem anúncios. Tudo fica guardado no `localStorage` do 
 Qualquer servidor estático serve. Por exemplo:
 
 ```bash
-npx http-server . -p 8080
+python3 -m http.server 8080 --bind 127.0.0.1
 # depois abre http://localhost:8080
 ```
 
@@ -30,7 +30,7 @@ Não uses `file://` diretamente — o *service worker* e o manifest precisam de 
 
 ## Versão Android (APK, sem loja)
 
-A versão Android acrescenta lembretes locais e um widget com os próximos eventos, sem servidor ou mensalidade. A instalação e a transferência dos dados do PWA por backup estão descritas em [android/README.md](android/README.md). Os dados do PWA e do APK são separados; importar o backup substitui os dados no APK.
+O **Protocolo Novo** acrescenta lembretes locais, um widget com as atividades do dia e cópia de atividades entre rotinas, sem servidor ou mensalidade. A instalação e a transferência dos dados do PWA por backup estão descritas em [android/README.md](android/README.md). Os dados do PWA e do APK são separados; importar o backup substitui os dados no APK.
 
 ## Contadores, progresso e histórico
 
@@ -44,10 +44,10 @@ As novas marcações guardam a rotina e os nomes para preservar o histórico ap�
 
 ## Validar a lógica
 
-Não há dependências de build. Os testes de calendário e indicadores usam o Node.js nativo:
+A versão web não precisa de build. Os testes de calendário e indicadores usam o Node.js nativo:
 
 ```bash
-node --test tests/logic.test.cjs
+node --test tests/*.test.cjs
 ```
 
 A validação no browser deve cobrir os temas claro/escuro em telas pequenas, navegação, edição de áreas, múltiplas tarefas de Forma e Trabalho, validação de datas, exportação/importação e recarregamento offline. Usa um perfil de browser de teste para preservar os dados pessoais.
@@ -58,19 +58,21 @@ A validação no browser deve cobrir os temas claro/escuro em telas pequenas, na
 2. Escolhe o branch `main` e a pasta `/ (root)`.
 3. Guarda. Em 1–2 minutos o app fica disponível em `https://<utilizador>.github.io/<repo>/`.
 
-## Transformar em APK (Android)
+## Assinatura e atualizações do APK
 
-O app já cumpre os requisitos de um PWA instalável (manifest + ícones + service worker). Duas formas simples de gerar um `.apk`/`.aab` a partir do URL publicado (GitHub Pages):
+A assinatura do **Protocolo Novo** é fixa. As atualizações devem usar o mesmo applicationId e o certificado já registado. A chave privada deve ficar nos GitHub Actions Secrets e num backup privado do proprietário, fora do código.
 
-- **[PWABuilder](https://www.pwabuilder.com/)** (mais simples, sem instalar nada): cola o URL do teu GitHub Pages, deixa validar o manifest, e escolhe "Android" para descarregar o pacote pronto a instalar ou publicar na Play Store.
-- **[Bubblewrap](https://github.com/GoogleChromeLabs/bubblewrap)** (linha de comandos, mais controlo): `npx @bubblewrap/cli init --manifest=https://<teu-url>/manifest.webmanifest`.
+O repositório inclui dois workflows:
 
-Ambos geram uma *Trusted Web Activity* — uma app Android real que carrega o teu PWA em ecrã inteiro, sem barra de navegador.
+- **Verificar app Android**: testes e compilação sem segredos, em cada alteração relevante.
+- **Gerar APK para o meu celular**: compilação assinada, manual, na branch `main`; entrega o APK para instalar por cima do existente.
+
+A configuração única dos dois segredos, a recuperação da chave e o processo de atualização estão em **[docs/ANDROID_RELEASES.md](docs/ANDROID_RELEASES.md)**. A integração atual não tem acesso aos Actions Secrets; o proprietário precisa de configurar esses campos no GitHub. A versão é mantida apenas em `android/release.json`.
 
 ## Estrutura
 
 ```
-index.html            shell do app + as 3 vistas (Início, Línguas, Forma)
+index.html            shell do app + as 5 vistas principais
 css/styles.css         sistema de design (cores, tipografia, componentes)
 js/logic.js            cálculos de calendário e indicadores, usados no app e nos testes
 js/data.js             conteúdo dos dois planos (sem lógica)
@@ -78,7 +80,10 @@ js/app.js              navegação, trackers, persistência, gráfico de peso
 manifest.webmanifest   metadados do PWA
 sw.js                  service worker (cache da app shell, funciona offline)
 icons/                 ícones do PWA (192, 512, maskable, apple-touch, favicon)
-tests/logic.test.cjs    testes de calendário, limites dos períodos e pontuações AIF
+tests/                 testes de calendário, horários, AIF e ponte Android
+android/               app Android, versão, validação e ferramentas de assinatura
+.github/workflows/     testes automáticos e geração manual do APK assinado
+docs/ANDROID_RELEASES.md  configuração e atualização da instalação pessoal
 ```
 
 ## Créditos

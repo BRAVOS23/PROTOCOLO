@@ -1,8 +1,8 @@
-# Protocolo Novo 2.0 — instalação separada, sem loja ou servidor
+# Protocolo Novo — instalação separada, sem loja ou servidor
 
 O APK inclui o app web e funciona offline. Não usa Firebase, conta, serviço de push, assinatura mensal, publicidade ou permissão de Internet. Os links externos de estudo abrem o navegador apenas quando são tocados.
 
-Download direto: [Protocolo-Novo.apk](https://bravos23.github.io/PROTOCOLO/downloads/Protocolo-Novo.apk?v=2.0). A cópia distribuída fica em `downloads/Protocolo-Novo.apk`.
+Download direto: [Protocolo-Novo.apk](https://bravos23.github.io/PROTOCOLO/downloads/Protocolo-Novo.apk). A cópia distribuída fica em `downloads/Protocolo-Novo.apk`.
 
 Esta instalação tem nome **Protocolo Novo** e identificador `app.protocolo.mobile`. Instala ao lado do APK antigo (`app.protocolo.android`), sem substituir nem apagar os seus dados. O APK antigo em `downloads/Protocolo.apk` continua preservado. A chave antiga não está disponível; por isso, esta é uma nova identidade, com assinatura própria.
 
@@ -33,6 +33,10 @@ Os lembretes usam o relógio/fuso do celular. Funcionam sem o app aberto, mas o 
 
 O mínimo do APK é Android 8.0/API 26. O Android System WebView deve estar atualizado. O APK distribuído tem depuração desativada. Futuras atualizações desta nova instalação precisam do mesmo identificador e da sua nova chave; não podem usar a assinatura antiga.
 
+## Assinatura permanente e GitHub Actions
+
+O processo recomendado está em [docs/ANDROID_RELEASES.md](../docs/ANDROID_RELEASES.md). A chave original fica nos dois Actions Secrets e num backup privado, e não depende de uma pasta temporária do Codex. A integração atual não conseguiu configurar esses segredos: a configuração inicial do proprietário ainda é necessária. `android/release.json` é a única origem da versão para Python e Gradle. O build nunca gera uma chave substituta.
+
 ## Compilar no Linux/Codex
 
 Prérequisitos: Python 3, Java com o módulo `jdk.compiler` (JDK 17+ recomendado) e as ferramentas oficiais do Android SDK. A compilação padrão não precisa de Gradle nem de dependências pagas.
@@ -42,6 +46,7 @@ cd /workspace/PROTOCOLO
 python3 android/tools/install_sdk.py
 python3 android/tools/test_logic.py
 node --test tests/*.test.cjs
+python3 android/tools/signing.py check
 python3 android/tools/build.py
 ```
 

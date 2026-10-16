@@ -1,0 +1,34 @@
+name: Verificar app Android
+
+on:
+  push:
+    branches: [main]
+    paths: ['android/**', 'js/**', 'css/**', 'icons/**', 'index.html', 'tests/**', '.github/workflows/**', 'AGENTS.md']
+  pull_request:
+    paths: ['android/**', 'js/**', 'css/**', 'icons/**', 'index.html', 'tests/**', '.github/workflows/**', 'AGENTS.md']
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: android-checks-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  check:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+        with:
+          persist-credentials: false
+      - name: Testar lógica web e Android
+        run: |
+          node --test tests/*.test.cjs
+          python3 android/tools/test_logic.py
+          python3 android/tests/test_release_tools.py
+      - name: Instalar SDK oficial com verificação de integridade
+        run: python3 android/tools/install_sdk.py --sdk "$RUNNER_TEMP/protocolo-sdk"
+      - name: Compilar sem chaves privadas
+        run: python3 android/tools/build.py --sdk "$RUNNER_TEMP/protocolo-sdk" --unsigned
