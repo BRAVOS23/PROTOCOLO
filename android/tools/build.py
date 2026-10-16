@@ -41,6 +41,7 @@ signing.mkdir(mode=0o700,parents=True,exist_ok=True)
 key=signing/'personal.p12';password=signing/'password.txt'
 if key.exists()!=password.exists():raise SystemExit('Signing key/password file is incomplete. Restore the original signing files; do not replace the key.')
 if not key.exists():
+ if (WEB/'downloads/Protocolo.apk').exists():raise SystemExit('The published APK already has a signing identity. Restore its original signing key and password; generating a replacement would prevent compatible updates.')
  password.write_text(secrets.token_urlsafe(32)+'\n');password.chmod(0o600)
  run('keytool','-genkeypair','-keystore',key,'-storetype','PKCS12','-storepass:file',password,'-keypass:file',password,'-alias','protocolo','-keyalg','RSA','-keysize','3072','-validity','10000','-dname','CN=Protocolo Pessoal,O=Protocolo')
  key.chmod(0o600)

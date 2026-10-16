@@ -562,6 +562,14 @@
     </button>
   </div>
   <div class="day-picker" id="dayPicker"></div>
+  <button class="btn ghost" id="btnCopyActivities" type="button">Copiar atividades para outro dia</button>
+  <div class="activity-copy-panel" id="activityCopyPanel" hidden>
+    <p id="activityCopyCount" role="status"></p>
+    <label class="activity-copy-all"><input id="activityCopyAll" type="checkbox"> Selecionar todas</label>
+    <label class="field-label"><span>Copiar para</span><select id="activityCopyDestination"></select></label>
+    <p class="overview-note">Mantém os horários, áreas e detalhes. As originais ficam neste dia e as cópias começam por concluir.</p>
+    <div class="form-actions"><button class="btn ghost" id="activityCopyCancel" type="button">Cancelar</button><button class="btn" id="activityCopyConfirm" type="button" disabled>Copiar selecionadas</button></div>
+  </div>
   <div id="activityList"></div>
   <div class="form-actions" style="justify-content:space-between;margin-top:4px;">
     <button class="btn-add-activity" id="btnAddActivity" type="button">+ Nova atividade</button>

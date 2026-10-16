@@ -1199,3 +1199,11 @@ span.mx[role="button"],span.del[role="button"]{ min-width:44px; min-height:44px;
 .native-widget{ border-top:1px solid var(--accent-soft-line); padding-top:16px; }
 .native-widget .btn{ width:100%; margin-top:12px; }
 .today-item.native-activity-focus{outline:2px solid var(--accent);outline-offset:3px;}
+.activity-copy-panel:not([hidden]){display:grid;gap:12px;padding:16px;margin:12px 0;background:var(--surface-2);border:1px solid var(--line);border-radius:16px;}
+.activity-copy-panel p{margin:0;}
+.activity-copy-all,.activity-copy-option{display:flex;align-items:center;gap:14px;min-height:48px;cursor:pointer;}
+.activity-copy-option{padding:12px 4px;border-bottom:1px solid var(--line);}
+.activity-copy-option span{min-width:0;overflow-wrap:anywhere;}
+.activity-copy-option strong,.activity-copy-option small{display:block;}
+.activity-copy-option small{margin-top:4px;color:var(--ink-faint);}
+.activity-copy-option input,.activity-copy-all input{width:22px;height:22px;flex-shrink:0;accent-color:var(--accent);}

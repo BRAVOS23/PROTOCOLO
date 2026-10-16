@@ -1294,6 +1294,25 @@
 
   /* ---- editor sheet ---- */
   var editingDay = TODAY_WEEKDAY;
+  var copyingActivities=false,copyActivityIds=new Set(),copyDestination='';
+  function resetActivityCopy(){copyingActivities=false;copyActivityIds.clear();}
+  function renderActivityCopy(){
+    var acts=dayActivities(editingDay);
+    copyActivityIds.forEach(function(id){if(!acts.some(function(a){return a.id===id;}))copyActivityIds.delete(id);});
+    document.getElementById('btnCopyActivities').hidden=copyingActivities || areasManaging;
+    document.getElementById('btnCopyActivities').disabled=!acts.length;
+    document.getElementById('activityCopyPanel').hidden=!copyingActivities || areasManaging;
+    document.getElementById('btnAddActivity').disabled=copyingActivities;
+    document.getElementById('btnManageAreas').disabled=copyingActivities;
+    if(!copyingActivities)return;
+    var days=WEEKDAYS.filter(function(day){return day!==editingDay;});
+    if(days.indexOf(copyDestination)===-1)copyDestination=days[0];
+    var select=document.getElementById('activityCopyDestination');
+    select.innerHTML=days.map(function(day){return '<option>'+escHtml(day)+'</option>';}).join('');select.value=copyDestination;
+    document.getElementById('activityCopyCount').textContent=copyActivityIds.size+' de '+acts.length+' atividades selecionadas em '+editingDay;
+    var all=document.getElementById('activityCopyAll');all.checked=acts.length>0 && copyActivityIds.size===acts.length;all.indeterminate=copyActivityIds.size>0 && copyActivityIds.size<acts.length;
+    document.getElementById('activityCopyConfirm').disabled=!copyActivityIds.size;
+  }
   function renderDayPicker(){
     document.getElementById('dayPicker').innerHTML = WEEKDAYS.map(function(day){
       var type = DAY_TYPE[day];
@@ -1302,7 +1321,7 @@
         '<span class="dtdot" style="background:'+color+'"></span>' + day.slice(0,3) + '</button>';
     }).join('');
     document.querySelectorAll('#dayPicker button').forEach(function(b){
-      b.addEventListener('click', function(){ editingDay = b.getAttribute('data-day'); renderDayPicker(); renderActivityList(); });
+      b.addEventListener('click', function(){ resetActivityCopy();openEditId=null;editingDay = b.getAttribute('data-day'); renderDayPicker(); renderActivityList(); });
     });
   }
 
@@ -1412,10 +1431,16 @@
 
   var openEditId = null;
   function renderActivityList(){
+    renderActivityCopy();
     var acts = dayActivities(editingDay);
     var list = document.getElementById('activityList');
     if(!acts.length){
       list.innerHTML = '<p style="color:var(--ink-faint); font-size:13px; padding:14px 4px;">Sem atividades para '+editingDay+' ainda.</p>';
+      return;
+    }
+    if(copyingActivities){
+      list.innerHTML=acts.map(function(act){return '<label class="activity-copy-option"><input type="checkbox" data-copy-id="'+escAttr(act.id)+'"'+(copyActivityIds.has(act.id)?' checked':'')+'><span><strong>'+escHtml(act.title)+'</strong><small>'+escHtml([act.time,areaById(act.area).label].filter(Boolean).join(' · '))+'</small></span></label>';}).join('');
+      list.querySelectorAll('[data-copy-id]').forEach(function(input){input.addEventListener('change',function(){if(input.checked)copyActivityIds.add(input.getAttribute('data-copy-id'));else copyActivityIds.delete(input.getAttribute('data-copy-id'));renderActivityCopy();});});
       return;
     }
     list.innerHTML = acts.map(function(act){
@@ -1482,6 +1507,24 @@
   function escAttr(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/"/g,'&quot;'); }
   function escHtml(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
 
+  document.getElementById('btnCopyActivities').addEventListener('click',function(){
+    if(openEditId){toast('Guarda ou cancela a edição antes de copiar.');return;}
+    copyingActivities=true;copyActivityIds.clear();renderActivityList();
+  });
+  document.getElementById('activityCopyDestination').addEventListener('change',function(){copyDestination=this.value;});
+  document.getElementById('activityCopyAll').addEventListener('change',function(){copyActivityIds.clear();if(this.checked)dayActivities(editingDay).forEach(function(act){copyActivityIds.add(act.id);});renderActivityList();});
+  document.getElementById('activityCopyCancel').addEventListener('click',function(){resetActivityCopy();renderActivityList();});
+  document.getElementById('activityCopyConfirm').addEventListener('click',function(){
+    if(!copyingActivities || !copyActivityIds.size || copyDestination===editingDay || WEEKDAYS.indexOf(copyDestination)===-1)return;
+    var selected=dayActivities(editingDay).filter(function(act){return copyActivityIds.has(act.id);});
+    if(!selected.length)return;
+    var target=copyDestination;
+    if(!state.activities[target])state.activities[target]=[];
+    var usedIds=new Set();WEEKDAYS.forEach(function(day){dayActivities(day).forEach(function(act){usedIds.add(act.id);});});
+    selected.forEach(function(act){var copy=clone(act);do{copy.id=target+'-'+rid('copy');}while(usedIds.has(copy.id));usedIds.add(copy.id);state.activities[target].push(copy);});
+    saveState();resetActivityCopy();openEditId=null;editingDay=target;renderDayPicker();renderActivityList();renderDashboard();renderFitStatic();renderWorkStatic();
+    toast(selected.length+(selected.length===1?' atividade copiada para ':' atividades copiadas para ')+target+'.');
+  });
   document.getElementById('btnAddActivity').addEventListener('click', function(){
     var act = addActivity(editingDay, { area:'outro', title:'Nova atividade' });
     openEditId = act.id;
@@ -1491,6 +1534,7 @@
   });
 
   document.getElementById('btnEditDay').addEventListener('click', function(){
+    resetActivityCopy();
     editingDay = TODAY_WEEKDAY;
     areaActivityDraft = null;
     openEditId = null;
@@ -1524,6 +1568,7 @@
   var areasManaging = false;
   var draftAreas = [];
   function renderAreasManage(){
+    renderActivityCopy();
     var box = document.getElementById('areasManageBox');
     var list = document.getElementById('activityList');
     var addBtn = document.getElementById('btnAddActivity');
