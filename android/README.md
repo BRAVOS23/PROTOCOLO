@@ -1,19 +1,25 @@
-# Protocolo Android — APK pessoal, sem loja ou servidor
+# Protocolo Novo 2.0 — instalação separada, sem loja ou servidor
 
 O APK inclui o app web e funciona offline. Não usa Firebase, conta, serviço de push, assinatura mensal, publicidade ou permissão de Internet. Os links externos de estudo abrem o navegador apenas quando são tocados.
 
-Download direto: [Protocolo.apk](https://bravos23.github.io/PROTOCOLO/downloads/Protocolo.apk?v=1.2). A cópia distribuída fica em `downloads/Protocolo.apk`; substitui-a apenas depois de compilar e verificar uma atualização assinada pela mesma chave.
+Download direto: [Protocolo-Novo.apk](https://bravos23.github.io/PROTOCOLO/downloads/Protocolo-Novo.apk?v=2.0). A cópia distribuída fica em `downloads/Protocolo-Novo.apk`.
+
+Esta instalação tem nome **Protocolo Novo** e identificador `app.protocolo.mobile`. Instala ao lado do APK antigo (`app.protocolo.android`), sem substituir nem apagar os seus dados. O APK antigo em `downloads/Protocolo.apk` continua preservado. A chave antiga não está disponível; por isso, esta é uma nova identidade, com assinatura própria.
 
 Esta versão passou na compilação/assinatura, nos testes de lógica e na integração da interface com ponte nativa simulada. A entrega de notificações e a inclusão do widget ainda precisam de validação num Android real; o emulador deste ambiente não ficou disponível sem aceleração de hardware.
 
 ## Instalar e trazer os dados existentes
 
-1. No site/PWA atual, abre **Definições → Exportar dados** e guarda o JSON.
-2. Descarrega e instala `Protocolo.apk`. Se o Android pedir, permite a instalação pelo navegador/gestor de ficheiros que estás a usar. Não é necessário desativar o Play Protect.
-3. Abre o APK e usa **Definições → Importar dados** para escolher o JSON. O APK tem armazenamento próprio; não lê nem apaga o armazenamento do Chrome/PWA. A importação substitui os dados do APK.
-4. Em **Definições → Lembretes das atividades e agenda**, ativa os lembretes e permite as notificações.
-5. Se aparecer **Permitir horário exato**, abre essa opção e permite alarmes/lembretes para o Protocolo. Sem esse acesso, o Android pode atrasar os avisos.
-6. Usa **Adicionar widget** e confirma no Android. Também podes manter pressionada a tela inicial e escolher **Widgets → Protocolo → Atividades de hoje**.
+1. No **Protocolo antigo**, abre **Definições → Exportar dados** e guarda o JSON. Também podes usar um backup do site/PWA.
+2. Descarrega e instala **Protocolo-Novo.apk**. Mantém o antigo instalado. Se o Android pedir, permite a instalação pelo navegador/gestor de ficheiros que estás a usar. Não é necessário desativar o Play Protect.
+3. Abre **Protocolo Novo** e usa **Definições → Importar dados** para escolher o JSON. A importação substitui apenas os dados desta nova instalação; não altera os dados do app antigo ou do Chrome/PWA.
+4. Confere as atividades, tarefas, áreas, agenda, planos e histórico importados. O teste de migração exportou dados pelos assets reais do APK 1.2 e importou-os pela interface atual com ponte Android simulada; os campos e as conclusões foram preservados.
+5. No novo app, ativa **Definições → Lembretes das atividades e agenda** e permite as notificações.
+6. Se aparecer **Permitir horário exato**, abre essa opção e permite alarmes/lembretes para o **Protocolo Novo**. Sem esse acesso, o Android pode atrasar os avisos.
+7. Usa **Adicionar widget** e confirma no Android. Também podes manter pressionada a tela inicial e escolher **Widgets → Protocolo Novo → Atividades de hoje · Novo**.
+8. Depois de conferir a transferência, desativa os lembretes no app antigo para evitar avisos duplicados. Não precisas de desinstalá-lo para usar o novo.
+
+Para copiar atividades: **Início → lápis → dia de origem → Copiar atividades para outro dia**. Seleciona algumas ou todas, escolhe o destino e confirma. As originais e as atividades já existentes no destino ficam preservadas. As cópias mantêm horários, áreas e detalhes, com novos identificadores e conclusão independente.
 
 O widget mostra **todas as atividades do dia no Início**, por horário, como no Início: Acordar, God Moment, treinos, leitura, etc. A lista pode ser deslizada e inclui horários, conclusão e progresso do dia. O Início, o editor e o widget ordenam as atividades pela hora de início; horários iguais mantêm a ordem existente e atividades sem hora ficam no fim. Agenda e tarefas usam primeiro a data, depois a hora. Editar uma data/hora reposiciona o item sem mudar as suas marcações de conclusão. Tocar numa atividade abre o Início e destaca-a. A agenda continua com notificações; o conteúdo do widget agora é a rotina diária.
 
@@ -25,7 +31,7 @@ A antecedência é configurável: 10 minutos, 30 minutos, 1 hora ou 1 dia. Event
 
 Os lembretes usam o relógio/fuso do celular. Funcionam sem o app aberto, mas o aparelho precisa estar ligado. Se usares **Forçar parada**, o Android bloqueia a execução até reabrires o app. Restrições de bateria e a falta de acesso a alarmes exatos podem afetar o horário.
 
-O mínimo do APK é Android 8.0/API 26. O Android System WebView deve estar atualizado. O APK pessoal distribuído tem depuração desativada. A versão 1.2 tem o mesmo identificador e a mesma assinatura das versões anteriores: instala-a por cima, **sem desinstalar**, para preservar os dados. Faz um backup antes da atualização.
+O mínimo do APK é Android 8.0/API 26. O Android System WebView deve estar atualizado. O APK distribuído tem depuração desativada. Futuras atualizações desta nova instalação precisam do mesmo identificador e da sua nova chave; não podem usar a assinatura antiga.
 
 ## Compilar no Linux/Codex
 
@@ -41,9 +47,13 @@ python3 android/tools/build.py
 
 O instalador descarrega `platforms;android-35` e `build-tools;35.0.0` de `dl.google.com`, valida tamanho e checksum contra os metadados oficiais via HTTPS e escreve em `/workspace/android-tools/sdk`. Não desativa TLS ou verificação de artefactos. Usa `--sdk /outro/caminho` em ambos os scripts para mudar esse diretório.
 
-O APK fica em `android/dist/Protocolo.apk`. O script compila recursos/Java/DEX, alinha o APK, assina-o e verifica a assinatura e o alinhamento. `--debug` gera uma variante separada para testar WebView por ADB; essa variante não deve ser distribuída.
+O APK fica em `android/dist/Protocolo-Novo.apk`. O script compila recursos/Java/DEX, alinha o APK, assina-o e verifica a assinatura e o alinhamento. `--debug` gera uma variante separada para testar WebView por ADB; essa variante não deve ser distribuída.
 
-A primeira compilação cria a chave de assinatura em `/workspace/.protocolo-android-signing`, fora do Git, com permissões privadas. `PROTOCOLO_SIGNING_DIR` permite usar uma pasta de assinatura já existente. **Guarda a chave e o ficheiro de senha em segurança: todas as atualizações precisam da mesma chave para manter os dados do APK instalado.** Nunca publiques esses ficheiros. O script recusa uma pasta em que falta a chave ou a senha; não substitui material existente.
+A nova chave fica em `/workspace/.protocolo-novo-signing`, fora do Git, com permissões privadas. `PROTOCOLO_SIGNING_DIR` permite restaurar uma pasta de assinatura já existente. **Guarda o backup privado da assinatura: contém `personal.p12` e `password.txt`, necessários para atualizar o Protocolo Novo instalado.** Nunca publiques esses ficheiros ou o ZIP privado.
+
+O ficheiro versionado `android/signing-certificate.sha256` contém apenas a impressão digital pública do certificado. O build verifica-a e recusa uma assinatura diferente. Depois da primeira distribuição, se a chave/senha faltar, o script recusa gerar outra identidade. Restaura os dois ficheiros do backup privado numa pasta com acesso restrito e define `PROTOCOLO_SIGNING_DIR` para essa pasta.
+
+O código Java e o namespace dos recursos continuam em `app.protocolo.android` para reutilizar a implementação; o **applicationId** é `app.protocolo.mobile`. Os componentes do manifesto usam nomes de classe completos, e o build AAPT2 gera recursos no namespace Java com `--custom-package`.
 
 Os dados pessoais de teste e as chaves não entram no APK. Os assets são apenas `index.html`, `manifest.webmanifest`, `css/`, `js/` e `icons/` do repositório; o APK não inclui a pasta de compilação, SDK ou backups.
 

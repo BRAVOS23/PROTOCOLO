@@ -1,13 +1,13 @@
-<manifest xmlns:android="http://schemas.android.com/apk/res/android" package="app.protocolo.android">
+<manifest xmlns:android="http://schemas.android.com/apk/res/android" package="app.protocolo.mobile">
     <uses-sdk android:minSdkVersion="26" android:targetSdkVersion="35"/>
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>
     <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM"/>
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED"/>
-    <application android:label="Protocolo" android:icon="@drawable/ic_protocolo" android:theme="@style/AppTheme" android:allowBackup="false" android:usesCleartextTraffic="false" android:debuggable="false">
-        <activity android:name=".MainActivity" android:exported="true" android:launchMode="singleTask" android:configChanges="orientation|screenSize|keyboardHidden" android:windowSoftInputMode="adjustResize">
+    <application android:label="Protocolo Novo" android:icon="@drawable/ic_protocolo" android:theme="@style/AppTheme" android:allowBackup="false" android:usesCleartextTraffic="false" android:debuggable="false">
+        <activity android:name="app.protocolo.android.MainActivity" android:exported="true" android:launchMode="singleTask" android:configChanges="orientation|screenSize|keyboardHidden" android:windowSoftInputMode="adjustResize">
             <intent-filter><action android:name="android.intent.action.MAIN"/><category android:name="android.intent.category.LAUNCHER"/></intent-filter>
         </activity>
-        <receiver android:name=".EventReceiver" android:exported="false">
+        <receiver android:name="app.protocolo.android.EventReceiver" android:exported="false">
             <intent-filter>
                 <action android:name="android.intent.action.BOOT_COMPLETED"/>
                 <action android:name="android.intent.action.MY_PACKAGE_REPLACED"/>
@@ -16,8 +16,8 @@
                 <action android:name="android.app.action.SCHEDULE_EXACT_ALARM_PERMISSION_STATE_CHANGED"/>
             </intent-filter>
         </receiver>
-        <service android:name=".ActivityWidgetService" android:exported="false" android:permission="android.permission.BIND_REMOTEVIEWS"/>
-        <receiver android:name=".AgendaWidget" android:exported="false" android:label="Atividades de hoje">
+        <service android:name="app.protocolo.android.ActivityWidgetService" android:exported="false" android:permission="android.permission.BIND_REMOTEVIEWS"/>
+        <receiver android:name="app.protocolo.android.AgendaWidget" android:exported="false" android:label="Atividades de hoje · Novo">
             <intent-filter><action android:name="android.appwidget.action.APPWIDGET_UPDATE"/></intent-filter>
             <meta-data android:name="android.appwidget.provider" android:resource="@xml/agenda_widget"/>
         </receiver>

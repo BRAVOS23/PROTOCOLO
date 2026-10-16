@@ -8,3 +8,5 @@ android/local.properties
 *.keystore
 *.jks
 *.p12
+*-assinatura-privada.zip
+*-chaves-privadas.zip
