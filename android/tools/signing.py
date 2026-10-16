@@ -102,6 +102,9 @@ def main():
             export_setup(args.output)
             print('Private GitHub setup saved outside the repository. No secret values were printed.')
     except (ValueError, OSError) as error:
+        if os.environ.get('GITHUB_ACTIONS') == 'true':
+            message = str(error).replace('%', '%25').replace('\r', '%0D').replace('\n', '%0A')
+            print('::error title=Assinatura Android::' + message)
         parser.exit(1, str(error) + '\n')
 
 
