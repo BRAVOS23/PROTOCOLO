@@ -20,7 +20,7 @@ jobs:
         with:
           persist-credentials: false
       - name: Preparar pasta temporária fora do código
-        run: echo "PROTOCOLO_SIGNING_DIR=$RUNNER_TEMP/protocolo-novo-signing" >> "$GITHUB_ENV"
+        run: echo "PROTOCOLO_SIGNING_DIR=$RUNNER_TEMP/protocolo-personal-signing" >> "$GITHUB_ENV"
       - name: Restaurar assinatura protegida e conferir a identidade
         env:
           ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
@@ -36,7 +36,7 @@ jobs:
       - name: Compilar e verificar APK assinado
         run: |
           python3 android/tools/build.py --sdk "$RUNNER_TEMP/protocolo-sdk"
-          python3 android/tools/verify_apk.py android/dist/Protocolo-Novo.apk --sdk "$RUNNER_TEMP/protocolo-sdk" --previous downloads/Protocolo-Novo.apk --output android/dist/release-info.json
+          python3 android/tools/verify_apk.py android/dist/Protocolo-Pessoal.apk --sdk "$RUNNER_TEMP/protocolo-sdk" --previous downloads/Protocolo-Pessoal.apk --output android/dist/release-info.json
       - name: Apagar os ficheiros temporários de assinatura
         if: always()
         run: |
@@ -46,14 +46,14 @@ jobs:
       - name: Disponibilizar apenas o APK e a verificação pública
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
-          name: Protocolo-Novo-${{ github.run_number }}
+          name: Protocolo-Pessoal-${{ github.run_number }}
           path: |
-            android/dist/Protocolo-Novo.apk
-            android/dist/Protocolo-Novo.apk.sha256
+            android/dist/Protocolo-Pessoal.apk
+            android/dist/Protocolo-Pessoal.apk.sha256
             android/dist/release-info.json
           if-no-files-found: error
           retention-days: 7
       - name: Explicar a instalação
         run: |
           echo '### APK pronto' >> "$GITHUB_STEP_SUMMARY"
-          echo 'Descarrega o artefacto Protocolo-Novo, extrai o APK e instala por cima do Protocolo Novo existente. Não desinstales o app. O ZIP contém apenas o APK e metadados públicos; as chaves foram apagadas do runner.' >> "$GITHUB_STEP_SUMMARY"
+          echo 'Descarrega o artefacto Protocolo-Pessoal, extrai o APK e instala por cima do Protocolo 3.0 existente (app.protocolo.personal). Na primeira instalação, mantém o app antigo e transfere os dados por Exportar/Importar. Não desinstales o app. O ZIP contém apenas o APK e metadados públicos; as chaves foram apagadas do runner.' >> "$GITHUB_STEP_SUMMARY"

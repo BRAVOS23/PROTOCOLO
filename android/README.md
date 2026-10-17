@@ -1,22 +1,22 @@
-# Protocolo Novo — instalação separada, sem loja ou servidor
+# Protocolo — instalação separada, sem loja ou servidor
 
 O APK inclui o app web e funciona offline. Não usa Firebase, conta, serviço de push, assinatura mensal, publicidade ou permissão de Internet. Os links externos de estudo abrem o navegador apenas quando são tocados.
 
-Download direto: [Protocolo-Novo.apk](https://bravos23.github.io/PROTOCOLO/downloads/Protocolo-Novo.apk). A cópia distribuída fica em `downloads/Protocolo-Novo.apk`.
+Download direto: [Protocolo-Pessoal.apk](https://bravos23.github.io/PROTOCOLO/downloads/Protocolo-Pessoal.apk). A cópia distribuída fica em `downloads/Protocolo-Pessoal.apk`.
 
-Esta instalação tem nome **Protocolo Novo** e identificador `app.protocolo.mobile`. Instala ao lado do APK antigo (`app.protocolo.android`), sem substituir nem apagar os seus dados. O APK antigo em `downloads/Protocolo.apk` continua preservado. A chave antiga não está disponível; por isso, esta é uma nova identidade, com assinatura própria.
+Esta instalação **Protocolo 3.0** tem nome visível **Protocolo** e identificador `app.protocolo.personal`. A perda da chave anterior e a nova instalação foram confirmadas e autorizadas pelo utilizador em 17/10/2026. Instala ao lado dos apps anteriores (`app.protocolo.android` e `app.protocolo.mobile`), sem substituir nem apagar os seus dados. Os APKs `downloads/Protocolo.apk` e `downloads/Protocolo-Novo.apk` continuam preservados. Futuras atualizações desta instalação usam a nova assinatura fixa.
 
 Esta versão passou na compilação/assinatura, nos testes de lógica e na integração da interface com ponte nativa simulada. A entrega de notificações e a inclusão do widget ainda precisam de validação num Android real; o emulador deste ambiente não ficou disponível sem aceleração de hardware.
 
 ## Instalar e trazer os dados existentes
 
 1. No **Protocolo antigo**, abre **Definições → Exportar dados** e guarda o JSON. Também podes usar um backup do site/PWA.
-2. Descarrega e instala **Protocolo-Novo.apk**. Mantém o antigo instalado. Se o Android pedir, permite a instalação pelo navegador/gestor de ficheiros que estás a usar. Não é necessário desativar o Play Protect.
-3. Abre **Protocolo Novo** e usa **Definições → Importar dados** para escolher o JSON. A importação substitui apenas os dados desta nova instalação; não altera os dados do app antigo ou do Chrome/PWA.
+2. Descarrega e instala **Protocolo-Pessoal.apk**. Mantém o antigo instalado. Se o Android pedir, permite a instalação pelo navegador/gestor de ficheiros que estás a usar. Não é necessário desativar o Play Protect.
+3. Abre **Protocolo** e usa **Definições → Importar dados** para escolher o JSON. A importação substitui apenas os dados desta nova instalação; não altera os dados do app antigo ou do Chrome/PWA.
 4. Confere as atividades, tarefas, áreas, agenda, planos e histórico importados. O teste de migração exportou dados pelos assets reais do APK 1.2 e importou-os pela interface atual com ponte Android simulada; os campos e as conclusões foram preservados.
 5. No novo app, ativa **Definições → Lembretes das atividades e agenda** e permite as notificações.
-6. Se aparecer **Permitir horário exato**, abre essa opção e permite alarmes/lembretes para o **Protocolo Novo**. Sem esse acesso, o Android pode atrasar os avisos.
-7. Usa **Adicionar widget** e confirma no Android. Também podes manter pressionada a tela inicial e escolher **Widgets → Protocolo Novo → Atividades de hoje · Novo**.
+6. Se aparecer **Permitir horário exato**, abre essa opção e permite alarmes/lembretes para o **Protocolo**. Sem esse acesso, o Android pode atrasar os avisos.
+7. Usa **Adicionar widget** e confirma no Android. Também podes manter pressionada a tela inicial e escolher **Widgets → Protocolo → Atividades de hoje**.
 8. Depois de conferir a transferência, desativa os lembretes no app antigo para evitar avisos duplicados. Não precisas de desinstalá-lo para usar o novo.
 
 Para copiar atividades: **Início → lápis → dia de origem → Copiar atividades para outro dia**. Seleciona algumas ou todas, escolhe o destino e confirma. As originais e as atividades já existentes no destino ficam preservadas. As cópias mantêm horários, áreas e detalhes, com novos identificadores e conclusão independente.
@@ -52,13 +52,13 @@ python3 android/tools/build.py
 
 O instalador descarrega `platforms;android-35` e `build-tools;35.0.0` de `dl.google.com`, valida tamanho e checksum contra os metadados oficiais via HTTPS e escreve em `/workspace/android-tools/sdk`. Não desativa TLS ou verificação de artefactos. Usa `--sdk /outro/caminho` em ambos os scripts para mudar esse diretório.
 
-O APK fica em `android/dist/Protocolo-Novo.apk`. O script compila recursos/Java/DEX, alinha o APK, assina-o e verifica a assinatura e o alinhamento. `--debug` gera uma variante separada para testar WebView por ADB; essa variante não deve ser distribuída.
+O APK fica em `android/dist/Protocolo-Pessoal.apk`. O script compila recursos/Java/DEX, alinha o APK, assina-o e verifica a assinatura e o alinhamento. `--debug` gera uma variante separada para testar WebView por ADB; essa variante não deve ser distribuída.
 
-A nova chave fica em `/workspace/.protocolo-novo-signing`, fora do Git, com permissões privadas. `PROTOCOLO_SIGNING_DIR` permite restaurar uma pasta de assinatura já existente. **Guarda o backup privado da assinatura: contém `personal.p12` e `password.txt`, necessários para atualizar o Protocolo Novo instalado.** Nunca publiques esses ficheiros ou o ZIP privado.
+A nova chave fica em `/workspace/.protocolo-personal-signing`, fora do Git, com permissões privadas. `PROTOCOLO_SIGNING_DIR` permite restaurar uma pasta de assinatura já existente. **Guarda o backup privado da assinatura: contém `personal.p12` e `password.txt`, necessários para atualizar o Protocolo instalado.** Nunca publiques esses ficheiros ou o ZIP privado.
 
 O ficheiro versionado `android/signing-certificate.sha256` contém apenas a impressão digital pública do certificado. O build verifica-a e recusa uma assinatura diferente. Depois da primeira distribuição, se a chave/senha faltar, o script recusa gerar outra identidade. Restaura os dois ficheiros do backup privado numa pasta com acesso restrito e define `PROTOCOLO_SIGNING_DIR` para essa pasta.
 
-O código Java e o namespace dos recursos continuam em `app.protocolo.android` para reutilizar a implementação; o **applicationId** é `app.protocolo.mobile`. Os componentes do manifesto usam nomes de classe completos, e o build AAPT2 gera recursos no namespace Java com `--custom-package`.
+O código Java e o namespace dos recursos continuam em `app.protocolo.android` para reutilizar a implementação; o **applicationId** é `app.protocolo.personal`. Os componentes do manifesto usam nomes de classe completos, e o build AAPT2 gera recursos no namespace Java com `--custom-package`.
 
 Os dados pessoais de teste e as chaves não entram no APK. Os assets são apenas `index.html`, `manifest.webmanifest`, `css/`, `js/` e `icons/` do repositório; o APK não inclui a pasta de compilação, SDK ou backups.
 

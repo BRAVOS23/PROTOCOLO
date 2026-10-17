@@ -4,9 +4,9 @@ import pathlib
 import re
 
 PROJECT = pathlib.Path(__file__).resolve().parents[1]
-APPLICATION_ID = 'app.protocolo.mobile'
+APPLICATION_ID = 'app.protocolo.personal'
 NAMESPACE = 'app.protocolo.android'
-ARTIFACT = 'Protocolo-Novo.apk'
+ARTIFACT = 'Protocolo-Pessoal.apk'
 
 
 def load_version(path=None):

@@ -47,7 +47,7 @@ def verify(apk, sdk, unsigned=False, previous=None, require_newer=False):
         certificates = subprocess.check_output([str(tools / 'apksigner'), 'verify', '--print-certs', str(apk)], text=True)
         match = re.search(r'certificate SHA-256 digest: ([0-9a-f]{64})', certificates)
         if not match or match[1] != expected_certificate():
-            raise ValueError('APK signing certificate differs from the installed Protocolo Novo identity')
+            raise ValueError('APK signing certificate differs from the protected Protocolo identity')
         result['certificate_sha256'] = match[1]
     subprocess.run([str(tools / 'zipalign'), '-c', '-p', '4', str(apk)], check=True)
     if previous:

@@ -9,7 +9,7 @@ Sem backend, sem contas, sem anúncios. Tudo fica guardado no `localStorage` do 
 
 ## Funcionalidades
 
-- **Início** — tarefas e progresso de hoje, ciclo com “dia X de Y”, sequências, indicadores AIF expansíveis e histórico semanal/mensal em calendário ou quadro de hábitos.
+- **Início** — tarefas e progresso de hoje, ciclo com “dia X de Y”, sequências, marcação conjunta de autenticidade, intensidade e fidelidade e histórico semanal/mensal em calendário ou quadro de hábitos.
 - **Línguas** — rotina semanal, currículo das 13 semanas (gramática + vocabulário com checkboxes), checkpoints, recursos e fontes.
 - **Forma** — registo de peso com gráfico e tendência (kg/semana vs meta), treino semanal com checkboxes, protocolos, plano alimentar e regras.
 - **Vida** — estudos com cronómetro e gráficos de linhas, compras, pendentes, agenda e planos futuros com fases e contagem “dia X de Y”.
@@ -30,7 +30,7 @@ Não uses `file://` diretamente — o *service worker* e o manifest precisam de 
 
 ## Versão Android (APK, sem loja)
 
-O **Protocolo Novo** acrescenta lembretes locais, um widget com as atividades do dia e cópia de atividades entre rotinas, sem servidor ou mensalidade. A instalação e a transferência dos dados do PWA por backup estão descritas em [android/README.md](android/README.md). Os dados do PWA e do APK são separados; importar o backup substitui os dados no APK.
+O **Protocolo 3.0** acrescenta lembretes locais, um widget com as atividades do dia e cópia de atividades entre rotinas, sem servidor ou mensalidade. A instalação e a transferência dos dados do PWA por backup estão descritas em [android/README.md](android/README.md). Os dados do PWA e do APK são separados; importar o backup substitui os dados no APK.
 
 ## Contadores, progresso e histórico
 
@@ -38,7 +38,7 @@ Os períodos têm uma data de início e uma data de fim editáveis. A contagem i
 
 A Rota para a China usa inicialmente 1 de setembro de 2026 até à data de candidatura já guardada. Edita o lápis do contador para ajustar essas datas.
 
-O progresso de Forma inclui todas as atividades dessa área, mesmo quando há mais de uma no mesmo dia. A sequência de Línguas considera atividades concluídas nessa área ou vocabulário marcado no dia. Uma categoria AIF sem atividades não reduz a média; intensidade compara as tarefas concluídas com a chama marcada com todas as tarefas de intensidade previstas.
+O progresso de Forma inclui todas as atividades dessa área, mesmo quando há mais de uma no mesmo dia. A sequência de Línguas considera atividades concluídas nessa área ou vocabulário marcado no dia. No painel Protocolo, a chama reúne autenticidade, intensidade e fidelidade numa única marcação por atividade concluída. O progresso diário compara essas marcações com todas as atividades previstas; os registos anteriores são preservados sem os converter automaticamente para o novo critério.
 
 As novas marcações guardam a rotina e os nomes para preservar o histórico após edições. Registos antigos sem a rotina e a classificação AIF necessárias continuam no calendário, mas não recebem uma pontuação AIF inventada. As migrações de conteúdo antigo são aplicadas uma vez, para não recriar tarefas que foram removidas.
 
@@ -60,7 +60,7 @@ A validação no browser deve cobrir os temas claro/escuro em telas pequenas, na
 
 ## Assinatura e atualizações do APK
 
-A assinatura do **Protocolo Novo** é fixa. As atualizações devem usar o mesmo applicationId e o certificado já registado. A chave privada deve ficar nos GitHub Actions Secrets e num backup privado do proprietário, fora do código.
+A assinatura do **Protocolo 3.0** é fixa. As atualizações devem usar o mesmo applicationId e o certificado já registado. A chave privada deve ficar nos GitHub Actions Secrets e num backup privado do proprietário, fora do código.
 
 O repositório inclui dois workflows:
 

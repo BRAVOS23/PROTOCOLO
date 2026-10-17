@@ -4,11 +4,13 @@ O app é pessoal, offline e sem serviços pagos. Usa o checkout existente; não 
 
 ## Assinatura Android
 
-- A instalação atual chama-se **Protocolo** (antes **Protocolo Novo**), applicationId `app.protocolo.mobile`. O namespace Java/recursos é `app.protocolo.android`.
+- A instalação atual chama-se **Protocolo**, versão 3.0, applicationId `app.protocolo.personal`. O namespace Java/recursos é `app.protocolo.android`.
 - Nunca geres outra chave, alteres o applicationId, mudes a impressão digital de `android/signing-certificate.sha256` ou peças para desinstalar o app para contornar um erro. Uma nova identidade exige instrução explícita do utilizador.
-- A chave privada pertence ao utilizador. No GitHub, fica exclusivamente nos Actions Secrets `ANDROID_KEYSTORE_BASE64` e `ANDROID_KEYSTORE_PASSWORD`. Localmente, usa `PROTOCOLO_SIGNING_DIR` ou `/workspace/.protocolo-novo-signing`.
+- A chave privada pertence ao utilizador. No GitHub, fica exclusivamente nos Actions Secrets `ANDROID_KEYSTORE_BASE64` e `ANDROID_KEYSTORE_PASSWORD`. Localmente, usa `PROTOCOLO_SIGNING_DIR` ou `/workspace/.protocolo-personal-signing`.
 - Não publiques, imprimas ou incluas chaves/senhas nos assets, commits, artefactos ou logs. O backup privado deve ficar fora do checkout.
 - Uma pasta de assinatura ausente num ambiente novo não significa que o app precise de outra chave. Usa o workflow assinado ou restaura o backup original. Explica qualquer bloqueio real de permissões.
+
+A mudança para `app.protocolo.personal` e uma nova assinatura foi autorizada explicitamente pelo utilizador em 17/10/2026, após confirmar a perda da chave anterior. Não voltes a trocar a identidade. Os APKs legados `downloads/Protocolo.apk` e `downloads/Protocolo-Novo.apk` ficam preservados. O download atual é `downloads/Protocolo-Pessoal.apk`.
 
 ## Atualizações
 

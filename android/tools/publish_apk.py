@@ -15,11 +15,11 @@ parser.add_argument('--sdk', default=os.environ.get('ANDROID_SDK_ROOT', str(PROJ
 args = parser.parse_args()
 root = PROJECT.parent
 try:
-    result = verify(args.apk, args.sdk, previous=root / 'downloads' / ARTIFACT, require_newer=True)
+    result = verify(args.apk, args.sdk, previous=(root / 'downloads' / ARTIFACT) if (root / 'downloads' / ARTIFACT).exists() else None, require_newer=True)
     entry = root / 'index.html'
-    content, count = re.subn(r'(/downloads/Protocolo-Novo\.apk\?v=)[^"\s]+', lambda match: match[1] + result['version_name'], entry.read_text())
+    content, count = re.subn(r'(/downloads/' + re.escape(ARTIFACT) + r'\?v=)[^"\s]+', lambda match: match[1] + result['version_name'], entry.read_text())
     if count != 1:
-        raise ValueError('Expected one Protocolo Novo download link in index.html')
+        raise ValueError('Expected one current Protocolo download link in index.html')
     shutil.copy2(args.apk, root / 'downloads' / ARTIFACT)
     (root / 'downloads' / (ARTIFACT + '.sha256')).write_text(result['sha256'] + '  ' + ARTIFACT + '\n')
     entry.write_text(content)

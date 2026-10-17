@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Build Protocolo Novo with its fixed identity; unsigned mode is only for CI checks."""
+"""Build Protocolo with its fixed identity; unsigned mode is only for CI checks."""
 import argparse
 import hashlib
 import os
@@ -23,7 +23,7 @@ if args.debug and args.unsigned:
 version = load_version()
 source_manifest = PROJECT / 'app/src/main/AndroidManifest.xml'
 if ET.parse(source_manifest).getroot().get('package') != APPLICATION_ID:
-    parser.error('The Android applicationId must remain app.protocolo.mobile')
+    parser.error('The Android applicationId must remain app.protocolo.personal')
 if not args.unsigned:
     try:
         key, password = validate(signing_dir())
@@ -75,7 +75,7 @@ else:
     run(tools / 'apksigner', 'verify', '--verbose', output)
 if not args.debug:
     try:
-        verify(output, sdk, unsigned=args.unsigned, previous=WEB / 'downloads' / ARTIFACT)
+        verify(output, sdk, unsigned=args.unsigned, previous=(WEB / 'downloads' / ARTIFACT) if (WEB / 'downloads' / ARTIFACT).exists() else None)
     except (ValueError, subprocess.CalledProcessError):
         output.unlink(missing_ok=True)
         raise

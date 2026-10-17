@@ -1,10 +1,10 @@
 # Atualizar o app do teu celular sem perder a assinatura
 
-A assinatura Android permite atualizar o **Protocolo** já instalado (antes chamado **Protocolo Novo**). O nome visível muda na versão 2.1, mantendo a mesma identidade e os dados. O acesso ao GitHub é uma permissão separada. O código pode ser recriado noutro ambiente; a assinatura privada precisa de um armazenamento permanente e de um backup.
+A assinatura Android permite atualizar o **Protocolo 3.0**. A versão 3.0 é uma instalação separada, autorizada após a perda da chave anterior. Transfere os dados por Exportar/Importar e mantém o app antigo até conferir a transferência. O acesso ao GitHub é uma permissão separada. O código pode ser recriado noutro ambiente; a assinatura privada precisa de um armazenamento permanente e de um backup.
 
 A identidade atual fica fixa:
 
-- App: **Protocolo** (anteriormente **Protocolo Novo**) (`app.protocolo.mobile`).
+- App: **Protocolo** (`app.protocolo.personal`).
 - Impressão digital pública: `android/signing-certificate.sha256`.
 - Versão: `android/release.json` — a mesma origem para Python e Gradle.
 - Dados pessoais: apenas no celular/browser; não entram no APK gerado.
@@ -27,8 +27,8 @@ A integração do Codex desta sessão recebeu **HTTP 403 — Resource not access
 
 1. Abre [Actions → Gerar APK para o meu celular](https://github.com/BRAVOS23/PROTOCOLO/actions/workflows/android-apk.yml).
 2. Escolhe **Run workflow**, branch **main**.
-3. Quando terminar, descarrega o artefacto `Protocolo-Novo-…` e extrai `Protocolo-Novo.apk`.
-4. Instala por cima do **Protocolo Novo**, sem o desinstalar. Os dados continuam na mesma instalação.
+3. Quando terminar, descarrega o artefacto `Protocolo-Pessoal-…` e extrai `Protocolo-Pessoal.apk`.
+4. Instala por cima do **Protocolo 3.0**, sem o desinstalar. Os dados continuam na mesma instalação.
 
 O artefacto inclui apenas o APK, o checksum e a verificação pública. A chave temporária é apagada antes do upload, mesmo se a compilação falhar. O download do artefacto fica disponível por sete dias; o app instalado não expira. Este repositório é público e usa o runner padrão do GitHub, sem Play Store, servidor ou serviço pago.
 
@@ -37,17 +37,17 @@ Se faltar um segredo, a senha estiver errada ou o certificado não corresponder 
 ## Preparar uma nova versão
 
 1. Faz e testa a alteração no código.
-2. Em `android/release.json`, aumenta `version_code` e atualiza `version_name` (por exemplo, de `1`/`2.0` para `2`/`2.1`). Nunca reduzas o código de versão.
+2. Em `android/release.json`, aumenta `version_code` e atualiza `version_name` (por exemplo, de `3`/`3.0` para `4`/`3.1`). Nunca reduzas o código de versão.
 3. Publica essas alterações em `main` e confirma o workflow **Verificar app Android**. Esse workflow compila sem segredos; não entrega um APK instalável.
 4. Executa **Gerar APK para o meu celular**. O workflow valida a assinatura antes de gerar o APK.
 5. Para atualizar também o link do site, descarrega o APK assinado e executa localmente:
 
 ```bash
 python3 android/tools/install_sdk.py
-python3 android/tools/publish_apk.py /caminho/Protocolo-Novo.apk
+python3 android/tools/publish_apk.py /caminho/Protocolo-Pessoal.apk
 ```
 
-Esse comando recusa um APK não assinado, com outra identidade, de depuração, ou com versão igual/inferior ao download atual. Depois de passar, revê e faz commit de `downloads/Protocolo-Novo.apk`, do seu `.sha256` e do link atualizado em `index.html`. O GitHub Pages publica o download pelo processo existente. O APK legado `downloads/Protocolo.apk` fica preservado.
+Esse comando recusa um APK não assinado, com outra identidade, de depuração, ou com versão igual/inferior ao download atual. Depois de passar, revê e faz commit de `downloads/Protocolo-Pessoal.apk`, do seu `.sha256` e do link atualizado em `index.html`. O GitHub Pages publica o download pelo processo existente. O APK legado `downloads/Protocolo.apk` e o anterior `downloads/Protocolo-Novo.apk` ficam preservados.
 
 ## Recuperar a compilação local
 
@@ -64,5 +64,5 @@ Não uses PWABuilder, Bubblewrap, uma chave de debug ou um novo applicationId pa
 Para preparar novamente os dois ficheiros de configuração do GitHub a partir da chave original restaurada:
 
 ```bash
-python3 android/tools/signing.py export-setup --output /caminho/fora-do-repositorio/Protocolo-Novo-configuracao-GitHub-privada.zip
+python3 android/tools/signing.py export-setup --output /caminho/fora-do-repositorio/Protocolo-Pessoal-configuracao-GitHub-privada.zip
 ```

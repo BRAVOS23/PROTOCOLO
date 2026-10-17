@@ -16,7 +16,7 @@ SECRETS = ('ANDROID_KEYSTORE_BASE64', 'ANDROID_KEYSTORE_PASSWORD')
 
 
 def signing_dir():
-    return pathlib.Path(os.environ.get('PROTOCOLO_SIGNING_DIR', str(PROJECT.parent.parent / '.protocolo-novo-signing'))).resolve()
+    return pathlib.Path(os.environ.get('PROTOCOLO_SIGNING_DIR', str(PROJECT.parent.parent / '.protocolo-personal-signing'))).resolve()
 
 
 def expected_certificate():
@@ -36,7 +36,7 @@ def validate(folder):
     if result.returncode:
         raise ValueError('Cannot open the signing key with this password. Restore the original matching files.')
     if hashlib.sha256(result.stdout).hexdigest() != expected_certificate():
-        raise ValueError('Signing certificate differs from Protocolo Novo. Refusing to replace the installed app identity.')
+        raise ValueError('Signing certificate differs from Protocolo. Refusing to replace the installed app identity.')
     return key, password
 
 
@@ -73,7 +73,7 @@ def export_setup(destination):
     if destination.is_relative_to(PROJECT.parent):
         raise ValueError('Private signing setup must be saved outside the Git checkout')
     destination.parent.mkdir(mode=0o700, parents=True, exist_ok=True)
-    instructions = '''CONFIGURACAO PRIVADA DO PROTOCOLO NOVO\n\nNao publiques este ZIP ou os seus ficheiros no repositorio.\n\n1. Abre https://github.com/BRAVOS23/PROTOCOLO/settings/secrets/actions\n2. New repository secret: ANDROID_KEYSTORE_BASE64\n   Cola o conteudo completo de ANDROID_KEYSTORE_BASE64.txt.\n3. New repository secret: ANDROID_KEYSTORE_PASSWORD\n   Cola o conteudo de ANDROID_KEYSTORE_PASSWORD.txt.\n\nOs valores devem ficar apenas nos campos de segredo do GitHub.\nPara restaurar a compilacao local, guarda personal.p12 e password.txt numa pasta privada e define PROTOCOLO_SIGNING_DIR para essa pasta.\nGuarda este ZIP em local privado para recuperacao.\n'''
+    instructions = '''CONFIGURACAO PRIVADA DO PROTOCOLO\n\nNao publiques este ZIP ou os seus ficheiros no repositorio.\n\n1. Abre https://github.com/BRAVOS23/PROTOCOLO/settings/secrets/actions\n2. New repository secret: ANDROID_KEYSTORE_BASE64\n   Cola o conteudo completo de ANDROID_KEYSTORE_BASE64.txt.\n3. New repository secret: ANDROID_KEYSTORE_PASSWORD\n   Cola o conteudo de ANDROID_KEYSTORE_PASSWORD.txt.\n\nOs valores devem ficar apenas nos campos de segredo do GitHub.\nPara restaurar a compilacao local, guarda personal.p12 e password.txt numa pasta privada e define PROTOCOLO_SIGNING_DIR para essa pasta.\nGuarda este ZIP em local privado para recuperacao.\n'''
     with zipfile.ZipFile(destination, 'w', zipfile.ZIP_DEFLATED) as archive:
         archive.write(key, 'personal.p12')
         archive.write(password, 'password.txt')

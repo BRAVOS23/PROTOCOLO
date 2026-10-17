@@ -1,4 +1,4 @@
-const CACHE = 'protocolo-v31';
+const CACHE = 'protocolo-v32';
 const SHELL = [
   './',
   './index.html',
