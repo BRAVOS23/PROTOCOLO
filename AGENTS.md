@@ -4,7 +4,7 @@ O app é pessoal, offline e sem serviços pagos. Usa o checkout existente; não 
 
 ## Assinatura Android
 
-- A instalação atual é **Protocolo Novo**, applicationId `app.protocolo.mobile`. O namespace Java/recursos é `app.protocolo.android`.
+- A instalação atual chama-se **Protocolo** (antes **Protocolo Novo**), applicationId `app.protocolo.mobile`. O namespace Java/recursos é `app.protocolo.android`.
 - Nunca geres outra chave, alteres o applicationId, mudes a impressão digital de `android/signing-certificate.sha256` ou peças para desinstalar o app para contornar um erro. Uma nova identidade exige instrução explícita do utilizador.
 - A chave privada pertence ao utilizador. No GitHub, fica exclusivamente nos Actions Secrets `ANDROID_KEYSTORE_BASE64` e `ANDROID_KEYSTORE_PASSWORD`. Localmente, usa `PROTOCOLO_SIGNING_DIR` ou `/workspace/.protocolo-novo-signing`.
 - Não publiques, imprimas ou incluas chaves/senhas nos assets, commits, artefactos ou logs. O backup privado deve ficar fora do checkout.

@@ -11,7 +11,7 @@ import java.util.regex.Pattern;
 
 /** Weekly activities are expanded locally, so tomorrow works without reopening the app. */
 public final class ActivitySchedule {
-    private static final Pattern CLOCK = Pattern.compile("^(\\d{1,2})(?:[hH](\\d{2})?|:(\\d{2}))(?:\\s*(?:[–—-].*|[·].*))?$");
+    private static final Pattern CLOCK = Pattern.compile("^(?:[àa]s\\s+)?(\\d{1,2})(?:\\s*[hH](?:oras)?(?:\\s*(\\d{2}))?|\\s*:\\s*(\\d{2}))?(?:\\s*(?:[–—·-].*|\\(.*\\)))?$");
     public static final class Template {
         public final int weekday;
         public final String id, title, displayTime;

@@ -7,8 +7,7 @@
   /* paleta de cores para as matérias de Estudos — definida cedo porque a
      migração (mais abaixo) já precisa dela para converter dados antigos. */
   var ESTUDO_PALETTE = [
-    'var(--accent)', 'var(--cat-lang)', 'var(--cat-fit)',
-    'var(--warn)', 'var(--bad)', 'var(--good)', 'var(--accent-strong)',
+    '#2563eb', '#a855f7', '#00c896', '#f59e0b', '#ec4899', '#06b6d4', '#f97316',
   ];
 
   /* converte um objeto no formato antigo de "rota" (timeline+note+chips) num
@@ -61,6 +60,9 @@
       scheduleHistoryVersion:1,
       contentMigrationVersion:0,
       activityFull: {},
+      activityPrinciples: {},
+      principlesSince: null,
+      areaPaletteVersion: 0,
       aif: clone(AIF_LETTERS),
       cycle: { start: '2026-09-01', end: '2026-11-29' },
       protocolo: clone(DEFAULT_PROTOCOLO),
@@ -235,6 +237,15 @@
     var oldColors={a:'#2c757a',i:'#b8471f',f:'#966b18'}, newColors={a:'var(--cat-fit)',i:'var(--accent)',f:'var(--cat-lang)'};
     Object.keys(oldColors).forEach(function(k){if(s.aif[k].color===oldColors[k])s.aif[k].color=newColors[k];});
     (s.areas||[]).forEach(function(a){if(a.color==='#2c757a')a.color='var(--cat-fit)';});
+    if(!s.activityPrinciples)s.activityPrinciples={};
+    if(!s.principlesSince)s.principlesSince=iso(new Date());
+    if(!s.areaPaletteVersion){
+      (s.areas||[]).forEach(function(area){
+        var standard=DEFAULT_AREAS.find(function(a){return a.id===area.id;});
+        if(standard && (/^var\(--/.test(area.color||'') || ['#2c757a','#b8471f','#966b18','#3F6472'].indexOf(area.color)!==-1))area.color=standard.color;
+      });
+      s.areaPaletteVersion=1;
+    }
     return s;
   }
 
@@ -713,7 +724,7 @@
           '<td>'+checkbox+'</td>' +
           '<td class="day">'+day+'<small class="weekly-date">'+fmtDateShort(weekdaysThisWeek[i])+'</small></td>' +
           '<td class="time mono">'+escHtml(act.time||'—')+'</td>' +
-          '<td><span class="area-tag"><span class="area-dot" style="background:'+area.color+'"></span>'+escHtml(act.title)+'</span></td>' +
+          '<td><span class="area-tag area-vivid" style="--area-color:'+escAttr(area.color)+'"><span class="area-dot" style="background:'+escAttr(area.color)+'"></span>'+escHtml(act.title)+'</span></td>' +
           '<td style="color:var(--ink-soft);font-size:12.5px;"><div class="weekly-detail"><span>'+escHtml(act.detail||'')+'</span><button class="ar-icon-btn" type="button" aria-label="Editar '+escAttr(act.title)+'">'+PENCIL_SVG+'</button></div></td>' +
           '</tr>';
       }).join('');
@@ -1179,7 +1190,7 @@
       });
       if(saved)Object.keys(saved).forEach(function(id){if(isActDone(dateISO,id) && !acts.some(function(a){return a.id===id;}))acts.push(Object.assign({id:id},saved[id]));});
     }
-    return acts.map(function(act){return Object.assign({},act,{done:isActDone(dateISO,act.id),full:isActFull(dateISO,act.id)});});
+    return acts.map(function(act){return Object.assign({},act,{done:isActDone(dateISO,act.id),full:isActFull(dateISO,act.id),principles:!!state.activityPrinciples[fullKey(dateISO,act.id)]});});
   }
   function recomputeDerived(dateISO, day){
     var acts = metricActivitiesForDate(dateISO,day);
@@ -1195,6 +1206,7 @@
     if(state.activityDone[key]){
       delete state.activityDone[key];
       delete state.activityFull[fullKey(dateISO, actId)];
+      delete state.activityPrinciples[fullKey(dateISO, actId)];
     } else state.activityDone[key] = true;
     if(!state.activityHistory) state.activityHistory = {};
     var history = state.activityHistory[dateISO] || {};
@@ -1339,11 +1351,6 @@
       '</div></div>';
   }
 
-  var AIF_GROUP_LABELS = {
-    fidelidade: 'Fidelidade (padrão — só conta no total)',
-    intensidade: 'Intensidade (mostra a chama)',
-    autenticidade: 'Autenticidade',
-  };
   function syncActivityAreaField(form){
     var input=form.querySelector('[data-f="area"]');
     var button=form.querySelector('[data-act="pick-area"]');
@@ -1411,11 +1418,9 @@
   }
 
   function activityRowEdit(day, act){
-    var aif = act.aif || 'fidelidade';
     return '<div class="activity-edit-form" data-id="'+act.id+'">' +
       '<div class="row2">' +
       '<div class="area-field"><span class="area-field-label">Área da vida</span><input type="hidden" data-f="area" value="'+escAttr(act.area)+'"><button type="button" class="area-picker-trigger" data-act="pick-area" aria-expanded="false" aria-label="Selecionar, criar ou editar área da vida"><span class="area-dot" style="background:'+escAttr(areaById(act.area).color)+'"></span><span>'+escHtml(areaById(act.area).label)+'</span><span aria-hidden="true">▾</span></button><div class="area-picker" hidden></div></div>' +
-      '<select data-f="aif" aria-label="Tipo de compromisso">' + ['fidelidade','intensidade','autenticidade'].map(function(k){ return '<option value="'+k+'"'+(k===aif?' selected':'')+'>'+AIF_GROUP_LABELS[k]+'</option>'; }).join('') + '</select>' +
       '</div>' +
       '<button class="btn ghost manage-areas-inline" data-act="manage-areas" type="button">+ Criar ou editar áreas</button>' +
       '<div class="row2">' +
@@ -1490,7 +1495,6 @@
         var id = form.getAttribute('data-id');
         var patch = {
           area: form.querySelector('[data-f="area"]').value,
-          aif: form.querySelector('[data-f="aif"]').value,
           title: form.querySelector('[data-f="title"]').value.trim() || 'Sem título',
           time: form.querySelector('[data-f="time"]').value.trim(),
           detail: form.querySelector('[data-f="detail"]').value.trim(),
@@ -1785,19 +1789,20 @@
   function fullKey(dateISO, actId){ return dateISO + '|' + actId; }
   function isActFull(dateISO, actId){ return !!state.activityFull[fullKey(dateISO, actId)]; }
   function toggleActivityFull(dateISO, actId){
-    var key = fullKey(dateISO, actId);
-    if(state.activityFull[key]) delete state.activityFull[key];
-    else state.activityFull[key] = true;
+    if(!isActDone(dateISO,actId))return;
+    var key=fullKey(dateISO,actId);
+    if(state.activityPrinciples[key])delete state.activityPrinciples[key];
+    else state.activityPrinciples[key]=true;
     saveState();
   }
 
   function aifPercentForDate(dateISO,weekday){
-    if(dateISO<TODAY_ISO && !state.activityScheduleDates[dateISO])return {a:0,i:0,f:0,total:0,applicable:[],known:false};
-    return Object.assign(ProtocolLogic.aifScores(metricActivitiesForDate(dateISO,weekday)),{known:true});
+    var known=dateISO>=state.principlesSince && (dateISO===TODAY_ISO || !!state.activityScheduleDates[dateISO]);
+    return Object.assign(ProtocolLogic.principlesScore(metricActivitiesForDate(dateISO,weekday)),{known:known});
   }
 
   function aifEarliestDate(){
-    var dates = Object.keys(state.activityDone).concat(Object.keys(state.activityFull))
+    var dates = Object.keys(state.activityDone).concat(Object.keys(state.activityFull),Object.keys(state.activityPrinciples))
       .map(function(k){ return k.split('|')[0]; }).filter(Boolean);
     dates.sort();
     return dates.length ? dates[0] : TODAY_ISO;
@@ -1832,63 +1837,14 @@
     return { current: current, best: best, cumpridos: hist.filter(function(h){ return h.done; }).length };
   }
 
-  var openAifEdit = null;
-  var openAifExpanded = null;
   function renderAifToday(){
-    var pct = aifPercentForDate(TODAY_ISO, TODAY_WEEKDAY);
-    document.getElementById('aifRings').innerHTML = ['a','i','f'].map(function(k){
-      var applicable=pct.applicable.indexOf(k)!==-1;
-      var val = Math.round(pct[k]);
-      var L = state.aif[k];
-      var circ = 97.4;
-      var active = openAifExpanded === k;
-      return '<button class="aif-ring-card'+(active?' active':'')+'" data-act="toggle" data-letter="'+k+'" type="button">' +
-        '<svg viewBox="0 0 36 36"><circle cx="18" cy="18" r="15.5" fill="none" stroke="var(--bar-track)" stroke-width="4"></circle>' +
-        '<circle cx="18" cy="18" r="15.5" fill="none" stroke="'+L.color+'" stroke-width="4" stroke-linecap="round" stroke-dasharray="'+circ+'" stroke-dashoffset="'+(circ-(circ*Math.min(val,100)/100))+'" transform="rotate(-90 18 18)"></circle></svg>' +
-        '<span class="aif-ring-letter" style="color:'+L.color+';">'+L.letter+'</span>' +
-        '<span class="aif-ring-pct">'+(applicable?val+'%':'Sem tarefas')+'</span>' +
-        '</button>';
-    }).join('');
-    document.getElementById('aifTotal').innerHTML =
-      '<span class="aif-total-label">Total do dia</span><span class="aif-total-val">'+Math.round(pct.total)+'%</span>';
-    document.querySelectorAll('#aifRings [data-act="toggle"]').forEach(function(btn){
-      btn.addEventListener('click', function(){
-        var k = btn.getAttribute('data-letter');
-        openAifExpanded = (openAifExpanded === k) ? null : k;
-        renderAifToday();
-        renderAifDetailBox();
-      });
-    });
+    var pct=aifPercentForDate(TODAY_ISO,TODAY_WEEKDAY);
+    document.getElementById('aifRings').innerHTML='<div class="principles-card">'+FLAME_SVG+'<div><strong>Autenticidade · Intensidade · Fidelidade</strong><p>'+pct.marked+' de '+pct.planned+' atividades com os três princípios</p></div></div>';
+    document.getElementById('aifTotal').innerHTML='<span class="aif-total-label">Protocolo do dia</span><span class="aif-total-val">'+Math.round(pct.total)+'%</span>';
   }
-
   function renderAifDetailBox(){
-    var box = document.getElementById('aifDetailBox');
-    var k = openAifExpanded;
-    if(!k){ box.innerHTML = ''; return; }
-    var L = state.aif[k];
-    if(openAifEdit === k){
-      box.innerHTML = '<div class="aif-card editing" style="--aif-color:'+L.color+';">' +
-        '<input data-f="title" value="'+escAttr(L.title)+'" placeholder="Título" style="width:100%;margin-bottom:6px;border:1px solid var(--line-strong);border-radius:6px;padding:6px 8px;font-size:13px;font-weight:600;">' +
-        '<textarea data-f="body" placeholder="Texto" style="width:100%;min-height:56px;border:1px solid var(--line-strong);border-radius:6px;padding:6px 8px;font-size:12.5px;font-family:inherit;margin-bottom:6px;">'+escHtml(L.body)+'</textarea>' +
-        '<input data-f="test" value="'+escAttr(L.test)+'" placeholder="Teste" style="width:100%;border:1px solid var(--line-strong);border-radius:6px;padding:6px 8px;font-size:12.5px;font-style:italic;">' +
-        '<div class="form-actions" style="justify-content:flex-end;margin-top:8px;"><span style="display:flex;gap:8px;"><button class="btn ghost" data-act="cancel" type="button">Cancelar</button><button class="btn" data-act="save" type="button">Guardar</button></span></div>' +
-        '</div>';
-      box.querySelector('[data-act="cancel"]').addEventListener('click', function(){ openAifEdit=null; renderAifDetailBox(); });
-      box.querySelector('[data-act="save"]').addEventListener('click', function(){
-        L.title = box.querySelector('[data-f="title"]').value.trim() || L.title;
-        L.body = box.querySelector('[data-f="body"]').value.trim();
-        L.test = box.querySelector('[data-f="test"]').value.trim();
-        saveState(); openAifEdit=null; renderAifDetailBox(); renderAifToday();
-      });
-    } else {
-      box.innerHTML = '<div class="aif-card" style="--aif-color:'+L.color+';position:relative;">' +
-        '<button class="cardedit" data-act="edit" type="button" style="position:absolute;top:10px;right:10px;color:var(--ink-faint);background:var(--surface-2);">'+PENCIL_SVG+'</button>' +
-        '<h4 class="aif-title">'+escHtml(L.title)+'</h4>' +
-        '<p class="aif-body">'+escHtml(L.body)+'</p>' +
-        '<p class="aif-test">"'+escHtml(L.test)+'"</p><p class="aif-scoring-note">'+(k==='i'?'Tarefas de intensidade concluídas com a chama marcada, entre todas as previstas.':k==='a'?'Tarefas de autenticidade concluídas, entre as previstas.':'Todas as tarefas concluídas, entre as previstas.')+' Categorias sem tarefas não entram na média.</p>' +
-        '</div>';
-      box.querySelector('[data-act="edit"]').addEventListener('click', function(){ openAifEdit = k; renderAifDetailBox(); });
-    }
+    var box=document.getElementById('aifDetailBox');
+    box.innerHTML='<p class="aif-scoring-note">Conclui a atividade e toca na chama quando a realizaste com autenticidade, intensidade e fidelidade. Uma marcação reúne os três princípios. As marcações antigas ficam guardadas; este registo conjunto começa em '+escHtml(state.principlesSince)+'.</p>';
   }
 
   function renderAifStreak(){
@@ -1899,7 +1855,7 @@
       '<span class="streak-chip"><span class="dot" style="background:var(--cat-fit)"></span>Cumpridos <span class="n">'+info.cumpridos+'</span></span>';
     document.getElementById('aifStrip').innerHTML = aifStripDays(45).map(function(d){
       var alpha = Math.max(0.07, Math.min(1, d.total/100));
-      return '<span class="aif-strip-day" title="'+d.date+' · '+(d.known?Math.round(d.total)+'%':'Sem rotina guardada')+'" style="background:color-mix(in srgb,var(--cat-fit) '+Math.round(alpha*100)+'%,var(--surface));"></span>';
+      return '<span class="aif-strip-day" title="'+d.date+' · '+(d.known?Math.round(d.total)+'%':'Sem marcação conjunta neste dia')+'" style="background:color-mix(in srgb,var(--cat-fit) '+Math.round(alpha*100)+'%,var(--surface));"></span>';
     }).join('');
   }
 
@@ -3139,14 +3095,14 @@
       var sub = escHtml([act.time, act.detail].filter(Boolean).join(' · '));
       // a chama só aparece depois de concluído — e sempre apagada por defeito,
       // para não parecer que "já foi marcada" sozinha.
-      var showFlame = act.aif==='intensidade' && done;
+      var showFlame = done;
       var flameHtml = showFlame
-        ? '<button type="button" class="today-flame'+(isActFull(TODAY_ISO, act.id)?' on':'')+'" data-flame="'+act.id+'" aria-pressed="'+isActFull(TODAY_ISO,act.id)+'" aria-label="Dei 100% na atividade '+escAttr(act.title)+'?">'+FLAME_SVG+'</button>'
+        ? '<button type="button" class="today-flame'+(!!state.activityPrinciples[fullKey(TODAY_ISO,act.id)]?' on':'')+'" data-flame="'+act.id+'" aria-pressed="'+!!state.activityPrinciples[fullKey(TODAY_ISO,act.id)]+'" aria-label="Segui os três princípios na atividade '+escAttr(act.title)+'?">'+FLAME_SVG+'</button>'
         : '';
       return '<div class="today-item'+(done?' done':'')+'" data-act="'+act.id+'">' +
         '<button class="today-check'+(done?' on':'')+'" type="button" aria-pressed="'+done+'" aria-label="'+escAttr((done?'Desmarcar ':'Concluir ')+act.title)+'">'+CHECK_SVG+'</button>' +
         '<div class="today-txt"><div class="tt">'+escHtml(act.title)+'</div>' +
-        '<div class="ts"><span class="area-tag"><span class="area-dot" style="background:'+area.color+'"></span>'+escHtml(area.label)+'</span>'+(sub?'<span>'+sub+'</span>':'')+'</div></div>' +
+        '<div class="ts"><span class="area-tag area-vivid" style="--area-color:'+escAttr(area.color)+'"><span class="area-dot" style="background:'+escAttr(area.color)+'"></span>'+escHtml(area.label)+'</span>'+(sub?'<span>'+sub+'</span>':'')+'</div></div>' +
         flameHtml +
         '</div>';
     }).join('') : '<p style="color:var(--ink-faint); font-size:13px;">Sem atividades para hoje — toca no lápis para adicionar.</p>';
@@ -3375,7 +3331,7 @@
     lines.push('PROTOCOLO — resumo dos últimos 30 dias');
     lines.push('Dia ' + cycleDayNumber() + ' de ' + cycleDaysTotal() + ' (' + Math.round(cyclePercent()) + '% do ciclo)');
     lines.push('');
-    lines.push('AIF (médias 30 dias): A ' + Math.round(avg('a')) + '% · I ' + Math.round(avg('i')) + '% · F ' + Math.round(avg('f')) + '%');
+    lines.push('Protocolo (média dos dias registados nos últimos 30 dias): ' + Math.round(avg('total')) + '% · três princípios juntos');
     lines.push('Sequência atual: ' + streak.current + ' dias · Melhor sequência: ' + streak.best + ' dias · Dias cumpridos (total): ' + streak.cumpridos);
     lines.push('');
     lines.push('Peso inicial: ' + wStart + ' kg');
@@ -3487,7 +3443,7 @@
 
   function refreshCalendarDay(){
     var next=todayDate(), nextISO=iso(next);
-    if(nextISO===TODAY_ISO || document.hidden || currentSheet || cycleEditing || protocoloEditing || openAifEdit)return false;
+    if(nextISO===TODAY_ISO || document.hidden || currentSheet || cycleEditing || protocoloEditing)return false;
     // Do not replace an unfinished editor just because midnight passed.
     if(document.querySelector('.view .editing-row,.view .period-editor,.view .activity-edit-form,.view input[data-f],.view textarea[data-f],.view input[data-rf],#planoTitleInput,#planoNoteInput,#planoChipsEdit'))return false;
     var previousISO=TODAY_ISO;

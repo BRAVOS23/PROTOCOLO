@@ -17,8 +17,11 @@ public final class ActivityScheduleTest {
         check(ActivitySchedule.clock("18h–19h").equals("18:00"),"Range starts at 18");
         check(ActivitySchedule.clock("06h00 – 07h00").equals("06:00"),"Range with minutes");
         check(ActivitySchedule.clock("5h · God Moment").equals("05:00"),"Legacy clock with note");
+        check(ActivitySchedule.clock("5").equals("05:00"),"Plain hour");
+        check(ActivitySchedule.clock("às 5 h 30").equals("05:30"),"Spaced hour with prefix");
+        check(ActivitySchedule.clock("6 horas").equals("06:00"),"Written hours");
         check(ActivitySchedule.clock("14:30").equals("14:30"),"Colon clock");
-        for(String bad:new String[]{"","—","amanhã","25h00","10h60","1h antes","5","05:4","5h300"})check(ActivitySchedule.clock(bad).isEmpty(),"Reject ambiguous clock: "+bad);
+        for(String bad:new String[]{"","—","amanhã","25h00","10h60","1h antes","05:4","5h300"})check(ActivitySchedule.clock(bad).isEmpty(),"Reject ambiguous clock: "+bad);
         ZoneId zone=ZoneId.of("Africa/Maputo");
         LocalDate monday=LocalDate.of(2026,10,12);
         List<ActivitySchedule.Template> week=Arrays.asList(new ActivitySchedule.Template(1,"a","Acordar","05h30"),new ActivitySchedule.Template(1,"b","God Moment","05h40"),new ActivitySchedule.Template(1,"c","Leitura",""),new ActivitySchedule.Template(2,"a","Acordar","05h30"),new ActivitySchedule.Template(0,"sun","Domingo","10h"));

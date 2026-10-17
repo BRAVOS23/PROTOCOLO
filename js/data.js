@@ -271,15 +271,15 @@ const DAY_TYPE_LABEL = {
    instalações novas ou utilizadores antigos; a partir daqui a lista vive em
    state.areas e o próprio utilizador pode renomear/recolorir/apagar/criar. */
 const DEFAULT_AREAS = [
-  { id: 'trabalho', label: 'Trabalho', color: 'var(--slate, #3F6472)' },
-  { id: 'fitness', label: 'Judo & Tiros', color: 'var(--cat-fit)' },
-  { id: 'linguas', label: 'Línguas', color: 'var(--cat-lang)' },
-  { id: 'leitura', label: 'Leitura', color: 'var(--warn)' },
-  { id: 'revisao', label: 'Revisão', color: 'var(--warn)' },
-  { id: 'pessoal', label: 'Cuidados pessoais', color: 'var(--accent)' },
-  { id: 'domestico', label: 'Doméstico', color: 'var(--accent)' },
-  { id: 'diario', label: 'Diário', color: 'var(--cat-fit)' },
-  { id: 'outro', label: 'Outro', color: 'var(--ink-faint)' },
+  { id: 'trabalho', label: 'Trabalho', color: '#2563eb' },
+  { id: 'fitness', label: 'Judo & Tiros', color: '#00c896' },
+  { id: 'linguas', label: 'Línguas', color: '#a855f7' },
+  { id: 'leitura', label: 'Leitura', color: '#f59e0b' },
+  { id: 'revisao', label: 'Revisão', color: '#ec4899' },
+  { id: 'pessoal', label: 'Cuidados pessoais', color: '#06b6d4' },
+  { id: 'domestico', label: 'Doméstico', color: '#f97316' },
+  { id: 'diario', label: 'Diário', color: '#10b981' },
+  { id: 'outro', label: 'Outro', color: '#818cf8' },
 ];
 
 /* itens fixos do AIF — Autenticidade: entram no fim da checklist de todos os dias */

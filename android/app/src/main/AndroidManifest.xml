@@ -3,7 +3,7 @@
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>
     <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM"/>
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED"/>
-    <application android:label="Protocolo Novo" android:icon="@drawable/ic_protocolo" android:theme="@style/AppTheme" android:allowBackup="false" android:usesCleartextTraffic="false" android:debuggable="false">
+    <application android:label="Protocolo" android:icon="@drawable/ic_protocolo" android:theme="@style/AppTheme" android:allowBackup="false" android:usesCleartextTraffic="false" android:debuggable="false">
         <activity android:name="app.protocolo.android.MainActivity" android:exported="true" android:launchMode="singleTask" android:configChanges="orientation|screenSize|keyboardHidden" android:windowSoftInputMode="adjustResize">
             <intent-filter><action android:name="android.intent.action.MAIN"/><category android:name="android.intent.category.LAUNCHER"/></intent-filter>
         </activity>
@@ -17,7 +17,7 @@
             </intent-filter>
         </receiver>
         <service android:name="app.protocolo.android.ActivityWidgetService" android:exported="false" android:permission="android.permission.BIND_REMOTEVIEWS"/>
-        <receiver android:name="app.protocolo.android.AgendaWidget" android:exported="false" android:label="Atividades de hoje · Novo">
+        <receiver android:name="app.protocolo.android.AgendaWidget" android:exported="false" android:label="Atividades de hoje">
             <intent-filter><action android:name="android.appwidget.action.APPWIDGET_UPDATE"/></intent-filter>
             <meta-data android:name="android.appwidget.provider" android:resource="@xml/agenda_widget"/>
         </receiver>

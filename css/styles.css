@@ -1207,3 +1207,13 @@ span.mx[role="button"],span.del[role="button"]{ min-width:44px; min-height:44px;
 .activity-copy-option strong,.activity-copy-option small{display:block;}
 .activity-copy-option small{margin-top:4px;color:var(--ink-faint);}
 .activity-copy-option input,.activity-copy-all input{width:22px;height:22px;flex-shrink:0;accent-color:var(--accent);}
+
+/* Cores das áreas e marcação conjunta do Protocolo. */
+.area-vivid{background:color-mix(in srgb,var(--area-color) 18%,var(--surface));border:1px solid color-mix(in srgb,var(--area-color) 55%,transparent);}
+.area-vivid .area-dot{width:10px;height:10px;box-shadow:0 0 8px color-mix(in srgb,var(--area-color) 40%,transparent);flex-shrink:0;}
+#aifRings{grid-template-columns:minmax(0,1fr);}
+.principles-card{display:flex;align-items:center;gap:14px;padding:18px;border:1px solid var(--line);border-radius:16px;background:linear-gradient(120deg,var(--cat-lang-soft),var(--cat-fit-soft));}
+.principles-card>svg{width:40px;height:40px;flex-shrink:0;color:var(--cat-lang);}
+.principles-card strong{font-size:15px;line-height:1.6;}
+.principles-card p{font-size:13px;color:var(--ink-soft);margin:5px 0 0;}
+.today-flame.on{color:var(--cat-lang);background:var(--cat-lang-soft);border-color:var(--cat-lang);}

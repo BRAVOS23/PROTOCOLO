@@ -1,10 +1,10 @@
 # Atualizar o app do teu celular sem perder a assinatura
 
-A assinatura Android permite atualizar o **Protocolo Novo** já instalado. O acesso ao GitHub é uma permissão separada. O código pode ser recriado noutro ambiente; a assinatura privada precisa de um armazenamento permanente e de um backup.
+A assinatura Android permite atualizar o **Protocolo** já instalado (antes chamado **Protocolo Novo**). O nome visível muda na versão 2.1, mantendo a mesma identidade e os dados. O acesso ao GitHub é uma permissão separada. O código pode ser recriado noutro ambiente; a assinatura privada precisa de um armazenamento permanente e de um backup.
 
 A identidade atual fica fixa:
 
-- App: **Protocolo Novo** (`app.protocolo.mobile`).
+- App: **Protocolo** (anteriormente **Protocolo Novo**) (`app.protocolo.mobile`).
 - Impressão digital pública: `android/signing-certificate.sha256`.
 - Versão: `android/release.json` — a mesma origem para Python e Gradle.
 - Dados pessoais: apenas no celular/browser; não entram no APK gerado.

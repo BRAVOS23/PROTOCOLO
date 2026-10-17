@@ -53,3 +53,17 @@ test('horários iguais conservam a ordem e concluir não muda a cronologia',()=>
   assert.deepEqual(sortSchedule(items).map(x=>x.id),['one','two','blank','unknown']);
   items[1].time='04:00';assert.deepEqual(sortSchedule(items).map(x=>x.id),['two','one','blank','unknown']);
 });
+
+test('horas livres e com espaços mantêm a ordem cronológica',()=>{
+  const {clockMinutes,sortSchedule}=require('../js/logic.js');
+  for(const [text,minutes] of [['5',300],['às 5 h 30',330],['6 horas',360],['5 : 40',340],['05h 45',345],['23h59',1439],['6h (treino)',360]]) assert.equal(clockMinutes(text),minutes,text);
+  for(const text of ['1h antes','5h300','24h','12:60','30 minutos','05:4'])assert.equal(clockMinutes(text),null,text);
+  assert.deepEqual(sortSchedule([{time:'6 horas'},{time:''},{time:'às 5 h 30'},{time:'5'}]).map(a=>a.time),['5','às 5 h 30','6 horas','']);
+});
+
+test('uma chama reúne os três princípios sem reutilizar a antiga intensidade',()=>{
+  const {principlesScore}=require('../js/logic.js');
+  assert.deepEqual(principlesScore([]),{total:0,marked:0,planned:0,completed:0});
+  const score=principlesScore([{done:true,full:true},{done:true,principles:true},{done:false,principles:true},{done:true,aif:'autenticidade',principles:true}]);
+  assert.deepEqual(score,{total:50,marked:2,planned:4,completed:3});
+});
