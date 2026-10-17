@@ -64,7 +64,7 @@
             <span class="rc-label">Forma</span>
             <svg viewBox="0 0 36 36"><circle cx="18" cy="18" r="15.5" fill="none" stroke="var(--cat-fit-soft)" stroke-width="4"></circle><circle id="ringFit" cx="18" cy="18" r="15.5" fill="none" stroke="var(--cat-fit)" stroke-width="4" stroke-linecap="round" stroke-dasharray="97.4" stroke-dashoffset="97.4" transform="rotate(-90 18 18)"></circle></svg>
           </div>
-          <span class="rc-sub" id="fitSummary">0/7 treinos esta semana</span>
+          <span class="rc-sub" id="fitSummary">0/0 treinos hoje</span>
         </button>
       </div>
     </div>
@@ -223,18 +223,18 @@
 
     <section class="blk" id="ft-treino">
       <div class="blk-head">
-        <div><span class="kicker">Treino semanal</span><h2>Marca os treinos feitos</h2></div>
-        <span class="progress-chip" id="trainChip">0/5 esta semana</span>
+        <div><span class="kicker" id="trainingDayDate">Hoje</span><h2 id="trainingDayTitle">Treinos de hoje</h2></div>
+        <span class="progress-chip" id="trainChip">0/0 hoje</span>
       </div>
       <details id="trainingAreas" class="training-areas"></details>
-      <p id="trainingEmpty" class="lead" hidden>Sem treinos associados. Em «Escolher áreas de treino», seleciona as áreas das tuas atividades, como Gym. Se ainda não criaste as atividades, adiciona-as no Início.</p>
+      <p id="trainingEmpty" class="lead" hidden>Hoje não há treinos planeados. Em «Escolher áreas de treino», seleciona as áreas das tuas atividades, como Gym. Se ainda não criaste as atividades, adiciona-as no Início.</p>
       <div class="tbl-scroll">
         <table class="week">
           <thead><tr><th>Feito</th><th>Dia</th><th>Hora</th><th>Treino</th><th>Foco</th></tr></thead>
           <tbody id="fitTraining"></tbody>
         </table>
       </div>
-      <p class="lead" style="margin-top:6px;font-size:12px;color:var(--ink-faint);">Toca numa linha para editar hora, treino ou foco.</p>
+      <p class="lead" style="margin-top:6px;font-size:12px;color:var(--ink-faint);">Marca o círculo quando terminares. Toca numa linha para editar hora, treino ou foco.</p>
       <div class="blk-head" style="margin-top:22px;">
         <div><span class="kicker">Como treinar</span><h2>Protocolos</h2></div>
         <button class="iconbtn" id="btnAddProtocolo" aria-label="Novo protocolo" type="button">
@@ -509,11 +509,11 @@
   </div>
   <section id="androidDownload" class="native-features">
     <div><span class="kicker">Para Android</span><h4>Atividades na tela inicial</h4><p>A versão instalável mostra as tarefas de hoje no widget e avisa das atividades com horário, sem conta ou mensalidade.</p></div>
-    <a class="btn" href="https://bravos23.github.io/PROTOCOLO/downloads/Protocolo-Pessoal.apk?v=3.1" download>Baixar Protocolo 3.1 para Android</a>
-    <p class="native-note">Versão 3.1 com as melhorias mais recentes. Instala ao lado do app antigo, sem apagar os seus dados. No antigo, usa Definições → Exportar dados; depois importa o ficheiro no Protocolo 3.1. Confere a transferência antes de remover o antigo.</p>
+    <a class="btn" href="https://bravos23.github.io/PROTOCOLO/downloads/Protocolo-Pessoal.apk?v=3.2" download>Baixar Protocolo 3.2 para Android</a>
+    <p class="native-note">Versão 3.2 com os treinos do dia. Se já usas o Protocolo 3.x, instala por cima, sem desinstalar: os dados ficam guardados. Se vens de uma instalação anterior à 3.0, mantém o app antigo e transfere os dados por Definições → Exportar dados / Importar dados.</p>
   </section>
   <section id="nativeFeatures" class="native-features" hidden>
-    <div class="native-migration"><span class="kicker">Protocolo</span><h4>Protocolo 3.1 · traz os teus dados</h4><p>Esta instalação é separada da antiga. No app antigo, abre Definições → Exportar dados. Depois usa Importar dados aqui em baixo e escolhe esse ficheiro. Confere os dados no novo antes de remover o antigo. Os lembretes e o widget são ativados separadamente neste app.</p></div>
+    <div class="native-migration"><span class="kicker">Protocolo</span><h4>Protocolo 3.2 · traz os teus dados</h4><p>As atualizações do Protocolo 3.x mantêm os teus dados nesta instalação. Se vens de um app anterior à versão 3.0, exporta os dados no antigo e importa o ficheiro aqui em baixo. Confere os dados antes de remover o antigo. Numa primeira instalação, ativa os lembretes e adiciona o widget neste app.</p></div>
     <div><span class="kicker">Neste celular</span><h4>Lembretes das atividades e agenda</h4><p id="nativeReminderStatus" role="status">Os lembretes estão desativados.</p></div>
     <label class="field-label"><span>Avisar antes do evento</span><select id="nativeLeadMinutes"><option value="10">10 minutos antes</option><option value="30" selected>30 minutos antes</option><option value="60">1 hora antes</option><option value="1440">1 dia antes</option></select></label>
     <p class="native-note">As atividades do Início usam a hora que definiste (ex.: 05h40). Define uma hora para receber aviso; as atividades sem hora aparecem no widget. Eventos da agenda sem hora continuam considerados às 09:00.</p>

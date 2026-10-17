@@ -713,14 +713,13 @@
     document.getElementById('fitStats').innerHTML =
       stat('Idade', FIT_META.age + ' anos') +
       stat('Altura', FIT_META.heightCm + ' cm') +
-      stat('Atividades/sem', String(trackableDatesThisWeek().length), false, true) +
+      stat('Treinos hoje', String(trainingActivitiesForDay(TODAY_WEEKDAY).length), false, true) +
       stat('Meta', '−'+FIT_META.goalRate+' kg/sem', true);
 
-    var weekdaysThisWeek = weekDates(TODAY);
-    document.getElementById('fitTraining').innerHTML = WEEKDAYS.map(function(day, i){
-      return trainingActivitiesForDay(day).map(function(act){
-        var dISO = iso(weekdaysThisWeek[i]);
-        var isToday = dISO === TODAY_ISO;
+    var day=TODAY_WEEKDAY,dISO=TODAY_ISO;
+    document.getElementById('trainingDayTitle').textContent='Treinos de '+day.toLocaleLowerCase('pt-PT');
+    document.getElementById('trainingDayDate').textContent='Hoje · '+fmtDateShort(TODAY);
+    document.getElementById('fitTraining').innerHTML = trainingActivitiesForDay(day).map(function(act){
         var area = areaById(act.area);
         if(act.id === openFitRowDay){
           return '<tr class="editing-row" data-day="'+day+'" data-id="'+escAttr(act.id)+'"><td colspan="5" style="padding:10px 16px;">' +
@@ -733,14 +732,13 @@
             '</div></td></tr>';
         }
         var checkbox = '<button type="button" class="done-check" '+(dISO>TODAY_ISO?'disabled ':'')+'aria-label="Marcar '+escAttr(act.title)+' em '+dISO+'" data-date="'+dISO+'" data-day="'+day+'" data-id="'+escAttr(act.id)+'" data-act="'+act.id+'">'+CHECK_SVG+'</button>';
-        return '<tr'+(isToday?' class="today"':'')+' data-act="editrow" data-day="'+day+'" data-id="'+escAttr(act.id)+'" style="cursor:pointer;">' +
+        return '<tr class="today" data-act="editrow" data-day="'+day+'" data-id="'+escAttr(act.id)+'" style="cursor:pointer;">' +
           '<td>'+checkbox+'</td>' +
-          '<td class="day">'+day+'<small class="weekly-date">'+fmtDateShort(weekdaysThisWeek[i])+'</small></td>' +
+          '<td class="day">'+day+'<small class="weekly-date">'+fmtDateShort(TODAY)+'</small></td>' +
           '<td class="time mono">'+escHtml(act.time||'—')+'</td>' +
           '<td><span class="area-tag area-vivid" style="--area-color:'+escAttr(area.color)+'"><span class="area-dot" style="background:'+escAttr(area.color)+'"></span>'+escHtml(act.title)+'</span></td>' +
           '<td style="color:var(--ink-soft);font-size:12.5px;"><div class="weekly-detail"><span>'+escHtml(act.detail||'')+'</span><button class="ar-icon-btn" type="button" aria-label="Editar '+escAttr(act.title)+'">'+PENCIL_SVG+'</button></div></td>' +
           '</tr>';
-      }).join('');
     }).join('');
 
     renderProtocolosGrid();
@@ -1048,11 +1046,11 @@
   }
 
   function renderTrainProgress(){
-    var dates = trackableDatesThisWeek();
-    var done = dates.filter(function(x){ return x.date<=TODAY_ISO && isActDone(x.date, x.id); }).length;
-    document.getElementById('trainChip').textContent = done + '/' + dates.length + ' esta semana';
-    setRing('ringFit', dates.length ? done/dates.length : 0);
-    document.getElementById('fitSummary').textContent = dates.length?done + '/' + dates.length + ' atividades esta semana':'Sem atividades planeadas';
+    var acts=trainingActivitiesForDay(TODAY_WEEKDAY);
+    var done=acts.filter(function(act){return isActDone(TODAY_ISO,act.id);}).length;
+    document.getElementById('trainChip').textContent=done+'/'+acts.length+' hoje';
+    setRing('ringFit',acts.length?done/acts.length:0);
+    document.getElementById('fitSummary').textContent=acts.length?done+'/'+acts.length+' treinos hoje':'Sem treinos hoje';
   }
 
   /* ================= PESO ================= */
@@ -1267,12 +1265,6 @@
     var act=dayActivities(day).find(function(a){return a.id===id;});if(act)archiveCompletedActivity(act);
     state.activities[day] = dayActivities(day).filter(function(a){ return a.id!==id; });
     saveState();
-  }
-
-  function trackableDatesThisWeek(){
-    var wd=weekDates(TODAY),dates=[];
-    WEEKDAYS.forEach(function(day,i){trainingActivitiesForDay(day).forEach(function(act){dates.push({date:iso(wd[i]),id:act.id});});});
-    return dates;
   }
 
   /* ---- aba Trabalho (DROP) ---- */
@@ -3482,6 +3474,7 @@
     var previousISO=TODAY_ISO;
     if(iso(progressRef)===previousISO){progressRef=new Date(next);progressSelected=nextISO;}
     if(iso(estudoRefDate)===previousISO)estudoRefDate=new Date(next);
+    openFitRowDay=null;
     TODAY=next;TODAY_ISO=nextISO;TODAY_WEEKDAY=WEEKDAYS_PT[next.getDay()];
     renderAll();return true;
   }
