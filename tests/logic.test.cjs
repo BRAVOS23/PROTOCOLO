@@ -67,3 +67,15 @@ test('uma chama reúne os três princípios sem reutilizar a antiga intensidade'
   const score=principlesScore([{done:true,full:true},{done:true,principles:true},{done:false,principles:true},{done:true,aif:'autenticidade',principles:true}]);
   assert.deepEqual(score,{total:50,marked:2,planned:4,completed:3});
 });
+
+test('treinos reconhecem Gym com ID próprio e respeitam a seleção explícita',()=>{
+  const {isTrainingArea}=require('../js/logic.js');
+  assert.equal(isTrainingArea({id:'ar-123',label:'Gym'}),true);
+  assert.equal(isTrainingArea({id:'ar-124',label:'Ginásio'}),true);
+  assert.equal(isTrainingArea({id:'ar-125',label:'Judo & Tiros'}),true);
+  assert.equal(isTrainingArea({id:'fitness',label:'Saúde'}),true);
+  assert.equal(isTrainingArea({id:'ar-126',label:'Saúde',training:true}),true);
+  assert.equal(isTrainingArea({id:'fitness',label:'Gym',training:false}),false);
+  assert.equal(isTrainingArea({id:'leitura',label:'Leitura'}),false);
+  assert.equal(isTrainingArea(null),false);
+});

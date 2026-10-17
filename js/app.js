@@ -237,6 +237,7 @@
     var oldColors={a:'#2c757a',i:'#b8471f',f:'#966b18'}, newColors={a:'var(--cat-fit)',i:'var(--accent)',f:'var(--cat-lang)'};
     Object.keys(oldColors).forEach(function(k){if(s.aif[k].color===oldColors[k])s.aif[k].color=newColors[k];});
     (s.areas||[]).forEach(function(a){if(a.color==='#2c757a')a.color='var(--cat-fit)';});
+    rememberTrainingAreas(s.areas);
     if(!s.activityPrinciples)s.activityPrinciples={};
     if(!s.principlesSince)s.principlesSince=iso(new Date());
     if(!s.areaPaletteVersion){
@@ -696,7 +697,19 @@
 
   /* ================= FORMA ================= */
   var openFitRowDay = null;
+  function renderTrainingAreas(){
+    var box=document.getElementById('trainingAreas'),wasOpen=box.open;
+    box.innerHTML='<summary>Escolher áreas de treino</summary><p>As atividades destas áreas aparecem aqui e contam para o progresso de Forma.</p><div class="training-area-options">'+state.areas.map(function(area){
+      return '<label class="training-area-option"><input type="checkbox" data-training-area="'+escAttr(area.id)+'"'+(ProtocolLogic.isTrainingArea(area)?' checked':'')+'><span class="area-dot" style="background:'+escAttr(area.color)+'"></span><span>'+escHtml(area.label)+'</span></label>';
+    }).join('')+'</div>';
+    box.open=wasOpen;
+    box.querySelectorAll('[data-training-area]').forEach(function(input){input.addEventListener('change',function(){
+      state.areas.find(function(area){return area.id===input.dataset.trainingArea;}).training=input.checked;
+      recomputeDerived(TODAY_ISO,TODAY_WEEKDAY);saveState();renderFitStatic();renderDashboard();
+    });});
+  }
   function renderFitStatic(){
+    renderTrainingAreas();
     document.getElementById('fitStats').innerHTML =
       stat('Idade', FIT_META.age + ' anos') +
       stat('Altura', FIT_META.heightCm + ' cm') +
@@ -705,10 +718,10 @@
 
     var weekdaysThisWeek = weekDates(TODAY);
     document.getElementById('fitTraining').innerHTML = WEEKDAYS.map(function(day, i){
-      return areaActivitiesForDay(day,'fitness').map(function(act){
+      return trainingActivitiesForDay(day).map(function(act){
         var dISO = iso(weekdaysThisWeek[i]);
         var isToday = dISO === TODAY_ISO;
-        var area = areaById('fitness');
+        var area = areaById(act.area);
         if(act.id === openFitRowDay){
           return '<tr class="editing-row" data-day="'+day+'" data-id="'+escAttr(act.id)+'"><td colspan="5" style="padding:10px 16px;">' +
             '<div style="max-width:min(320px,80vw);">' +
@@ -735,6 +748,7 @@
     renderRegrasGrid();
     renderAlimentosBoxes();
 
+    document.getElementById('trainingEmpty').hidden=!!document.querySelector('#fitTraining .done-check');
     bindTrainHandlers();
     renderWeightAll();
   }
@@ -999,10 +1013,12 @@
       var day = el.getAttribute('data-day');
       var actId = el.getAttribute('data-act');
       el.classList.toggle('on', isActDone(d, actId));
+      el.setAttribute('aria-pressed',String(isActDone(d,actId)));
       el.addEventListener('click', function(e){
         e.stopPropagation();
         toggleActivityDone(d, day, actId);
         el.classList.toggle('on', isActDone(d, actId));
+        el.setAttribute('aria-pressed',String(isActDone(d,actId)));
         renderTrainProgress();
         renderDashboard();
       });
@@ -1155,7 +1171,14 @@
   /* ================= ATIVIDADES (editável) ================= */
   function dayActivities(day){ return ProtocolLogic.sortSchedule(state.activities[day]); }
   function areaActivitiesForDay(day,area){return dayActivities(day).filter(function(a){return a.area===area;});}
-  function fitnessActivityForDay(day){ return areaActivitiesForDay(day,'fitness')[0]; }
+  function rememberTrainingAreas(areas){
+    (areas||[]).forEach(function(area){if(typeof area.training!=='boolean' && ProtocolLogic.isTrainingArea(area))area.training=true;});
+  }
+  function isTrainingActivity(act){
+    var area=state.areas.find(function(a){return a.id===act.area;});
+    return area?ProtocolLogic.isTrainingArea(area):act.training===true || act.area==='fitness';
+  }
+  function trainingActivitiesForDay(day){return dayActivities(day).filter(isTrainingActivity);}
   function areaById(id){
     var a = (state.areas||[]).filter(function(x){ return x.id===id; })[0];
     return a || { id:'outro', label:'Outro', color:'var(--ink-faint)' };
@@ -1164,7 +1187,7 @@
   function isActDone(dateISO, actId){ return !!state.activityDone[doneKey(dateISO, actId)]; }
 
   function activitySnapshot(act){
-    return {title:act.title,area:act.area,areaLabel:areaById(act.area).label,aif:act.aif||'fidelidade'};
+    return {title:act.title,area:act.area,areaLabel:areaById(act.area).label,aif:act.aif||'fidelidade',training:isTrainingActivity(act)};
   }
   function archiveCompletedActivity(act){
     if(!state.activityHistory)state.activityHistory={};
@@ -1194,7 +1217,7 @@
   }
   function recomputeDerived(dateISO, day){
     var acts = metricActivitiesForDate(dateISO,day);
-    var fitAny = acts.some(function(a){ return a.area==='fitness' && isActDone(dateISO, a.id); });
+    var fitAny = acts.some(function(a){ return isTrainingActivity(a) && isActDone(dateISO, a.id); });
     var langAny = acts.some(function(a){ return a.area==='linguas' && isActDone(dateISO, a.id); });
     if(fitAny) state.workouts[dateISO] = true; else delete state.workouts[dateISO];
     if(langAny || (state.vocabStudyDays[dateISO]||[]).length) state.langDone[dateISO] = true; else delete state.langDone[dateISO];
@@ -1217,6 +1240,12 @@
     state.activityScheduleDates[dateISO]=true;
     recomputeDerived(dateISO, day);
     saveState();
+    document.querySelectorAll('.done-check[data-date]').forEach(function(button){
+      if(button.dataset.date===dateISO && button.dataset.act===actId){
+        button.classList.toggle('on',isActDone(dateISO,actId));
+        button.setAttribute('aria-pressed',String(isActDone(dateISO,actId)));
+      }
+    });
   }
 
   function addActivity(day, obj){
@@ -1242,7 +1271,7 @@
 
   function trackableDatesThisWeek(){
     var wd=weekDates(TODAY),dates=[];
-    WEEKDAYS.forEach(function(day,i){areaActivitiesForDay(day,'fitness').forEach(function(act){dates.push({date:iso(wd[i]),id:act.id});});});
+    WEEKDAYS.forEach(function(day,i){trainingActivitiesForDay(day).forEach(function(act){dates.push({date:iso(wd[i]),id:act.id});});});
     return dates;
   }
 
@@ -1275,10 +1304,12 @@
     table.querySelectorAll('.done-check').forEach(function(el){
       var d = el.getAttribute('data-date'), day = el.getAttribute('data-day'), actId = el.getAttribute('data-act');
       el.classList.toggle('on', isActDone(d, actId));
+      el.setAttribute('aria-pressed',String(isActDone(d,actId)));
       el.addEventListener('click', function(e){
         e.stopPropagation();
         toggleActivityDone(d, day, actId);
         el.classList.toggle('on', isActDone(d, actId));
+        el.setAttribute('aria-pressed',String(isActDone(d,actId)));
         renderDashboard();
       });
     });
@@ -1360,6 +1391,7 @@
     }
   }
   function areaPickerChanged(form){
+    rememberTrainingAreas(state.areas);
     saveState();
     syncActivityAreaField(form);
     renderAreaPicker(form);
@@ -1565,7 +1597,7 @@
     areaActivityDraft = null;
   }
   function beginAreasManage(){
-    draftAreas = (state.areas||[]).map(function(a){ return { id:a.id, label:a.label, color:a.color }; });
+    draftAreas = (state.areas||[]).map(function(a){ return Object.assign({},a); });
     areasManaging = true;
     renderAreasManage();
   }
@@ -1618,7 +1650,8 @@
           if(keptIds.indexOf(act.area)===-1){archiveCompletedActivity(act);act.area = 'outro';}
         });
       });
-      state.areas = kept.map(function(a){ return { id:a.id, label:a.label.trim(), color:a.color }; });
+      state.areas = kept.map(function(a){ return Object.assign({},a,{label:a.label.trim()}); });
+      rememberTrainingAreas(state.areas);
       saveState();
       areasManaging = false;
       renderAreasManage();
