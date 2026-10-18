@@ -56,6 +56,21 @@
       return (first-second)||a.index-b.index;
     }).map(function(row){return row.item;});
   }
+  function planDocumentSections(text){
+    var sections=[],current=null,table=null;
+    String(text||'').split('\n').forEach(function(line){
+      if(line.startsWith('### ')){current={title:line.slice(4),items:[]};sections.push(current);table=null;return;}
+      if(!current){if(!line.trim())return;current={title:'',items:[]};sections.push(current);}
+      if(line.startsWith('|')){
+        var cells=line.split('|').slice(1,-1).map(function(cell){return cell.trim();});
+        if(cells.every(function(cell){return /^[-: ]+$/.test(cell);}))return;
+        if(!table){table={type:'table',header:cells,rows:[]};current.items.push(table);}else table.rows.push(cells);
+        return;
+      }
+      table=null;if(!line.trim())return;
+      current.items.push({type:line.startsWith('* ')?'bullet':'paragraph',text:line.startsWith('* ')?line.slice(2):line});
+    });return sections;
+  }
   function principlesScore(activities){
     var marked=activities.filter(function(a){return a.done && a.principles;}).length;
     return {total:activities.length?marked/activities.length*100:0,marked:marked,planned:activities.length,completed:activities.filter(function(a){return a.done;}).length};
@@ -80,7 +95,7 @@
   function sortSchedule(items,dateField,timeField){
     return (items||[]).map(function(item,index){return {item:item,index:index};}).sort(function(a,b){return compareScheduled(a.item,b.item,dateField,timeField)||a.index-b.index;}).map(function(row){return row.item;});
   }
-  var api={dayOrdinal:dayOrdinal,daysBetween:daysBetween,intervalProgress:intervalProgress,aifScores:aifScores,principlesScore:principlesScore,isTrainingArea:isTrainingArea,clockMinutes:clockMinutes,compareScheduled:compareScheduled,sortSchedule:sortSchedule,sortActivities:sortActivities,isWorkArea:isWorkArea};
+  var api={dayOrdinal:dayOrdinal,daysBetween:daysBetween,intervalProgress:intervalProgress,aifScores:aifScores,principlesScore:principlesScore,isTrainingArea:isTrainingArea,clockMinutes:clockMinutes,compareScheduled:compareScheduled,sortSchedule:sortSchedule,sortActivities:sortActivities,isWorkArea:isWorkArea,planDocumentSections:planDocumentSections};
   if(typeof module==='object' && module.exports) module.exports=api;
   else root.ProtocolLogic=api;
 })(typeof globalThis!=='undefined'?globalThis:this);

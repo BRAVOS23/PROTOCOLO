@@ -1242,3 +1242,33 @@ span.mx[role="button"],span.del[role="button"]{ min-width:44px; min-height:44px;
 .plan-document-table th,.plan-document-table td{padding:12px;text-align:left;vertical-align:top;border-bottom:1px solid var(--line);white-space:normal;}
 .plan-document-table th{background:var(--accent-soft);font-size:13px;}
 .plan-document-table td{font-size:14px;}
+
+/* Rota China: fases coloridas, entregas e checklists. */
+.route-document{display:grid;gap:20px;}
+.route-block{min-width:0;background:var(--surface);border:1px solid color-mix(in srgb,var(--route-color) 30%,var(--line));border-top:4px solid var(--route-color);border-radius:20px;padding:20px 16px;box-shadow:var(--shadow-1);}
+.route-hero{background:linear-gradient(140deg,var(--accent-soft),var(--cat-lang-soft));border-top:0;padding:24px 18px;}
+.route-block-heading{display:flex;align-items:flex-start;gap:12px;margin-bottom:18px;}
+.route-document .route-block-heading h3{flex:1;margin:0;font-size:19px;line-height:1.5;color:var(--route-color);}
+.route-document .route-hero h3{font-size:23px;color:var(--ink);}
+.route-section-count{flex-shrink:0;font-size:12px;font-weight:700;border-radius:999px;padding:5px 9px;background:color-mix(in srgb,var(--route-color) 12%,var(--surface));color:var(--ink-soft);}
+.route-document .route-paragraph{margin:16px 0;color:var(--ink-soft);font-size:14px;line-height:1.8;}
+.route-badge{display:inline-block;padding:7px 11px;margin:0 6px 12px 0;border:1px solid color-mix(in srgb,var(--route-color) 35%,transparent);border-radius:999px;background:color-mix(in srgb,var(--route-color) 10%,var(--surface));color:var(--ink);font-size:12px;font-weight:600;}
+.route-task{margin:12px 0;padding:15px 13px;border:1px solid var(--line);border-radius:14px;background:var(--surface);transition:background .15s,border-color .15s;}
+.route-task.done{border-color:var(--cat-fit);background:var(--cat-fit-soft);}
+.route-task-label{display:flex;align-items:flex-start;gap:12px;min-height:44px;cursor:pointer;}
+.route-task-label input[type="checkbox"]{width:24px!important;height:24px;min-height:24px;margin:2px 0 0;padding:0!important;flex-shrink:0;accent-color:var(--route-color);cursor:pointer;}
+.route-task-title{min-width:0;font-size:15px;font-weight:650;line-height:1.65;color:var(--ink);}
+.route-task.done .route-task-title{text-decoration:line-through;text-decoration-thickness:1px;}
+.route-document .route-task-body{margin:4px 0 0 36px;font-size:13px;line-height:1.8;color:var(--ink-soft);}
+.route-task-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,260px),1fr));gap:14px;margin-top:14px;}
+.route-delivery{min-width:0;padding:14px;background:var(--surface-2);border:1px solid var(--line);border-radius:16px;}
+.route-date{display:flex;flex-direction:column;gap:4px;margin-bottom:12px;}
+.route-date span,.route-field-label,.route-result>span{font-size:11px;color:var(--ink-soft);font-weight:600;}
+.route-date strong{font-size:15px;color:var(--route-color);}
+.route-delivery .route-task{margin:7px 0 0;padding:12px;}
+.route-result{margin:12px 0 0 36px;padding-top:10px;border-top:1px solid var(--line);}
+.route-document .route-result p{font-size:13px;line-height:1.7;margin:4px 0 0;color:var(--ink-soft);}
+.route-mission-progress,.route-overall{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:10px;margin-top:20px;padding:14px;background:color-mix(in srgb,var(--route-color) 10%,var(--surface));border-radius:12px;font-size:13px;}
+.route-overall progress{width:100%;height:10px;accent-color:var(--accent);border:0;border-radius:999px;overflow:hidden;}
+.route-overall progress::-webkit-progress-bar{background:var(--bar-track);border-radius:999px;}
+.route-overall progress::-webkit-progress-value{background:linear-gradient(90deg,var(--accent),var(--cat-lang));border-radius:999px;}

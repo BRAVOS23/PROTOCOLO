@@ -2033,9 +2033,10 @@
       }).join('');
       return '<div class="overview-plano-block">' +
         '<span class="overview-plano-tag">'+escHtml(p.title)+'</span>' +
-        (p.documentText?renderPlanDocument(p.documentText):fasesHtml || '<p style="color:var(--ink-faint); font-size:12.5px;">Sem fases ou marcos ainda.</p>') +
+        (p.documentText?renderPlanDocument(p.documentText,p):fasesHtml || '<p style="color:var(--ink-faint); font-size:12.5px;">Sem fases ou marcos ainda.</p>') +
         '</div>';
     }).join('');
+    box.querySelectorAll('.overview-plano-block').forEach(function(block,index){var plan=state.planos[index];if(plan.documentText)bindPlanDocument(block,plan);});
   }
   document.getElementById('btnPlanosOverview').addEventListener('click', function(){
     renderPlanosOverview();
@@ -2080,27 +2081,65 @@
     planoNoteEditing=false; openFaseEditId=null; openMarcoEditKey=null;
   }
 
-  function renderPlanDocument(text){
-    var lines=String(text).split('\n'),out=[],table=[];
-    function inline(value){return escHtml(value.replace(/\\\./g,'.'));}
-    function flushTable(){
-      if(!table.length)return;
-      out.push('<div class="plan-document-table"><table><thead><tr>'+table[0].map(function(cell){return '<th scope="col">'+inline(cell)+'</th>';}).join('')+'</tr></thead><tbody>'+table.slice(1).map(function(row){return '<tr>'+row.map(function(cell){return '<td>'+inline(cell)+'</td>';}).join('')+'</tr>';}).join('')+'</tbody></table></div>');table=[];
+  function renderPlanDocument(text,plan){
+    var sections=ProtocolLogic.planDocumentSections(text),checks=(plan&&plan.documentChecks)||{};
+    var colors=['var(--accent)','var(--cat-fit)','var(--cat-lang)','var(--accent-strong)','var(--cat-fit)','var(--cat-lang)','var(--accent)','var(--cat-fit)','var(--cat-lang)'];
+    function inline(value){return escHtml(String(value).replace(/\\\./g,'.'));}
+    function task(section,kind,title,body,extra){
+      var key=section.title+'|'+kind+'|'+title,done=!!checks[key];
+      return '<div class="route-task'+(done?' done':'')+'"><label class="route-task-label"><input type="checkbox" data-route-check="'+escAttr(key)+'"'+(done?' checked':'')+'><span class="route-task-title">'+inline(title)+'</span></label>'+(body?'<p class="route-task-body">'+inline(body)+'</p>':'')+(extra||'')+'</div>';
     }
-    lines.forEach(function(line){
-      if(line.startsWith('|')){var cells=line.split('|').slice(1,-1).map(function(cell){return cell.trim();});if(!cells.every(function(cell){return /^[-: ]+$/.test(cell);}))table.push(cells);return;}
-      flushTable();if(!line.trim())return;
-      if(line.startsWith('### '))out.push('<h3>'+inline(line.slice(4))+'</h3>');
-      else if(line.startsWith('* '))out.push('<ul><li>'+inline(line.slice(2))+'</li></ul>');
-      else out.push('<p>'+inline(line)+'</p>');
-    });flushTable();return '<article class="plan-document">'+out.join('')+'</article>';
+    return '<article class="plan-document route-document" data-route-plan="'+escAttr(plan.id)+'">'+sections.map(function(section,index){
+      var phaseOne=/^Fase 1 /.test(section.title),phaseThree=/^Fase 3 /.test(section.title),phaseFour=/^Fase 4 /.test(section.title);
+      var missionStart=phaseOne?section.items.findIndex(function(item){return item.text==='Criar um dossier China 2029';}):-1;
+      var missionEnd=phaseOne?section.items.findIndex(function(item){return item.text==='Missões concluídas';}):-1;
+      var content=[];
+      for(var i=0;i<section.items.length;i++){
+        var item=section.items[i],next=section.items[i+1];
+        if(item.type==='table'){
+          content.push('<div class="route-task-grid">'+item.rows.map(function(row){
+            var extra=row[2]?'<div class="route-result"><span>'+inline(item.header[2])+'</span><p>'+inline(row[2])+'</p></div>':'';
+            return '<div class="route-delivery"><div class="route-date"><span>'+inline(item.header[0])+'</span><strong>'+inline(row[0])+'</strong></div><span class="route-field-label">'+inline(item.header[1])+'</span>'+task(section,'table',row[1],'',extra)+'</div>';
+          }).join('')+'</div>');continue;
+        }
+        if(phaseOne && i>=missionStart && i<missionEnd && missionStart!==-1){content.push(task(section,'mission',item.text,next?next.text:''));i++;continue;}
+        if(phaseOne && item.text==='Missões concluídas'){
+          content.push('<div class="route-mission-progress"><span>'+inline(item.text)+'</span><strong data-route-missions>0 / 6</strong></div>');if(next&&next.text==='0 / 6')i++;continue;
+        }
+        if(phaseThree && item.type==='paragraph' && /^[^:]+:/.test(item.text) && next){content.push(task(section,'milestone',item.text,next.text));i++;continue;}
+        if(phaseFour && i===0){content.push(task(section,'application',item.text,''));continue;}
+        if(item.type==='bullet'){content.push(task(section,'project',item.text,''));continue;}
+        if(item.text && item.text.startsWith('Entrega:')){content.push(task(section,'delivery',item.text,''));continue;}
+        if(item.text==='PROJETO PROPOSTO' || item.text==='18 out. – 31 dez.' || item.text==='Missões para os próximos 75 dias')content.push('<span class="route-badge">'+inline(item.text)+'</span>');
+        else content.push('<p class="route-paragraph">'+inline(item.text)+'</p>');
+      }
+      return '<section class="route-block'+(index===0?' route-hero':'')+'" style="--route-color:'+colors[index%colors.length]+'"><div class="route-block-heading"><h3>'+inline(section.title)+'</h3>'+(index?'<span class="route-section-count" data-route-section-count></span>':'')+'</div>'+content.join('')+(index===0?'<div class="route-overall"><span>Entregas concluídas</span><strong data-route-total>0 / 0</strong><progress data-route-progress max="1" value="0" aria-label="Progresso geral da rota"></progress></div>':'')+'</section>';
+    }).join('')+'</article>';
+  }
+  function bindPlanDocument(root,plan){
+    var article=root.querySelector('[data-route-plan]');if(!article)return;
+    function update(){
+      var all=Array.from(article.querySelectorAll('[data-route-check]')),done=all.filter(function(input){return input.checked;}).length;
+      article.querySelector('[data-route-total]').textContent=done+' / '+all.length;
+      var progress=article.querySelector('[data-route-progress]');progress.max=all.length||1;progress.value=done;
+      article.querySelectorAll('.route-block').forEach(function(block){
+        var inputs=Array.from(block.querySelectorAll('[data-route-check]')),marked=inputs.filter(function(input){return input.checked;}).length;
+        var count=block.querySelector('[data-route-section-count]');if(count){count.hidden=!inputs.length;count.textContent=marked+' / '+inputs.length;}
+        var missions=block.querySelector('[data-route-missions]');if(missions)missions.textContent=marked+' / '+inputs.length;
+      });
+    }
+    article.querySelectorAll('[data-route-check]').forEach(function(input){input.addEventListener('change',function(){
+      if(!plan.documentChecks)plan.documentChecks={};
+      if(input.checked)plan.documentChecks[input.dataset.routeCheck]=true;else delete plan.documentChecks[input.dataset.routeCheck];
+      input.closest('.route-task').classList.toggle('done',input.checked);saveState();update();
+    });});update();
   }
   function renderPlanoDetail(){
     var p = currentPlano();
     if(!p) return;
     document.getElementById('planoDetailTitle').textContent = p.title;
     ['planoCountdownBox','planoChipsBox','planoFasesBox','planoNoteBox'].forEach(function(id){document.getElementById(id).closest('section').hidden=!!p.documentText;});
-    if(p.documentText){document.getElementById('planoHeaderBox').innerHTML=renderPlanDocument(p.documentText);return;}
+    if(p.documentText){var root=document.getElementById('planoHeaderBox');root.innerHTML=renderPlanDocument(p.documentText,p);bindPlanDocument(root,p);return;}
     renderPlanoHeader();
     renderPlanoCountdown();
     renderPlanoChips();
