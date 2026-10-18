@@ -47,6 +47,10 @@ public final class ActivityScheduleTest {
         check(ordered.get(2).activityId.equals("six") && ordered.get(3).activityId.equals("blank"),"Widget orders 5h before 6h and untimed last");
         check(ordered.get(4).date.equals("2026-10-13"),"Tomorrow is after all of today");
         check(mixed.get(0).id.equals("blank"),"Sorting preserves stored weekly templates");
+        List<ActivitySchedule.Template> manual=Arrays.asList(new ActivitySchedule.Template(1,"early","Early","05:00",1),new ActivitySchedule.Template(1,"late","Late","08:00",0),new ActivitySchedule.Template(1,"new","New","04:00"));
+        List<ActivitySchedule.Occurrence> manualRows=ActivitySchedule.occurrences(manual,Collections.emptySet(),monday,1,zone);
+        check(manualRows.get(0).activityId.equals("late") && manualRows.get(1).activityId.equals("early") && manualRows.get(2).activityId.equals("new"),"Widget respects manual override and appends new tasks");
+        check(manualRows.get(0).time.equals("08:00") && manualRows.get(0).at==EventTiming.eventMillis("2026-10-12","08:00",zone),"Dragging does not change reminder clock");
         System.out.println("PASS "+count+" daily activity/widget checks");
     }
 }

@@ -14,18 +14,23 @@ public final class ActivitySchedule {
     private static final Pattern CLOCK = Pattern.compile("^(?:[àa]s\\s+)?(\\d{1,2})(?:\\s*[hH](?:oras)?(?:\\s*(\\d{2}))?|\\s*:\\s*(\\d{2}))?(?:\\s*(?:[–—·-].*|\\(.*\\)))?$");
     public static final class Template {
         public final int weekday;
+        public final Integer manualOrder;
         public final String id, title, displayTime;
         public Template(int weekday, String id, String title, String time) {
-            this.weekday=weekday;this.id=id;this.title=title;this.displayTime=time;
+            this(weekday,id,title,time,null);
+        }
+        public Template(int weekday, String id, String title, String time, Integer order) {
+            this.manualOrder=order;this.weekday=weekday;this.id=id;this.title=title;this.displayTime=time;
         }
     }
     public static final class Occurrence {
         public final String id, activityId, date, title, time, displayTime;
         public final boolean done;
+        public final Integer manualOrder;
         public final long at, visibleUntil;
         Occurrence(Template item, LocalDate day, Set<String> doneKeys, ZoneId zone) {
             activityId=item.id;date=day.toString();id="activity:"+date+":"+activityId;
-            title=item.title;displayTime=item.displayTime;time=clock(displayTime);
+            title=item.title;displayTime=item.displayTime;time=clock(displayTime);manualOrder=item.manualOrder;
             done=doneKeys.contains(date+"|"+activityId);
             at=EventTiming.eventMillis(date,time,zone);
             visibleUntil=day.plusDays(1).atStartOfDay(zone).toInstant().toEpochMilli();
@@ -48,7 +53,11 @@ public final class ActivitySchedule {
             LocalDate day=first.plusDays(n);
             for(Template item:week)if(item.weekday==day.getDayOfWeek().getValue()%7)rows.add(new Occurrence(item,day,done,zone));
         }
-        rows.sort(java.util.Comparator.comparing((Occurrence row)->row.date).thenComparing(row->row.time.isEmpty()?"99:99":row.time));
+        rows.sort((a,b)->{
+            int date=a.date.compareTo(b.date);if(date!=0)return date;
+            if(a.manualOrder!=null || b.manualOrder!=null)return Integer.compare(a.manualOrder==null?Integer.MAX_VALUE:a.manualOrder,b.manualOrder==null?Integer.MAX_VALUE:b.manualOrder);
+            return (a.time.isEmpty()?"99:99":a.time).compareTo(b.time.isEmpty()?"99:99":b.time);
+        });
         return rows;
     }
     public static long nextMidnight(long now, ZoneId zone) {

@@ -26,3 +26,10 @@ test('completion, edit and removal update native state; identical saves do not',
   week.Segunda[0].time='06h30';native.syncActivities(week,{});assert.equal(calls[2].week[1][0].time,'06h30');
   week.Segunda=[];native.syncActivities(week,{});assert.equal(calls[3].week[1].length,0);
 });
+test('manual order reaches the widget while event clock times remain intact',()=>{
+ const {native,calls}=platform();
+ native.syncActivities({Segunda:[{id:'first',title:'First',time:'8h',manualOrder:0},{id:'second',title:'Second',time:'5h',manualOrder:1}]},{});
+ assert.deepEqual(calls[0].week[1].map(a=>a.id),['first','second']);
+ assert.equal(calls[0].week[1][0].manualOrder,0);
+ assert.equal(calls[0].week[1][1].time,'5h');
+});

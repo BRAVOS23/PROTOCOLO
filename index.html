@@ -99,7 +99,7 @@
           </button>
         </div>
       </div>
-      <div class="today-list" id="todayList"></div>
+      <div id="todayOrderControls" class="activity-order-controls"></div><div class="today-list" id="todayList"></div>
     </section>
 
     <details class="dashboard-insights"><summary><span>Protocolo</span><small>Autenticidade, intensidade e fidelidade</small></summary>
@@ -289,7 +289,7 @@
       <div class="blk-head">
         <div><span class="kicker">Semana</span><h2>Foco por dia</h2></div>
       </div>
-      <div id="workList"></div>
+      <details id="workAreas" class="training-areas"></details><p id="workEmpty" class="lead" hidden>Sem tarefas associadas. Escolhe as áreas de trabalho acima para mostrar as atividades que já criaste. Para adicionar tarefas, usa o lápis no Início.</p><div id="workList"></div>
       <p class="lead" style="margin-top:6px;font-size:12px;color:var(--ink-faint);">Toca numa linha para editar a tarefa ou o detalhe.</p>
     </section>
     <footer class="page-footer">Protocolo — DROP, o negócio que financia o rumo.</footer>
@@ -509,11 +509,11 @@
   </div>
   <section id="androidDownload" class="native-features">
     <div><span class="kicker">Para Android</span><h4>Atividades na tela inicial</h4><p>A versão instalável mostra as tarefas de hoje no widget e avisa das atividades com horário, sem conta ou mensalidade.</p></div>
-    <a class="btn" href="https://bravos23.github.io/PROTOCOLO/downloads/Protocolo-Pessoal.apk?v=3.2" download>Baixar Protocolo 3.2 para Android</a>
-    <p class="native-note">Versão 3.2 com os treinos do dia. Se já usas o Protocolo 3.x, instala por cima, sem desinstalar: os dados ficam guardados. Se vens de uma instalação anterior à 3.0, mantém o app antigo e transfere os dados por Definições → Exportar dados / Importar dados.</p>
+    <a class="btn" href="https://bravos23.github.io/PROTOCOLO/downloads/Protocolo-Pessoal.apk?v=3.3" download>Baixar Protocolo 3.3 para Android</a>
+    <p class="native-note">Versão 3.3 com os treinos do dia. Se já usas o Protocolo 3.x, instala por cima, sem desinstalar: os dados ficam guardados. Se vens de uma instalação anterior à 3.0, mantém o app antigo e transfere os dados por Definições → Exportar dados / Importar dados.</p>
   </section>
   <section id="nativeFeatures" class="native-features" hidden>
-    <div class="native-migration"><span class="kicker">Protocolo</span><h4>Protocolo 3.2 · traz os teus dados</h4><p>As atualizações do Protocolo 3.x mantêm os teus dados nesta instalação. Se vens de um app anterior à versão 3.0, exporta os dados no antigo e importa o ficheiro aqui em baixo. Confere os dados antes de remover o antigo. Numa primeira instalação, ativa os lembretes e adiciona o widget neste app.</p></div>
+    <div class="native-migration"><span class="kicker">Protocolo</span><h4>Protocolo 3.3 · traz os teus dados</h4><p>As atualizações do Protocolo 3.x mantêm os teus dados nesta instalação. Se vens de um app anterior à versão 3.0, exporta os dados no antigo e importa o ficheiro aqui em baixo. Confere os dados antes de remover o antigo. Numa primeira instalação, ativa os lembretes e adiciona o widget neste app.</p></div>
     <div><span class="kicker">Neste celular</span><h4>Lembretes das atividades e agenda</h4><p id="nativeReminderStatus" role="status">Os lembretes estão desativados.</p></div>
     <label class="field-label"><span>Avisar antes do evento</span><select id="nativeLeadMinutes"><option value="10">10 minutos antes</option><option value="30" selected>30 minutos antes</option><option value="60">1 hora antes</option><option value="1440">1 dia antes</option></select></label>
     <p class="native-note">As atividades do Início usam a hora que definiste (ex.: 05h40). Define uma hora para receber aviso; as atividades sem hora aparecem no widget. Eventos da agenda sem hora continuam considerados às 09:00.</p>
@@ -573,7 +573,7 @@
     <p class="overview-note">Mantém os horários, áreas e detalhes. As originais ficam neste dia e as cópias começam por concluir.</p>
     <div class="form-actions"><button class="btn ghost" id="activityCopyCancel" type="button">Cancelar</button><button class="btn" id="activityCopyConfirm" type="button" disabled>Copiar selecionadas</button></div>
   </div>
-  <div id="activityList"></div>
+  <div id="activityOrderControls" class="activity-order-controls"></div><div id="activityList"></div>
   <div class="form-actions" style="justify-content:space-between;margin-top:4px;">
     <button class="btn-add-activity" id="btnAddActivity" type="button">+ Nova atividade</button>
     <button class="btn ghost" id="btnManageAreas" type="button" style="white-space:nowrap;">Gerir áreas</button>

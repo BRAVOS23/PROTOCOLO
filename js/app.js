@@ -237,7 +237,7 @@
     var oldColors={a:'#2c757a',i:'#b8471f',f:'#966b18'}, newColors={a:'var(--cat-fit)',i:'var(--accent)',f:'var(--cat-lang)'};
     Object.keys(oldColors).forEach(function(k){if(s.aif[k].color===oldColors[k])s.aif[k].color=newColors[k];});
     (s.areas||[]).forEach(function(a){if(a.color==='#2c757a')a.color='var(--cat-fit)';});
-    rememberTrainingAreas(s.areas);
+    rememberAreaLinks(s.areas);
     if(!s.activityPrinciples)s.activityPrinciples={};
     if(!s.principlesSince)s.principlesSince=iso(new Date());
     if(!s.areaPaletteVersion){
@@ -1167,10 +1167,10 @@
   }
 
   /* ================= ATIVIDADES (editável) ================= */
-  function dayActivities(day){ return ProtocolLogic.sortSchedule(state.activities[day]); }
+  function dayActivities(day){ return ProtocolLogic.sortActivities(state.activities[day]); }
   function areaActivitiesForDay(day,area){return dayActivities(day).filter(function(a){return a.area===area;});}
-  function rememberTrainingAreas(areas){
-    (areas||[]).forEach(function(area){if(typeof area.training!=='boolean' && ProtocolLogic.isTrainingArea(area))area.training=true;});
+  function rememberAreaLinks(areas){
+    (areas||[]).forEach(function(area){if(typeof area.training!=='boolean' && ProtocolLogic.isTrainingArea(area))area.training=true;if(typeof area.work!=='boolean' && ProtocolLogic.isWorkArea(area))area.work=true;});
   }
   function isTrainingActivity(act){
     var area=state.areas.find(function(a){return a.id===act.area;});
@@ -1269,12 +1269,20 @@
 
   /* ---- aba Trabalho (DROP) ---- */
   var openWorkRowDay = null;
+  function renderWorkAreas(){
+    var box=document.getElementById('workAreas'),wasOpen=box.open;
+    box.innerHTML='<summary>Escolher áreas de trabalho</summary><p>Seleciona as áreas das tuas tarefas, mesmo que tenham outro nome.</p><div class="training-area-options">'+state.areas.map(function(area){
+      return '<label class="training-area-option"><input type="checkbox" data-work-area="'+escAttr(area.id)+'"'+(ProtocolLogic.isWorkArea(area)?' checked':'')+'><span class="area-dot" style="background:'+escAttr(area.color)+'"></span><span>'+escHtml(area.label)+'</span></label>';
+    }).join('')+'</div>';box.open=wasOpen;
+    box.querySelectorAll('[data-work-area]').forEach(function(input){input.addEventListener('change',function(){state.areas.find(function(area){return area.id===input.dataset.workArea;}).work=input.checked;saveState();renderWorkStatic();});});
+  }
   function renderWorkStatic(){
+    renderWorkAreas();
     var weekdaysThisWeek = weekDates(TODAY);
     document.getElementById('workList').innerHTML =
       '<div class="tbl-scroll"><table class="week"><thead><tr><th>Feito</th><th>Dia</th><th>Tarefa</th><th>Detalhe</th></tr></thead><tbody>' +
       WEEKDAYS.map(function(day, i){
-        return areaActivitiesForDay(day,'trabalho').map(function(act){
+        return dayActivities(day).filter(function(act){return ProtocolLogic.isWorkArea(state.areas.find(function(area){return area.id===act.area;}));}).map(function(act){
           var dISO = iso(weekdaysThisWeek[i]);
           var isToday = dISO === TODAY_ISO;
           if(act.id === openWorkRowDay){
@@ -1287,12 +1295,14 @@
           }
           var checkbox = '<button type="button" class="done-check" '+(dISO>TODAY_ISO?'disabled ':'')+'aria-label="Marcar '+escAttr(act.title)+' em '+dISO+'" data-date="'+dISO+'" data-day="'+day+'" data-id="'+escAttr(act.id)+'" data-act="'+act.id+'">'+CHECK_SVG+'</button>';
           return '<tr'+(isToday?' class="today"':'')+' data-act="editrow" data-day="'+day+'" data-id="'+escAttr(act.id)+'" style="cursor:pointer;">' +
-            '<td>'+checkbox+'</td><td class="day">'+day+'<small class="weekly-date">'+fmtDateShort(weekdaysThisWeek[i])+'</small></td><td>'+escHtml(act.title.replace(/^DROP\s*—\s*/,''))+'</td>' +
+            '<td>'+checkbox+activityDragHandle(act)+'</td><td class="day">'+day+'<small class="weekly-date">'+fmtDateShort(weekdaysThisWeek[i])+'</small></td><td>'+escHtml(act.title.replace(/^DROP\s*—\s*/,''))+'</td>' +
             '<td style="color:var(--ink-soft);font-size:12.5px;"><div class="weekly-detail"><span>'+escHtml(act.detail||'')+'</span><button class="ar-icon-btn" type="button" aria-label="Editar '+escAttr(act.title)+'">'+PENCIL_SVG+'</button></div></td></tr>';
         }).join('');
       }).join('') + '</tbody></table></div>';
 
+    document.getElementById('workEmpty').hidden=!!document.querySelector('#workList .done-check');
     var table = document.getElementById('workList');
+    WEEKDAYS.forEach(function(day){bindActivityReorder(table,day,'tr[data-act="editrow"]','data-id');});
     table.querySelectorAll('.done-check').forEach(function(el){
       var d = el.getAttribute('data-date'), day = el.getAttribute('data-day'), actId = el.getAttribute('data-act');
       el.classList.toggle('on', isActDone(d, actId));
@@ -1323,6 +1333,69 @@
         var detail = tr.querySelector('[data-f="detail"]').value.trim();
         updateActivity(day, act.id, { title:title, detail:detail });
         openWorkRowDay=null; renderWorkStatic();
+      });
+    });
+  }
+
+  function activityDragHandle(act){
+    return '<button type="button" class="activity-drag-handle" aria-label="Arrastar '+escAttr(act.title)+' para ordenar; usa as setas para cima e para baixo no teclado" title="Mantém pressionado e arrasta">⠿</button>';
+  }
+  function refreshActivityOrder(){
+    renderDashboard();renderFitStatic();renderWorkStatic();
+    if(currentSheet===activitySheet)renderActivityList();
+  }
+  function renderOrderControl(box,day){
+    var manual=dayActivities(day).some(function(act){return Number.isFinite(act.manualOrder);});
+    box.innerHTML='<span>'+ (manual?'Ordem manual':'Por horário')+' · segura ⠿ e arrasta</span>'+(manual?'<button type="button" class="btn ghost" data-reset-order>Usar horários</button>':'');
+    var reset=box.querySelector('[data-reset-order]');
+    if(reset)reset.addEventListener('click',function(){dayActivities(day).forEach(function(act){delete act.manualOrder;});saveState();refreshActivityOrder();});
+  }
+  function saveVisibleOrder(day,ids){
+    var acts=dayActivities(day),visible=new Set(ids),byId=new Map(acts.map(function(act){return [act.id,act];})),next=0;
+    acts=acts.map(function(act){return visible.has(act.id)?byId.get(ids[next++]):act;});
+    acts.forEach(function(act,index){act.manualOrder=index;});saveState();
+  }
+  function bindActivityReorder(container,day,selector,idAttribute){
+    function rows(){return Array.from(container.querySelectorAll(selector)).filter(function(row){return !row.dataset.day || row.dataset.day===day;});}
+    rows().forEach(function(row){
+      var handle=row.querySelector('.activity-drag-handle');if(!handle)return;
+      handle.addEventListener('click',function(e){e.preventDefault();e.stopPropagation();});
+      handle.addEventListener('keydown',function(e){
+        if(e.key!=='ArrowUp' && e.key!=='ArrowDown')return;
+        e.preventDefault();e.stopPropagation();var list=rows(),index=list.indexOf(row),target=index+(e.key==='ArrowUp'?-1:1);
+        if(target<0 || target>=list.length)return;
+        var ids=list.map(function(r){return r.getAttribute(idAttribute);}),id=ids[index];ids[index]=ids[target];ids[target]=id;
+        saveVisibleOrder(day,ids);refreshActivityOrder();
+        var moved=rows().find(function(r){return r.getAttribute(idAttribute)===id;});if(moved)moved.querySelector('.activity-drag-handle').focus();
+      });
+      handle.addEventListener('pointerdown',function(e){
+        if(e.button!==0 || !e.isPrimary)return;e.stopPropagation();
+        var pointer=e.pointerId,startY=e.clientY,lastY=e.clientY,active=false,frame=0;
+        var original=rows().map(function(r){return r.getAttribute(idAttribute);});
+        handle.setPointerCapture(pointer);
+        function position(){
+          var others=rows().filter(function(r){return r!==row;});if(!others.length)return;
+          var before=others.find(function(r){var box=r.getBoundingClientRect();return lastY<box.top+box.height/2;});
+          row.parentNode.insertBefore(row,before || others[others.length-1].nextSibling);
+          handle.setPointerCapture(pointer);
+        }
+        function tick(){
+          if(!active)return;
+          var sheet=handle.closest('.sheet'),bounds=sheet?sheet.getBoundingClientRect():{top:0,bottom:innerHeight};
+          var delta=lastY<bounds.top+64?-10:lastY>bounds.bottom-64?10:0;
+          if(delta){if(sheet)sheet.scrollTop+=delta;else window.scrollBy(0,delta);position();}
+          frame=requestAnimationFrame(tick);
+        }
+        function begin(){if(active)return;active=true;row.classList.add('is-reordering');handle.setAttribute('aria-grabbed','true');tick();}
+        var timer=setTimeout(begin,300);
+        function move(ev){if(ev.pointerId!==pointer)return;lastY=ev.clientY;if(!active && Math.abs(lastY-startY)>8)begin();if(active){ev.preventDefault();position();}}
+        function finish(ev){
+          if(ev.pointerId!==pointer)return;
+          clearTimeout(timer);cancelAnimationFrame(frame);document.removeEventListener('pointermove',move);document.removeEventListener('pointerup',finish,true);document.removeEventListener('pointercancel',finish,true);
+          row.classList.remove('is-reordering');handle.setAttribute('aria-grabbed','false');
+          if(active){var ids=rows().map(function(r){return r.getAttribute(idAttribute);});if(ev.type!=='pointercancel' && ids.join('|')!==original.join('|'))saveVisibleOrder(day,ids);refreshActivityOrder();}
+        }
+        document.addEventListener('pointermove',move,{passive:false});document.addEventListener('pointerup',finish,true);document.addEventListener('pointercancel',finish,true);
       });
     });
   }
@@ -1363,7 +1436,7 @@
   function activityRowView(day, act){
     var area = areaById(act.area);
     return '<div class="activity-row" data-id="'+act.id+'">' +
-      '<span class="area-dot" style="background:'+area.color+'; margin-top:6px;"></span>' +
+      activityDragHandle(act)+'<span class="area-dot" style="background:'+area.color+'; margin-top:6px;"></span>' +
       '<div class="ar-body">' +
         '<div class="ar-title">'+escHtml(act.title)+(act.time?' <span class="mono" style="color:var(--ink-faint);font-weight:500;font-size:11.5px;">· '+escHtml(act.time)+'</span>':'')+'</div>' +
         (act.detail ? '<div class="ar-detail">'+escHtml(act.detail)+'</div>' : '') +
@@ -1383,7 +1456,7 @@
     }
   }
   function areaPickerChanged(form){
-    rememberTrainingAreas(state.areas);
+    rememberAreaLinks(state.areas);
     saveState();
     syncActivityAreaField(form);
     renderAreaPicker(form);
@@ -1461,6 +1534,8 @@
   var openEditId = null;
   function renderActivityList(){
     renderActivityCopy();
+    renderOrderControl(document.getElementById('activityOrderControls'),editingDay);
+    document.getElementById('activityOrderControls').hidden=copyingActivities || areasManaging;
     var acts = dayActivities(editingDay);
     var list = document.getElementById('activityList');
     if(!acts.length){
@@ -1475,6 +1550,7 @@
     list.innerHTML = acts.map(function(act){
       return act.id === openEditId ? activityRowEdit(editingDay, act) : activityRowView(editingDay, act);
     }).join('');
+    bindActivityReorder(list,editingDay,'.activity-row','data-id');
 
     list.querySelectorAll('[data-act="pick-area"]').forEach(function(button){
       button.addEventListener('click',function(){
@@ -1549,7 +1625,7 @@
     var target=copyDestination;
     if(!state.activities[target])state.activities[target]=[];
     var usedIds=new Set();WEEKDAYS.forEach(function(day){dayActivities(day).forEach(function(act){usedIds.add(act.id);});});
-    selected.forEach(function(act){var copy=clone(act);do{copy.id=target+'-'+rid('copy');}while(usedIds.has(copy.id));usedIds.add(copy.id);state.activities[target].push(copy);});
+    selected.forEach(function(act){var copy=clone(act);delete copy.manualOrder;do{copy.id=target+'-'+rid('copy');}while(usedIds.has(copy.id));usedIds.add(copy.id);state.activities[target].push(copy);});
     saveState();resetActivityCopy();openEditId=null;editingDay=target;renderDayPicker();renderActivityList();renderDashboard();renderFitStatic();renderWorkStatic();
     toast(selected.length+(selected.length===1?' atividade copiada para ':' atividades copiadas para ')+target+'.');
   });
@@ -1601,6 +1677,7 @@
     var list = document.getElementById('activityList');
     var addBtn = document.getElementById('btnAddActivity');
     var manageBtn = document.getElementById('btnManageAreas');
+    document.getElementById('activityOrderControls').hidden=areasManaging || copyingActivities;
     box.hidden = !areasManaging;
     list.hidden = areasManaging;
     addBtn.hidden = areasManaging;
@@ -1643,7 +1720,7 @@
         });
       });
       state.areas = kept.map(function(a){ return Object.assign({},a,{label:a.label.trim()}); });
-      rememberTrainingAreas(state.areas);
+      rememberAreaLinks(state.areas);
       saveState();
       areasManaging = false;
       renderAreasManage();
@@ -3128,13 +3205,15 @@
         '<button class="today-check'+(done?' on':'')+'" type="button" aria-pressed="'+done+'" aria-label="'+escAttr((done?'Desmarcar ':'Concluir ')+act.title)+'">'+CHECK_SVG+'</button>' +
         '<div class="today-txt"><div class="tt">'+escHtml(act.title)+'</div>' +
         '<div class="ts"><span class="area-tag area-vivid" style="--area-color:'+escAttr(area.color)+'"><span class="area-dot" style="background:'+escAttr(area.color)+'"></span>'+escHtml(area.label)+'</span>'+(sub?'<span>'+sub+'</span>':'')+'</div></div>' +
-        flameHtml +
+        flameHtml + activityDragHandle(act)+
         '</div>';
     }).join('') : '<p style="color:var(--ink-faint); font-size:13px;">Sem atividades para hoje — toca no lápis para adicionar.</p>';
 
+    renderOrderControl(document.getElementById('todayOrderControls'),TODAY_WEEKDAY);
+    bindActivityReorder(document.getElementById('todayList'),TODAY_WEEKDAY,'.today-item','data-act');
     document.querySelectorAll('#todayList .today-item').forEach(function(el){
       el.addEventListener('click', function(ev){
-        if(ev.target.closest('.today-flame')) return;
+        if(ev.target.closest('.today-flame,.activity-drag-handle')) return;
         var actId = el.getAttribute('data-act');
         toggleActivityDone(TODAY_ISO, TODAY_WEEKDAY, actId);
         renderDashboard();

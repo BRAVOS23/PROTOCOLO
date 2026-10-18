@@ -12,7 +12,9 @@ Sem backend, sem contas, sem anúncios. Tudo fica guardado no `localStorage` do 
 - **Início** — tarefas e progresso de hoje, ciclo com “dia X de Y”, sequências, marcação conjunta de autenticidade, intensidade e fidelidade e histórico semanal/mensal em calendário ou quadro de hábitos.
 - **Línguas** — rotina semanal, currículo das 13 semanas (gramática + vocabulário com checkboxes), checkpoints, recursos e fontes.
 - **Forma** — lista e contador dos treinos de hoje, com mudança automática de dia e histórico preservado; áreas de treino selecionáveis (incluindo Gym e áreas criadas pelo utilizador), registo de peso com gráfico e tendência (kg/semana vs meta), treino semanal com checkboxes, protocolos, plano alimentar e regras.
+- **Trabalho** — tarefas de áreas selecionáveis, incluindo áreas novas como DROP e Negócio; as tarefas usam as mesmas marcações do Início.
 - **Vida** — estudos com cronómetro e gráficos de linhas, compras, pendentes, agenda e planos futuros com fases e contagem “dia X de Y”.
+- **Ordem manual** — mantém pressionado o botão ⠿ e arrasta as atividades no Início, Trabalho ou editor de rotinas. A ordem fica guardada por dia e também no widget; «Usar horários» repõe a ordem cronológica.
 - **Áreas da vida** — selecionar, criar, renomear e apagar diretamente no editor; também disponíveis nas Definições. As tarefas de uma área apagada passam para a área de destino “Outro”.
 - **Definições** — tema claro/escuro/automático, exportar/importar backup (`.json`), repor tudo. Interface móvel em azul elétrico, turquesa e violeta.
 - Instalável como app (PWA) com ícone, splash e funcionamento offline (service worker faz cache da app shell).

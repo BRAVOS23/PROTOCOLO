@@ -13,7 +13,7 @@
       function dateKey(d){return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');}
       var from=dateKey(today),until=dateKey(end),marks={};
       Object.keys(done||{}).forEach(function(key){if(done[key] && key.slice(0,10)>=from && key.slice(0,10)<until)marks[key]=true;});
-      var payload=JSON.stringify({week:days.map(function(day){return ProtocolLogic.sortSchedule(activities[day]).slice(0,1000).map(function(act){return {id:act.id,title:String(act.title||'Atividade').slice(0,500),time:String(act.time||'').slice(0,100)};});}),done:marks});
+      var payload=JSON.stringify({week:days.map(function(day){return ProtocolLogic.sortActivities(activities[day]).slice(0,1000).map(function(act){return {id:act.id,title:String(act.title||'Atividade').slice(0,500),time:String(act.time||'').slice(0,100),manualOrder:Number.isFinite(act.manualOrder)?act.manualOrder:null};});}),done:marks});
       if(payload===lastActivities)return;
       try{bridge.syncActivities(payload);lastActivities=payload;}catch(e){lastActivities=null;}
     },

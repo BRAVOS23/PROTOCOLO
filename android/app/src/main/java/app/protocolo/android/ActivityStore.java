@@ -27,7 +27,7 @@ final class ActivityStore {
                     if(item==null)continue;
                     String id=item.optString("id"),title=item.optString("title","Atividade"),time=item.optString("time");
                     if(id.isEmpty() || id.length()>160 || title.length()>1000 || time.length()>100 || !seen.add(id))continue;
-                    week.add(new ActivitySchedule.Template(day,id,title,time));
+                    week.add(new ActivitySchedule.Template(day,id,title,time,item.isNull("manualOrder")?null:item.optInt("manualOrder")));
                 }
             }
             JSONObject marks=stored.optJSONObject("done");

@@ -79,3 +79,21 @@ test('treinos reconhecem Gym com ID próprio e respeitam a seleção explícita'
   assert.equal(isTrainingArea({id:'leitura',label:'Leitura'}),false);
   assert.equal(isTrainingArea(null),false);
 });
+
+test('áreas de trabalho criadas pelo utilizador aparecem sem depender do ID antigo',()=>{
+ const {isWorkArea}=require('../js/logic.js');
+ assert.equal(isWorkArea({id:'ar-1',label:'Negócio'}),true);
+ assert.equal(isWorkArea({id:'ar-2',label:'DROP'}),true);
+ assert.equal(isWorkArea({id:'ar-3',label:'E-commerce'}),true);
+ assert.equal(isWorkArea({id:'ar-4',label:'Projetos',work:true}),true);
+ assert.equal(isWorkArea({id:'trabalho',label:'Trabalho',work:false}),false);
+ assert.equal(isWorkArea({id:'outro',label:'Outro'}),false);
+});
+test('ordem manual vence os horários e novas atividades ficam no fim',()=>{
+ const {sortActivities}=require('../js/logic.js');
+ const acts=[{id:'early',time:'5h',manualOrder:1},{id:'late',time:'6h',manualOrder:0},{id:'new',time:'4h'}];
+ assert.deepEqual(sortActivities(acts).map(a=>a.id),['late','early','new']);
+ assert.deepEqual(acts.map(a=>a.id),['early','late','new']);
+ const reset=acts.map(({manualOrder,...act})=>act);
+ assert.deepEqual(sortActivities(reset).map(a=>a.id),['new','early','late']);
+});

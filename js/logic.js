@@ -41,6 +41,21 @@
     var name=String(area.label||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase();
     return /\b(gym|ginasio|academia|fitness|treinos?|exercicios?|musculacao|judo|jiu jitsu|tiros|corrida|desporto)\b/.test(name);
   }
+  function isWorkArea(area){
+    if(!area)return false;
+    if(typeof area.work==='boolean')return area.work;
+    if(area.id==='trabalho')return true;
+    var name=String(area.label||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase();
+    return /\b(trabalho|drop|negocios?|profissional|work|e[ -]?commerce)\b/.test(name);
+  }
+  function sortActivities(items){
+    if(!(items||[]).some(function(a){return Number.isFinite(a.manualOrder);}))return sortSchedule(items);
+    return (items||[]).map(function(item,index){return {item:item,index:index};}).sort(function(a,b){
+      var first=Number.isFinite(a.item.manualOrder)?a.item.manualOrder:Infinity;
+      var second=Number.isFinite(b.item.manualOrder)?b.item.manualOrder:Infinity;
+      return (first-second)||a.index-b.index;
+    }).map(function(row){return row.item;});
+  }
   function principlesScore(activities){
     var marked=activities.filter(function(a){return a.done && a.principles;}).length;
     return {total:activities.length?marked/activities.length*100:0,marked:marked,planned:activities.length,completed:activities.filter(function(a){return a.done;}).length};
@@ -65,7 +80,7 @@
   function sortSchedule(items,dateField,timeField){
     return (items||[]).map(function(item,index){return {item:item,index:index};}).sort(function(a,b){return compareScheduled(a.item,b.item,dateField,timeField)||a.index-b.index;}).map(function(row){return row.item;});
   }
-  var api={dayOrdinal:dayOrdinal,daysBetween:daysBetween,intervalProgress:intervalProgress,aifScores:aifScores,principlesScore:principlesScore,isTrainingArea:isTrainingArea,clockMinutes:clockMinutes,compareScheduled:compareScheduled,sortSchedule:sortSchedule};
+  var api={dayOrdinal:dayOrdinal,daysBetween:daysBetween,intervalProgress:intervalProgress,aifScores:aifScores,principlesScore:principlesScore,isTrainingArea:isTrainingArea,clockMinutes:clockMinutes,compareScheduled:compareScheduled,sortSchedule:sortSchedule,sortActivities:sortActivities,isWorkArea:isWorkArea};
   if(typeof module==='object' && module.exports) module.exports=api;
   else root.ProtocolLogic=api;
 })(typeof globalThis!=='undefined'?globalThis:this);
