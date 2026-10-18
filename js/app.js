@@ -49,6 +49,9 @@
     return { timeline: seedRotaTimeline(), note: ROTA_META.note, countdownTarget: ROTA_META.countdownTarget, countdownLabel: ROTA_META.countdownLabel, chips: ROTA_META.chips.slice() };
   }
 
+  function china2029Plan(){
+    return {id:'plano-rota-china',title:'Nova Rota para a China — tarefas concretas',description:'',countdownStart:null,countdownTarget:null,countdownLabel:'',chips:[],fases:[],notaEstrategica:'',documentText:CHINA_2029_TEXT,chinaRouteVersion:1};
+  }
   function freshDefaultState(){
     return {
       vocabStudyDays:{}, vocab:{}, langDone:{}, workouts:{}, weight:[], theme:'system',
@@ -69,7 +72,7 @@
       shoppingLists: [ { id:'default', name:'Compras', items: [] } ],
       pendentes: [],
       agenda: [],
-      planos: [ rotaStateToPlano(defaultRotaState()) ],
+      planos: [ china2029Plan() ],
       estudoMaterias: [],
       estudoTipos: ['Teoria', 'Exercícios', 'Revisão', 'Vídeo'],
       estudoLog: [],
@@ -222,6 +225,12 @@
       (s.pendentes||[]).forEach(function(it){ if(it.detail===undefined) it.detail = ''; });
       (s.agenda||[]).forEach(function(ev){ if(ev.detail===undefined) ev.detail = ''; });
       s.contentMigrationVersion=1;
+    }
+    if(!s.chinaRouteVersion){
+      var chinaIndex=s.planos.findIndex(function(p){return p.id==='plano-rota-china';});
+      if(chinaIndex!==-1){if(!s.planos[chinaIndex].chinaRouteVersion)s.chinaRoutePrevious=clone(s.planos[chinaIndex]);s.planos.splice(chinaIndex,1,china2029Plan());}
+      else s.planos.push(china2029Plan());
+      s.chinaRouteVersion=1;
     }
     s.planos.forEach(function(p){
       if(p.countdownTarget && !p.countdownStart){
@@ -2024,7 +2033,7 @@
       }).join('');
       return '<div class="overview-plano-block">' +
         '<span class="overview-plano-tag">'+escHtml(p.title)+'</span>' +
-        (fasesHtml || '<p style="color:var(--ink-faint); font-size:12.5px;">Sem fases ou marcos ainda.</p>') +
+        (p.documentText?renderPlanDocument(p.documentText):fasesHtml || '<p style="color:var(--ink-faint); font-size:12.5px;">Sem fases ou marcos ainda.</p>') +
         '</div>';
     }).join('');
   }
@@ -2071,10 +2080,27 @@
     planoNoteEditing=false; openFaseEditId=null; openMarcoEditKey=null;
   }
 
+  function renderPlanDocument(text){
+    var lines=String(text).split('\n'),out=[],table=[];
+    function inline(value){return escHtml(value.replace(/\\\./g,'.'));}
+    function flushTable(){
+      if(!table.length)return;
+      out.push('<div class="plan-document-table"><table><thead><tr>'+table[0].map(function(cell){return '<th scope="col">'+inline(cell)+'</th>';}).join('')+'</tr></thead><tbody>'+table.slice(1).map(function(row){return '<tr>'+row.map(function(cell){return '<td>'+inline(cell)+'</td>';}).join('')+'</tr>';}).join('')+'</tbody></table></div>');table=[];
+    }
+    lines.forEach(function(line){
+      if(line.startsWith('|')){var cells=line.split('|').slice(1,-1).map(function(cell){return cell.trim();});if(!cells.every(function(cell){return /^[-: ]+$/.test(cell);}))table.push(cells);return;}
+      flushTable();if(!line.trim())return;
+      if(line.startsWith('### '))out.push('<h3>'+inline(line.slice(4))+'</h3>');
+      else if(line.startsWith('* '))out.push('<ul><li>'+inline(line.slice(2))+'</li></ul>');
+      else out.push('<p>'+inline(line)+'</p>');
+    });flushTable();return '<article class="plan-document">'+out.join('')+'</article>';
+  }
   function renderPlanoDetail(){
     var p = currentPlano();
     if(!p) return;
     document.getElementById('planoDetailTitle').textContent = p.title;
+    ['planoCountdownBox','planoChipsBox','planoFasesBox','planoNoteBox'].forEach(function(id){document.getElementById(id).closest('section').hidden=!!p.documentText;});
+    if(p.documentText){document.getElementById('planoHeaderBox').innerHTML=renderPlanDocument(p.documentText);return;}
     renderPlanoHeader();
     renderPlanoCountdown();
     renderPlanoChips();

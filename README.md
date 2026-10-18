@@ -38,7 +38,7 @@ O **Protocolo 3.0** acrescenta lembretes locais, um widget com as atividades do 
 
 Os períodos têm uma data de início e uma data de fim editáveis. A contagem inclui ambos os dias: o primeiro é o dia 1 e o último é o dia total. Antes do início, o app mostra quando começa; depois do prazo, mostra que o período terminou. A barra mede a passagem dos dias, não a realização do objetivo.
 
-A Rota para a China usa inicialmente 1 de setembro de 2026 até à data de candidatura já guardada. Edita o lápis do contador para ajustar essas datas.
+A Nova Rota para a China apresenta integralmente o texto fornecido em 18 de outubro de 2026, com as fases de 2026 a 2029, o projeto China–Moçambique e as tabelas de entregas. Substitui a rota anterior uma única vez; os outros planos e as rotinas ficam preservados.
 
 O progresso de Forma inclui todas as atividades dessa área, mesmo quando há mais de uma no mesmo dia. A sequência de Línguas considera atividades concluídas nessa área ou vocabulário marcado no dia. No painel Protocolo, a chama reúne autenticidade, intensidade e fidelidade numa única marcação por atividade concluída. O progresso diário compara essas marcações com todas as atividades previstas; os registos anteriores são preservados sem os converter automaticamente para o novo critério.
 

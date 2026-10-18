@@ -1231,3 +1231,14 @@ span.mx[role="button"],span.del[role="button"]{ min-width:44px; min-height:44px;
 .activity-order-controls{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:8px;margin:10px 0;font-size:12px;color:var(--ink-soft);}
 .activity-order-controls .btn{min-height:40px;padding:8px 12px;font-size:12px;}
 #workList td:first-child .activity-drag-handle{margin-top:6px;}
+
+.plan-document{font-size:15px;line-height:1.75;overflow-wrap:anywhere;}
+.plan-document h3{font-size:20px;line-height:1.45;margin:28px 0 14px;color:var(--accent-strong);}
+.plan-document h3:first-child{margin-top:0;}
+.plan-document p{margin:0 0 16px;white-space:pre-wrap;}
+.plan-document ul{padding-left:22px;margin:0 0 14px;}
+.plan-document-table{overflow-x:auto;margin:18px 0 24px;border:1px solid var(--line);border-radius:12px;}
+.plan-document-table table{width:100%;min-width:560px;border-collapse:collapse;}
+.plan-document-table th,.plan-document-table td{padding:12px;text-align:left;vertical-align:top;border-bottom:1px solid var(--line);white-space:normal;}
+.plan-document-table th{background:var(--accent-soft);font-size:13px;}
+.plan-document-table td{font-size:14px;}

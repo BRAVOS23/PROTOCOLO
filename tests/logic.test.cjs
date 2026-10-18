@@ -14,7 +14,7 @@ test('períodos futuros, terminados e de um único dia',()=>{
  const after=intervalProgress('2026-10-01','2026-10-05','2026-10-12');assert.equal(after.day,5);assert.equal(after.status,'after');assert.equal(after.percent,100);
  const single=intervalProgress('2026-10-12','2026-10-12','2026-10-12');assert.equal(single.total,1);assert.equal(single.percent,100);
 });
-test('Rota para a China mantém início de setembro e destino existente',()=>{
+test('metadados da rota antiga continuam disponíveis para a migração legada',()=>{
  const p=intervalProgress('2026-09-01','2028-12-01','2026-10-12');assert.equal(p.day,42);assert.equal(p.total,823);assert.equal(p.remaining,781);
 });
 test('dias civis atravessam mudanças de horário e anos bissextos',()=>{
