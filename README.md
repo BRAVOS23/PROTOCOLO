@@ -38,7 +38,7 @@ O **Protocolo 3.0** acrescenta lembretes locais, um widget com as atividades do 
 
 Os períodos têm uma data de início e uma data de fim editáveis. A contagem inclui ambos os dias: o primeiro é o dia 1 e o último é o dia total. Antes do início, o app mostra quando começa; depois do prazo, mostra que o período terminou. A barra mede a passagem dos dias, não a realização do objetivo.
 
-A Nova Rota para a China apresenta integralmente o texto fornecido em 18 de outubro de 2026, com as fases de 2026 a 2029, o projeto China–Moçambique e as entregas. A apresentação separa o texto em blocos coloridos, com 30 checklists e progresso por fase e geral, guardado também nos backups. Substitui a rota anterior uma única vez; os outros planos e as rotinas ficam preservados.
+A Rota para a China 2029 preserva integralmente o ficheiro de 154 missões semanais, organizado em ano → mês → página de missão. Cada página inclui o que fazer, alternativas e prova de conclusão, além de registo do processo e referência da prova. Guarda automaticamente as marcações, notas e a posição de leitura; ao regressar, retoma a missão pendente guardada ou a primeira pendente se a anterior foi concluída. A conclusão requer uma prova registada. O texto original e todo este progresso entram nos backups. A rota anterior fica arquivada nos dados, e as outras rotinas e planos são preservados.
 
 O progresso de Forma inclui todas as atividades dessa área, mesmo quando há mais de uma no mesmo dia. A sequência de Línguas considera atividades concluídas nessa área ou vocabulário marcado no dia. No painel Protocolo, a chama reúne autenticidade, intensidade e fidelidade numa única marcação por atividade concluída. O progresso diário compara essas marcações com todas as atividades previstas; os registos anteriores são preservados sem os converter automaticamente para o novo critério.
 
@@ -51,6 +51,8 @@ A versão web não precisa de build. Os testes de calendário e indicadores usam
 ```bash
 node --test tests/*.test.cjs
 ```
+
+Com Playwright e Chromium disponíveis, inicia o servidor local e executa `node tests/browser/weekly-route.cjs`. O teste usa dados sintéticos num perfil isolado e valida as pastas, páginas completas, prova de conclusão, notas, retoma da posição, navegação Android e exportação/importação.
 
 A validação no browser deve cobrir os temas claro/escuro em telas pequenas, navegação, edição de áreas, múltiplas tarefas de Forma e Trabalho, validação de datas, exportação/importação e recarregamento offline. Usa um perfil de browser de teste para preservar os dados pessoais.
 
@@ -78,6 +80,7 @@ index.html            shell do app + as 5 vistas principais
 css/styles.css         sistema de design (cores, tipografia, componentes)
 js/logic.js            cálculos de calendário e indicadores, usados no app e nos testes
 js/data.js             conteúdo dos dois planos (sem lógica)
+js/weekly-route.js     páginas das missões semanais, notas e retoma da leitura
 js/app.js              navegação, trackers, persistência, gráfico de peso
 manifest.webmanifest   metadados do PWA
 sw.js                  service worker (cache da app shell, funciona offline)

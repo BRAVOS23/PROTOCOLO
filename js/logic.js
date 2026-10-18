@@ -71,6 +71,30 @@
       current.items.push({type:line.startsWith('* ')?'bullet':'paragraph',text:line.startsWith('* ')?line.slice(2):line});
     });return sections;
   }
+  function weeklyRouteModel(text){
+    var model={title:'',intro:[],months:[],missions:[]},month=null,mission=null;
+    String(text||'').split('\n').forEach(function(line){
+      if(!line.trim())return;
+      if(line.startsWith('# ')){model.title=line.slice(2);return;}
+      if(line.startsWith('## ')){month={heading:line.slice(3),id:line.slice(3,10),missions:[]};model.months.push(month);mission=null;return;}
+      if(line.startsWith('### Semana ')){
+        var match=/^### (Semana (\d+) — (\d{2})\/(\d{2})\/(\d{4}) \| (.+))$/.exec(line);
+        if(!match || !month)throw new Error('Formato de missão inválido');
+        mission={id:'week-'+match[2].padStart(3,'0'),heading:match[1],number:match[2],title:match[6],date:match[5]+'-'+match[4]+'-'+match[3],monthId:month.id,lines:[],fields:[]};
+        month.missions.push(mission);model.missions.push(mission);return;
+      }
+      if(!mission){model.intro.push(line);return;}
+      mission.lines.push(line);
+      var field=/^\*\*(.+?)\*\*\s*(.*)$/.exec(line);
+      mission.fields.push(field?{label:field[1],text:field[2]}:{label:'',text:line});
+    });return model;
+  }
+  function weeklyMissionDone(record){return !!(record && record.action===true && record.proof===true && String(record.evidence||'').trim());}
+  function weeklyResumeMission(model,progress,resume){
+    var saved=model.missions.find(function(m){return resume && m.id===resume.missionId;});
+    if(saved && !weeklyMissionDone((progress||{})[saved.id]))return saved;
+    return model.missions.find(function(m){return !weeklyMissionDone((progress||{})[m.id]);}) || saved || model.missions[model.missions.length-1] || null;
+  }
   function principlesScore(activities){
     var marked=activities.filter(function(a){return a.done && a.principles;}).length;
     return {total:activities.length?marked/activities.length*100:0,marked:marked,planned:activities.length,completed:activities.filter(function(a){return a.done;}).length};
@@ -95,7 +119,7 @@
   function sortSchedule(items,dateField,timeField){
     return (items||[]).map(function(item,index){return {item:item,index:index};}).sort(function(a,b){return compareScheduled(a.item,b.item,dateField,timeField)||a.index-b.index;}).map(function(row){return row.item;});
   }
-  var api={dayOrdinal:dayOrdinal,daysBetween:daysBetween,intervalProgress:intervalProgress,aifScores:aifScores,principlesScore:principlesScore,isTrainingArea:isTrainingArea,clockMinutes:clockMinutes,compareScheduled:compareScheduled,sortSchedule:sortSchedule,sortActivities:sortActivities,isWorkArea:isWorkArea,planDocumentSections:planDocumentSections};
+  var api={dayOrdinal:dayOrdinal,daysBetween:daysBetween,intervalProgress:intervalProgress,aifScores:aifScores,principlesScore:principlesScore,isTrainingArea:isTrainingArea,clockMinutes:clockMinutes,compareScheduled:compareScheduled,sortSchedule:sortSchedule,sortActivities:sortActivities,isWorkArea:isWorkArea,planDocumentSections:planDocumentSections,weeklyRouteModel:weeklyRouteModel,weeklyMissionDone:weeklyMissionDone,weeklyResumeMission:weeklyResumeMission};
   if(typeof module==='object' && module.exports) module.exports=api;
   else root.ProtocolLogic=api;
 })(typeof globalThis!=='undefined'?globalThis:this);

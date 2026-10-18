@@ -50,7 +50,7 @@
   }
 
   function china2029Plan(){
-    return {id:'plano-rota-china',title:'Nova Rota para a China — tarefas concretas',description:'',countdownStart:null,countdownTarget:null,countdownLabel:'',chips:[],fases:[],notaEstrategica:'',documentText:CHINA_2029_TEXT,chinaRouteVersion:1};
+    return {id:'plano-rota-china',title:'ROTA PARA A CHINA 2029 — MISSÕES SEMANAIS',description:'',countdownStart:null,countdownTarget:null,countdownLabel:'',chips:[],fases:[],notaEstrategica:'',documentText:CHINA_WEEKLY_TEXT,chinaRouteVersion:2,weeklyRouteVersion:1,weeklyProgress:{}};
   }
   function freshDefaultState(){
     return {
@@ -226,11 +226,17 @@
       (s.agenda||[]).forEach(function(ev){ if(ev.detail===undefined) ev.detail = ''; });
       s.contentMigrationVersion=1;
     }
-    if(!s.chinaRouteVersion){
+    if((s.chinaRouteVersion||0)<2){
       var chinaIndex=s.planos.findIndex(function(p){return p.id==='plano-rota-china';});
-      if(chinaIndex!==-1){if(!s.planos[chinaIndex].chinaRouteVersion)s.chinaRoutePrevious=clone(s.planos[chinaIndex]);s.planos.splice(chinaIndex,1,china2029Plan());}
-      else s.planos.push(china2029Plan());
-      s.chinaRouteVersion=1;
+      if(chinaIndex!==-1){
+        var previous=s.planos[chinaIndex];
+        if(previous.chinaRouteVersion!==2){
+          if(!s.chinaRouteArchives)s.chinaRouteArchives=[];
+          s.chinaRouteArchives.push(clone(previous));
+          s.planos.splice(chinaIndex,1,china2029Plan());
+        }
+      }else s.planos.push(china2029Plan());
+      s.chinaRouteVersion=2;
     }
     s.planos.forEach(function(p){
       if(p.countdownTarget && !p.countdownStart){
@@ -368,6 +374,7 @@
   /* ---------------- tabs ---------------- */
   var views = { inicio:'view-inicio', linguas:'view-linguas', forma:'view-forma', trabalho:'view-trabalho', vida:'view-vida' };
   function goTab(tab){
+    if(weeklyRouteUI){weeklyRouteUI.capture();weeklyRouteUI.suspend();}
     Object.keys(views).forEach(function(k){
       document.getElementById(views[k]).classList.toggle('active', k===tab);
     });
@@ -2033,20 +2040,22 @@
       }).join('');
       return '<div class="overview-plano-block">' +
         '<span class="overview-plano-tag">'+escHtml(p.title)+'</span>' +
-        (p.documentText?renderPlanDocument(p.documentText,p):fasesHtml || '<p style="color:var(--ink-faint); font-size:12.5px;">Sem fases ou marcos ainda.</p>') +
+        (p.weeklyRouteVersion?'<button class="btn" type="button" data-open-weekly="'+escAttr(p.id)+'">'+escHtml(p.title)+'</button>':p.documentText?renderPlanDocument(p.documentText,p):fasesHtml || '<p style="color:var(--ink-faint); font-size:12.5px;">Sem fases ou marcos ainda.</p>') +
         '</div>';
     }).join('');
-    box.querySelectorAll('.overview-plano-block').forEach(function(block,index){var plan=state.planos[index];if(plan.documentText)bindPlanDocument(block,plan);});
+    box.querySelectorAll('.overview-plano-block').forEach(function(block,index){var plan=state.planos[index];if(plan.weeklyRouteVersion)block.querySelector('[data-open-weekly]').addEventListener('click',function(){openPlano(plan.id);});else if(plan.documentText)bindPlanDocument(block,plan);});
   }
   document.getElementById('btnPlanosOverview').addEventListener('click', function(){
     renderPlanosOverview();
     goVida('planos-overview');
   });
   function openPlano(id){
+    if(weeklyRouteUI)weeklyRouteUI.capture();
     openPlanoId = id;
     resetPlanoEditState();
     renderPlanoDetail();
     goVida('plano-detail');
+    if(currentPlano().weeklyRouteVersion){state.weeklyRouteTabId=id;saveState();}
   }
   document.getElementById('btnAddPlano').addEventListener('click', function(){
     var p = newPlano();
@@ -2134,11 +2143,19 @@
       input.closest('.route-task').classList.toggle('done',input.checked);saveState();update();
     });});update();
   }
+  var weeklyRouteUI=WeeklyRouteUI.create({
+    root:function(){return document.getElementById('planoHeaderBox');},
+    title:function(value,isMission){document.getElementById('planoDetailTitle').textContent=value;document.getElementById('btnDeletePlano').hidden=!!isMission;},
+    getPlan:currentPlano,save:saveState,toast:toast,
+    isActive:function(){return document.getElementById('view-vida').classList.contains('active') && vidaScreen==='plano-detail';}
+  });
   function renderPlanoDetail(){
     var p = currentPlano();
     if(!p) return;
     document.getElementById('planoDetailTitle').textContent = p.title;
+    document.getElementById('btnDeletePlano').hidden=false;
     ['planoCountdownBox','planoChipsBox','planoFasesBox','planoNoteBox'].forEach(function(id){document.getElementById(id).closest('section').hidden=!!p.documentText;});
+    if(p.weeklyRouteVersion){weeklyRouteUI.open(p);return;}
     if(p.documentText){var root=document.getElementById('planoHeaderBox');root.innerHTML=renderPlanDocument(p.documentText,p);bindPlanDocument(root,p);return;}
     renderPlanoHeader();
     renderPlanoCountdown();
@@ -3161,6 +3178,8 @@
     if(vidaBtn) vidaBtn.classList.toggle('has-today', (pendingShopping+pendentesOpen)>0 || (!!upcoming && daysUntil(upcoming.date)<=3));
   }
   function goVida(screen){
+    if(weeklyRouteUI && screen!=='plano-detail'){weeklyRouteUI.capture();weeklyRouteUI.suspend();}
+    if(screen!=='plano-detail' && state.weeklyRouteTabId){delete state.weeklyRouteTabId;saveState();}
     vidaScreen = screen;
     document.querySelectorAll('#view-vida .subview').forEach(function(el){
       el.classList.toggle('active', el.id === (screen==='hub' ? 'vida-hub' : 'vida-'+screen));
@@ -3169,10 +3188,10 @@
     window.scrollTo({ top:0, behavior:'instant' in window ? 'instant':'auto' });
   }
   document.querySelectorAll('#view-vida [data-vida-back]').forEach(function(btn){
-    btn.addEventListener('click', function(){ goVida(btn.getAttribute('data-vida-back') || 'hub'); });
+    btn.addEventListener('click', function(){if(btn.closest('#vida-plano-detail') && weeklyRouteUI.back())return;goVida(btn.getAttribute('data-vida-back') || 'hub'); });
   });
   // ao voltar à aba Vida a partir de outra aba, mostra sempre o hub primeiro
-  document.querySelector('.tabbtn[data-tab="vida"]').addEventListener('click', function(){ goVida('hub'); });
+  document.querySelector('.tabbtn[data-tab="vida"]').addEventListener('click', function(){var plan=state.planos.find(function(p){return p.id===state.weeklyRouteTabId && p.weeklyRouteVersion;});if(plan)openPlano(plan.id);else goVida('hub'); });
 
   /* Histórico: os registos antigos mantêm-se; novas marcações guardam os nomes. */
   var progressPeriod = 'mes', progressView = 'calendario';
@@ -3541,6 +3560,7 @@
         var data = JSON.parse(reader.result);
         var merged=Object.assign(freshDefaultState(),data);if(!Object.prototype.hasOwnProperty.call(data,'scheduleHistoryVersion'))merged.scheduleHistoryVersion=0;
         if(!Object.prototype.hasOwnProperty.call(data,'contentMigrationVersion') && Array.isArray(data.areas) && data.fitNotes && data.langNotes)merged.contentMigrationVersion=1;
+        if(weeklyRouteUI)weeklyRouteUI.suspend();
         state = migrateNotionImports(merged);
         saveState();
         applyTheme(state.theme);
@@ -3573,6 +3593,7 @@
     renderWorkStatic();
     renderVida();
     renderDashboard();
+    if(openPlanoId && currentPlano() && vidaScreen==='plano-detail')renderPlanoDetail();
   }
   // Os mesmos rótulos, foco e espaço de escrita em todos os editores.
   var fieldNames={title:'Título',name:'Nome',time:'Hora',area:'Área da vida',aif:'Tipo de compromisso',detail:'Detalhes',desc:'Descrição',body:'Texto',days:'Dias',tag:'Cor',date:'Data',grammarNote:'Notas de gramática',milestoneNote:'Notas do checkpoint',detalhe:'Detalhes',titulo:'Título',quando:'Quando',tipo:'Tipo'};
@@ -3646,6 +3667,8 @@
     if(confirmOverlay.classList.contains('open')){hideConfirm();return;}
     if(currentSheet){closeSheet();return;}
     var active=document.querySelector('.tabbtn.active').getAttribute('data-tab');
+    if(active==='vida' && vidaScreen==='plano-detail' && weeklyRouteUI.back())return;
+    if(active==='vida' && vidaScreen==='plano-detail' && currentPlano() && currentPlano().weeklyRouteVersion){goVida('planos');return;}
     if(active==='vida' && vidaScreen!=='hub'){goVida('hub');return;}
     if(active!=='inicio'){goTab('inicio');return;}
     if(window.ProtocoloNative)ProtocoloNative.exitApp();

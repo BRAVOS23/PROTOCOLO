@@ -4,7 +4,7 @@ O app é pessoal, offline e sem serviços pagos. Usa o checkout existente; não 
 
 ## Assinatura Android
 
-- A instalação atual chama-se **Protocolo**, versão 3.0, applicationId `app.protocolo.personal`. O namespace Java/recursos é `app.protocolo.android`.
+- A instalação atual chama-se **Protocolo**, linha 3.x, applicationId `app.protocolo.personal`. O namespace Java/recursos é `app.protocolo.android`.
 - Nunca geres outra chave, alteres o applicationId, mudes a impressão digital de `android/signing-certificate.sha256` ou peças para desinstalar o app para contornar um erro. Uma nova identidade exige instrução explícita do utilizador.
 - A chave privada pertence ao utilizador. No GitHub, fica exclusivamente nos Actions Secrets `ANDROID_KEYSTORE_BASE64` e `ANDROID_KEYSTORE_PASSWORD`. Localmente, usa `PROTOCOLO_SIGNING_DIR` ou `/workspace/.protocolo-personal-signing`.
 - Não publiques, imprimas ou incluas chaves/senhas nos assets, commits, artefactos ou logs. O backup privado deve ficar fora do checkout.
@@ -23,6 +23,7 @@ A mudança para `app.protocolo.personal` e uma nova assinatura foi autorizada ex
 ## Validação e dados
 
 - Lógica: `node --test tests/*.test.cjs`, `python3 android/tools/test_logic.py`, `python3 android/tests/test_release_tools.py`.
+- Para alterações na rota semanal, executa `node tests/browser/weekly-route.cjs` com o servidor local, Playwright e Chromium disponíveis. O teste usa um perfil isolado e dados sintéticos.
 - Verifica alterações de interface num perfil isolado de browser. Preserva o localStorage e os backups do utilizador.
 - Não confundas compilação ou testes com ponte nativa simulada com uma validação de notificações/widget num Android real.
 - O site é estático. Para testes locais usa `python3 -m http.server 8080 --bind 127.0.0.1`; não exponhas links de preview localhost.

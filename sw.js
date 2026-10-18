@@ -1,4 +1,4 @@
-const CACHE = 'protocolo-v37';
+const CACHE = 'protocolo-v38';
 const SHELL = [
   './',
   './index.html',
@@ -7,6 +7,7 @@ const SHELL = [
   './js/native-platform.js',
   './js/data.js',
   './js/app.js',
+  './js/weekly-route.js',
   './manifest.webmanifest',
   './icons/icon-192.png',
   './icons/icon-512.png',
