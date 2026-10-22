@@ -34,7 +34,8 @@ import java.util.List;
 
 public final class MainActivity extends Activity {
     private static final String HOST = "protocolo.local";
-    private static final int IMPORT = 201, EXPORT = 202, NOTIFICATIONS = 203;
+    private static final int IMPORT = 201, EXPORT = 202, NOTIFICATIONS = 203, NOTEBOOK = 204;
+    private final java.util.concurrent.ExecutorService notebookWriter = java.util.concurrent.Executors.newSingleThreadExecutor();
     private WebView web;
     private FrameLayout container;
     private boolean pageReady;
@@ -178,6 +179,16 @@ public final class MainActivity extends Activity {
     }
     @Override protected void onActivityResult(int request, int result, Intent data) {
         super.onActivityResult(request, result, data);
+        if (request == NOTEBOOK) {
+            if (result == RESULT_OK && data != null && data.getData() != null) {
+                try {
+                    Uri uri = data.getData();
+                    getContentResolver().takePersistableUriPermission(uri, data.getFlags() & (Intent.FLAG_GRANT_READ_URI_PERMISSION | Intent.FLAG_GRANT_WRITE_URI_PERMISSION));
+                    getPreferences(0).edit().putString("notebookFolder", uri.toString()).apply();
+                    notebookSignal("Pasta ligada. As cópias ficam nesta pasta.", true);
+                } catch (Exception e) { notebookSignal("Não foi possível ligar a pasta. Escolhe novamente.", false); }
+            } else notebookSignal("Seleção de pasta cancelada.", false);
+        }
         if (request == IMPORT && fileCallback != null) {
             fileCallback.onReceiveValue(result == RESULT_OK && data != null && data.getData() != null ? new Uri[]{data.getData()} : null);
             fileCallback = null;
@@ -193,6 +204,40 @@ public final class MainActivity extends Activity {
             pendingBackup = null;
             new java.io.File(getCacheDir(), "pending-backup.json").delete();
         }
+    }
+
+    private void notebookSignal(String message, boolean selected) {
+        runOnUiThread(() -> {
+            if (web != null) web.evaluateJavascript("window.dispatchEvent(new CustomEvent('protocolo-notebook',{detail:{message:"
+                + JSONObject.quote(message) + ",selected:" + selected + "}}))", null);
+        });
+    }
+    private void writeNotebookFiles(String json) {
+        String folder = getPreferences(0).getString("notebookFolder", null);
+        if (folder == null) { notebookSignal("Escolhe uma pasta para guardar as cópias.", false); return; }
+        try {
+            Uri tree = Uri.parse(folder);
+            String rootId = android.provider.DocumentsContract.getTreeDocumentId(tree);
+            Uri parent = android.provider.DocumentsContract.buildDocumentUriUsingTree(tree, rootId);
+            java.util.Map<String,Uri> existing = new java.util.HashMap<>();
+            Uri children = android.provider.DocumentsContract.buildChildDocumentsUriUsingTree(tree, rootId);
+            try (android.database.Cursor cursor = getContentResolver().query(children, new String[]{"document_id", "_display_name"}, null, null, null)) {
+                if (cursor != null) while (cursor.moveToNext()) existing.put(cursor.getString(1), android.provider.DocumentsContract.buildDocumentUriUsingTree(tree,cursor.getString(0)));
+            }
+            JSONArray files = new JSONArray(json);
+            for (int i=0; i<files.length(); i++) {
+                JSONObject f=files.getJSONObject(i); String name=f.getString("name");
+                if (!name.matches("protocolo-backup\\.json|diario-[0-9]{4}-[0-9]{2}-[0-9]{2}\\.(md|svg)")) continue;
+                Uri target=existing.get(name);
+                if (target==null) target=android.provider.DocumentsContract.createDocument(getContentResolver(), parent, f.getString("mime"), name);
+                if (target==null) throw new java.io.IOException("Create failed");
+                try (OutputStream out=getContentResolver().openOutputStream(target,"wt")) {
+                    if (out==null) throw new java.io.IOException("Write failed");
+                    out.write(f.getString("text").getBytes(StandardCharsets.UTF_8));
+                }
+            }
+            notebookSignal("Cópia atualizada na pasta escolhida.", false);
+        } catch (Exception e) { notebookSignal("Não foi possível atualizar a pasta. Os dados continuam no app; verifica o acesso ou escolhe outra pasta.", false); }
     }
 
     public final class NativeBridge {
@@ -279,6 +324,17 @@ public final class MainActivity extends Activity {
                     signal("widget", requested, requested ? "Confirma a adição do widget no Android." : "Adiciona Protocolo pelo menu Widgets da tela inicial.");
                 }catch(RuntimeException e){signal("widget",false,"Adiciona Protocolo pelo menu Widgets da tela inicial.");}
             });
+        }
+        @JavascriptInterface public void chooseNotebookFolder() {
+            runOnUiThread(() -> {
+                try { startActivityForResult(new Intent(Intent.ACTION_OPEN_DOCUMENT_TREE)
+                    .addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION | Intent.FLAG_GRANT_WRITE_URI_PERMISSION | Intent.FLAG_GRANT_PERSISTABLE_URI_PERMISSION), NOTEBOOK); }
+                catch (Exception e) { notebookSignal("Não foi possível abrir o seletor de pastas.", false); }
+            });
+        }
+        @JavascriptInterface public void writeNotebook(String json) {
+            if (json == null || json.length() > 20000000) return;
+            notebookWriter.execute(() -> writeNotebookFiles(json));
         }
         @JavascriptInterface public void exportBackup(String json) {
             if (json == null || json.length() > 10000000) return;

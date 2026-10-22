@@ -94,3 +94,11 @@ docs/ANDROID_RELEASES.md  configuração e atualização da instalação pessoal
 ## Créditos
 
 Conteúdo adaptado dos planos pessoais "Rota para B1" (revisão do plano original de @itsteacherlais) e "Judo, Tiros e Emagrecimento".
+
+### Caderno do dia e pasta pessoal
+
+Em **Vida → Caderno do dia**, cada data tem texto e uma folha de escrita à mão com caneta ou dedo, cores, espessura e desfazer. A escrita é guardada como traços vetoriais no estado do app e incluída na exportação/importação JSON. Não há reconhecimento de escrita nem sincronização na nuvem.
+
+No APK, **Os meus ficheiros → Escolher pasta** usa o seletor de pastas do Android e conserva a autorização. Escolhe uma pasta dedicada, por exemplo `Documentos/Protocolo`. Após alterações no caderno, o app atualiza nesta pasta `diario-AAAA-MM-DD.md`, os desenhos `.svg` e `protocolo-backup.json`. **Atualizar cópia** guarda também o estado atual das outras partes do app. Estes nomes são substituídos nas atualizações; não uses a pasta para ficheiros diferentes com os mesmos nomes. As cópias não são importadas automaticamente quando editadas externamente. Uma falha de acesso é apresentada sem apagar os dados internos. No site, usa a descarga da página ou a exportação geral.
+
+Verificação móvel do caderno: com o servidor local em 8080, `node tests/browser/journal.cjs`.

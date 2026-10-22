@@ -305,11 +305,12 @@
         <h1 style="font-size:24px;">Vida <em style="font-style:normal;color:var(--accent-strong);">fora da rotina</em></h1>
       </section>
       <section class="blk">
-        <div class="hub-cards" id="vidaHubCards"></div>
+        <button class="btn" id="openJournal" type="button" style="width:100%;margin-bottom:16px">✎ Caderno do dia</button><div class="hub-cards" id="vidaHubCards"></div>
       </section>
       <footer class="page-footer">Protocolo — o resto da vida que sustenta a rotina.</footer>
     </div>
 
+    <div class="subview" id="vida-caderno"><div class="detail-head"><button class="backbtn" data-vida-back type="button" aria-label="Voltar">‹</button><h2>Caderno do dia</h2></div><section class="blk" id="journalRoot"></section></div>
     <!-- Compras -->
     <div class="subview" id="vida-compras">
       <div class="detail-head"><button class="backbtn" data-vida-back type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 6-6 6 6 6"></path></svg></button><h2>Compras</h2></div>
@@ -509,11 +510,11 @@
   </div>
   <section id="androidDownload" class="native-features">
     <div><span class="kicker">Para Android</span><h4>Atividades na tela inicial</h4><p>A versão instalável mostra as tarefas de hoje no widget e avisa das atividades com horário, sem conta ou mensalidade.</p></div>
-    <a class="btn" href="https://bravos23.github.io/PROTOCOLO/downloads/Protocolo-Pessoal.apk?v=3.6" download>Baixar Protocolo 3.6 para Android</a>
-    <p class="native-note">Versão 3.6 com os treinos do dia. Se já usas o Protocolo 3.x, instala por cima, sem desinstalar: os dados ficam guardados. Se vens de uma instalação anterior à 3.0, mantém o app antigo e transfere os dados por Definições → Exportar dados / Importar dados.</p>
+    <a class="btn" href="https://bravos23.github.io/PROTOCOLO/downloads/Protocolo-Pessoal.apk?v=3.7" download>Baixar Protocolo 3.6 para Android</a>
+    <p class="native-note">Versão 3.7 com caderno diário, escrita à mão e pasta acessível. Se já usas o Protocolo 3.x, instala por cima, sem desinstalar: os dados ficam guardados. Se vens de uma instalação anterior à 3.0, mantém o app antigo e transfere os dados por Definições → Exportar dados / Importar dados.</p>
   </section>
   <section id="nativeFeatures" class="native-features" hidden>
-    <div class="native-migration"><span class="kicker">Protocolo</span><h4>Protocolo 3.6 · traz os teus dados</h4><p>As atualizações do Protocolo 3.x mantêm os teus dados nesta instalação. Se vens de um app anterior à versão 3.0, exporta os dados no antigo e importa o ficheiro aqui em baixo. Confere os dados antes de remover o antigo. Numa primeira instalação, ativa os lembretes e adiciona o widget neste app.</p></div>
+    <div class="native-migration"><span class="kicker">Protocolo</span><h4>Protocolo 3.7 · traz os teus dados</h4><p>As atualizações do Protocolo 3.x mantêm os teus dados nesta instalação. Se vens de um app anterior à versão 3.0, exporta os dados no antigo e importa o ficheiro aqui em baixo. Confere os dados antes de remover o antigo. Numa primeira instalação, ativa os lembretes e adiciona o widget neste app.</p></div>
     <div><span class="kicker">Neste celular</span><h4>Lembretes das atividades e agenda</h4><p id="nativeReminderStatus" role="status">Os lembretes estão desativados.</p></div>
     <label class="field-label"><span>Avisar antes do evento</span><select id="nativeLeadMinutes"><option value="10">10 minutos antes</option><option value="30" selected>30 minutos antes</option><option value="60">1 hora antes</option><option value="1440">1 dia antes</option></select></label>
     <p class="native-note">As atividades do Início usam a hora que definiste (ex.: 05h40). Define uma hora para receber aviso; as atividades sem hora aparecem no widget. Eventos da agenda sem hora continuam considerados às 09:00.</p>
@@ -635,6 +636,7 @@
 <script src="js/data.js"></script>
 <script src="js/native-platform.js"></script>
 <script src="js/weekly-route.js"></script>
+<script src="js/journal.js"></script>
 <script src="js/app.js"></script>
 </body>
 </html>

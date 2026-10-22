@@ -282,7 +282,7 @@
     }catch(e){ return migrateNotionImports(freshDefaultState()); }
   }
   function saveState(){
-    try{ localStorage.setItem(STORE_KEY, JSON.stringify(state)); if(window.NativePlatform){NativePlatform.syncAgenda(state.agenda);NativePlatform.syncActivities(state.activities,state.activityDone);} }catch(e){}
+    try{ localStorage.setItem(STORE_KEY, JSON.stringify(state)); if(window.NativePlatform){NativePlatform.syncAgenda(state.agenda);NativePlatform.syncActivities(state.activities,state.activityDone);} return true; }catch(e){return false;}
   }
   function clone(o){ return JSON.parse(JSON.stringify(o)); }
 
@@ -3177,10 +3177,13 @@
     var vidaBtn = document.querySelector('.tabbtn[data-tab="vida"]');
     if(vidaBtn) vidaBtn.classList.toggle('has-today', (pendingShopping+pendentesOpen)>0 || (!!upcoming && daysUntil(upcoming.date)<=3));
   }
+  var journalUI=JournalUI.create({root:document.getElementById('journalRoot'),getState:function(){return state;},save:saveState,toast:toast});
+  document.getElementById('openJournal').addEventListener('click',function(){goVida('caderno');});
   function goVida(screen){
     if(weeklyRouteUI && screen!=='plano-detail'){weeklyRouteUI.capture();weeklyRouteUI.suspend();}
     if(screen!=='plano-detail' && state.weeklyRouteTabId){delete state.weeklyRouteTabId;saveState();}
     vidaScreen = screen;
+    if(screen==='caderno')journalUI.open();
     document.querySelectorAll('#view-vida .subview').forEach(function(el){
       el.classList.toggle('active', el.id === (screen==='hub' ? 'vida-hub' : 'vida-'+screen));
     });
