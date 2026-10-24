@@ -1,11 +1,11 @@
 <resources>
     <style name="AppTheme" parent="android:style/Theme.Material.Light.NoActionBar">
         <item name="android:fontFamily">sans</item>
-        <item name="android:colorAccent">#2458E6</item>
-        <item name="android:windowLightStatusBar">true</item>
-        <item name="android:windowLightNavigationBar">true</item>
+        <item name="android:colorAccent">#7152D8</item>
+        <item name="android:windowLightStatusBar">false</item>
+        <item name="android:windowLightNavigationBar">false</item>
         <item name="android:windowActionModeOverlay">true</item>
-        <item name="android:windowBackground">#F3F6FF</item>
+        <item name="android:windowBackground">#101010</item>
     </style>
     <string name="widget_description">As atividades de hoje do Início, com horários e tarefas concluídas.</string>
 </resources>

@@ -1,0 +1,7 @@
+/* Move existing dashboard nodes, keeping their IDs, state and event handlers. */
+(function(){'use strict';
+ var home=document.getElementById('view-inicio'),today=document.getElementById('dashToday'),media=matchMedia('(min-width:1100px)'),cycle=home.querySelector(':scope > .aif-block'),cycleAnchor=document.createComment('cycle-position'),nodes=['progressOverview','dashDestinations','dashAgendaBlk','dashPendentesBlk'].map(function(id){return document.getElementById(id);});nodes.push(home.querySelector('.dashboard-insights'));var anchors=nodes.map(function(n){var a=document.createComment('dashboard-position');n.before(a);return a;}),layout=null;
+ cycle.before(cycleAnchor);
+ function arrange(){var focused=document.activeElement;if(media.matches&&!layout){layout=document.createElement('div');layout.className='desktop-dashboard';today.before(layout);layout.appendChild(today);home.querySelector('.hero').appendChild(cycle);var aside=document.createElement('aside');aside.className='dashboard-side';aside.setAttribute('aria-label','Progresso e próximos compromissos');layout.appendChild(aside);nodes.forEach(function(n){aside.appendChild(n);});}else if(!media.matches&&layout){layout.before(today);cycleAnchor.after(cycle);nodes.forEach(function(n,i){anchors[i].after(n);});layout.remove();layout=null;}if(focused&&focused.isConnected&&focused!==document.body)focused.focus({preventScroll:true});}
+ media.addEventListener('change',arrange);arrange();
+})();

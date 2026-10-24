@@ -118,3 +118,11 @@ Teste móvel: `node tests/browser/sections.cjs`.
 `sectionPlans` guarda tarefas que pertencem apenas a estas abas, sem as inserir no Início. Na primeira abertura desta versão, os planos originais do código (FIT_TRAINING e tarefas DROP) são recuperados quando não existe uma atividade com o mesmo título e dia na rotina; tarefas já existentes não são substituídas. A inicialização acontece uma só vez: edições e eliminações posteriores são respeitadas, inclusive após exportar/importar. Trabalho apresenta a semana; Forma mostra apenas hoje. Ambos permitem adicionar, editar dia/hora/detalhes, apagar e marcar conclusões, guardadas por data e ID. Os treinos próprios contam para o indicador de treino, mas não para os princípios das atividades do Início. Tudo é incluído no backup automático. Os dados originais não permitem reconstruir edições pessoais que só existam numa exportação antiga.
 
 Teste: `node tests/browser/standalone-plans.cjs`.
+
+### Interface preto e grafite · PC, tablet e celular
+
+O tema escuro usa superfícies neutras pretas e grafite, mantendo violeta e turquesa nos destaques. A atualização troca a preferência antiga Auto para o novo tema escuro uma única vez; uma escolha explícita de Claro é respeitada. Podes voltar a Claro/Auto/Escuro nas Definições.
+
+A partir de 768 px, a navegação fica numa barra lateral compacta. A partir de 1100 px, mostra nomes, atalhos de Cadernos e Definições e um Início em duas colunas. Abaixo de 768 px, mantém a navegação inferior. O dashboard reutiliza os mesmos elementos e registos ao redimensionar; não duplica tarefas nem inventa valores para os gráficos. Os atalhos de cadernos e Rota para a China usam os dados atuais. O PWA permite orientação vertical e horizontal, e o APK mantém o fundo nativo coerente com o tema escolhido.
+
+Verificação responsiva: `node tests/browser/adaptive-layout.cjs` testa os intervalos de 360–1440 px, todas as abas, a navegação lateral, conservação de dados/eventos ao redimensionar, cadernos em tela cheia e a preferência de tema claro.

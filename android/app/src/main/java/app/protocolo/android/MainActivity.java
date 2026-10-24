@@ -47,7 +47,7 @@ public final class MainActivity extends Activity {
         ReminderController.createChannel(this);
         getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE);
         boolean dark = (getResources().getConfiguration().uiMode & Configuration.UI_MODE_NIGHT_MASK) == Configuration.UI_MODE_NIGHT_YES;
-        int background = dark ? Color.rgb(12, 20, 39) : Color.rgb(243, 246, 255);
+        int background = getPreferences(0).getInt("appearanceBackground", Color.rgb(16, 16, 16));
         getWindow().setStatusBarColor(background);
         getWindow().setNavigationBarColor(background);
         FrameLayout root = new FrameLayout(this);container=root;
@@ -252,6 +252,7 @@ public final class MainActivity extends Activity {
             runOnUiThread(() -> {
                 if(web==null)return;
                 int background=Color.parseColor(color);
+                getPreferences(0).edit().putInt("appearanceBackground",background).apply();
                 container.setBackgroundColor(background);web.setBackgroundColor(background);
                 getWindow().setStatusBarColor(background);getWindow().setNavigationBarColor(background);
                 if(Build.VERSION.SDK_INT>=30 && getWindow().getInsetsController()!=null){
