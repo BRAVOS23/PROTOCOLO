@@ -3611,7 +3611,7 @@
       button.setAttribute('aria-label',button.classList.contains('danger')?'Apagar':'Editar');
     });
     root.querySelectorAll('input:not([type="hidden"]):not([type="checkbox"]):not([type="radio"]):not([type="file"]),select,textarea').forEach(function(field){
-      if(field.closest('.field-label') || field.closest('label')) return;
+      if(field.closest('.notebook-root') || field.closest('.field-label') || field.closest('label')) return;
       var key=field.dataset.f||field.dataset.rf;
       var name=field.getAttribute('aria-label') || fieldNames[key] || field.getAttribute('placeholder') || (field.type==='date'?'Data':field.tagName==='SELECT'?'Selecionar opção':'Nome');
       if(field.id==='estudoCustomStartInput') name='De';
@@ -3670,6 +3670,7 @@
     if(confirmOverlay.classList.contains('open')){hideConfirm();return;}
     if(currentSheet){closeSheet();return;}
     var active=document.querySelector('.tabbtn.active').getAttribute('data-tab');
+    if(active==='vida' && vidaScreen==='caderno' && journalUI.back())return;
     if(active==='vida' && vidaScreen==='plano-detail' && weeklyRouteUI.back())return;
     if(active==='vida' && vidaScreen==='plano-detail' && currentPlano() && currentPlano().weeklyRouteVersion){goVida('planos');return;}
     if(active==='vida' && vidaScreen!=='hub'){goVida('hub');return;}

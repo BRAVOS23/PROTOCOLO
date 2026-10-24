@@ -227,7 +227,7 @@ public final class MainActivity extends Activity {
             JSONArray files = new JSONArray(json);
             for (int i=0; i<files.length(); i++) {
                 JSONObject f=files.getJSONObject(i); String name=f.getString("name");
-                if (!name.matches("protocolo-backup\\.json|diario-[0-9]{4}-[0-9]{2}-[0-9]{2}\\.(md|svg)")) continue;
+                if (!name.matches("protocolo-backup\\.json|diario-[0-9]{4}-[0-9]{2}-[0-9]{2}\\.(md|svg)|caderno-[a-zA-Z0-9-]+\\.(md|svg)")) continue;
                 Uri target=existing.get(name);
                 if (target==null) target=android.provider.DocumentsContract.createDocument(getContentResolver(), parent, f.getString("mime"), name);
                 if (target==null) throw new java.io.IOException("Create failed");
