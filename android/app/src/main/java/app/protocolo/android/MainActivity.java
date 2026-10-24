@@ -184,7 +184,7 @@ public final class MainActivity extends Activity {
                 try {
                     Uri uri = data.getData();
                     getContentResolver().takePersistableUriPermission(uri, data.getFlags() & (Intent.FLAG_GRANT_READ_URI_PERMISSION | Intent.FLAG_GRANT_WRITE_URI_PERMISSION));
-                    getPreferences(0).edit().putString("notebookFolder", uri.toString()).apply();
+                    getPreferences(0).edit().putString("notebookFolder", uri.toString()).remove("dataFolderError").remove("dataFolderLastSaved").apply();
                     notebookSignal("Pasta ligada. As cópias ficam nesta pasta.", true);
                 } catch (Exception e) { notebookSignal("Não foi possível ligar a pasta. Escolhe novamente.", false); }
             } else notebookSignal("Seleção de pasta cancelada.", false);
@@ -206,10 +206,11 @@ public final class MainActivity extends Activity {
         }
     }
 
-    private void notebookSignal(String message, boolean selected) {
+    private void notebookSignal(String message, boolean selected) { notebookSignal(message, selected, true); }
+    private void notebookSignal(String message, boolean selected, boolean ok) {
         runOnUiThread(() -> {
             if (web != null) web.evaluateJavascript("window.dispatchEvent(new CustomEvent('protocolo-notebook',{detail:{message:"
-                + JSONObject.quote(message) + ",selected:" + selected + "}}))", null);
+                + JSONObject.quote(message) + ",selected:" + selected + ",ok:" + ok + "}}))", null);
         });
     }
     private void writeNotebookFiles(String json) {
@@ -236,8 +237,13 @@ public final class MainActivity extends Activity {
                     out.write(f.getString("text").getBytes(StandardCharsets.UTF_8));
                 }
             }
+            getPreferences(0).edit().putLong("dataFolderLastSaved", System.currentTimeMillis()).remove("dataFolderError").apply();
             notebookSignal("Cópia atualizada na pasta escolhida.", false);
-        } catch (Exception e) { notebookSignal("Não foi possível atualizar a pasta. Os dados continuam no app; verifica o acesso ou escolhe outra pasta.", false); }
+        } catch (Exception e) {
+            String message="Não foi possível atualizar a pasta. Os dados continuam no app; verifica o acesso ou escolhe outra pasta.";
+            getPreferences(0).edit().putString("dataFolderError", message).apply();
+            notebookSignal(message, false, false);
+        }
     }
 
     public final class NativeBridge {
@@ -325,6 +331,31 @@ public final class MainActivity extends Activity {
                 }catch(RuntimeException e){signal("widget",false,"Adiciona Protocolo pelo menu Widgets da tela inicial.");}
             });
         }
+        @JavascriptInterface public String getDataFolderStatus() {
+            try {
+                String folder=getPreferences(0).getString("notebookFolder", null), name="";
+                boolean configured=false;
+                if (folder!=null) {
+                    Uri tree=Uri.parse(folder);
+                    for (android.content.UriPermission permission:getContentResolver().getPersistedUriPermissions()) {
+                        if (permission.getUri().equals(tree) && permission.isReadPermission() && permission.isWritePermission()) configured=true;
+                    }
+                    if (configured) {
+                        Uri document=android.provider.DocumentsContract.buildDocumentUriUsingTree(tree,android.provider.DocumentsContract.getTreeDocumentId(tree));
+                        try (android.database.Cursor cursor=getContentResolver().query(document,new String[]{"_display_name"},null,null,null)) {
+                            if (cursor!=null && cursor.moveToFirst()) name=cursor.getString(0);
+                        } catch (Exception e) { configured=false; }
+                    }
+                }
+                return new JSONObject().put("configured",configured).put("name",name)
+                    .put("dismissed",getPreferences(0).getBoolean("dataFolderDismissed",false))
+                    .put("lastSaved",getPreferences(0).getLong("dataFolderLastSaved",0))
+                    .put("error",getPreferences(0).getString("dataFolderError","")).toString();
+            } catch (Exception e) { return "{}"; }
+        }
+        @JavascriptInterface public void deferDataFolderPrompt() {
+            getPreferences(0).edit().putBoolean("dataFolderDismissed",true).apply();
+        }
         @JavascriptInterface public void chooseNotebookFolder() {
             runOnUiThread(() -> {
                 try { startActivityForResult(new Intent(Intent.ACTION_OPEN_DOCUMENT_TREE)
@@ -333,7 +364,9 @@ public final class MainActivity extends Activity {
             });
         }
         @JavascriptInterface public void writeNotebook(String json) {
-            if (json == null || json.length() > 20000000) return;
+            if (json == null || json.length() > 20000000) {
+                notebookSignal("Cópia demasiado grande para esta operação. Usa Exportar dados.", false, false); return;
+            }
             notebookWriter.execute(() -> writeNotebookFiles(json));
         }
         @JavascriptInterface public void exportBackup(String json) {

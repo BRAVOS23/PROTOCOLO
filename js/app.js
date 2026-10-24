@@ -282,7 +282,7 @@
     }catch(e){ return migrateNotionImports(freshDefaultState()); }
   }
   function saveState(){
-    try{ localStorage.setItem(STORE_KEY, JSON.stringify(state)); if(window.NativePlatform){NativePlatform.syncAgenda(state.agenda);NativePlatform.syncActivities(state.activities,state.activityDone);} return true; }catch(e){return false;}
+    try{ localStorage.setItem(STORE_KEY, JSON.stringify(state)); if(window.NativePlatform){NativePlatform.syncAgenda(state.agenda);NativePlatform.syncActivities(state.activities,state.activityDone);} if(window.DataFolder)DataFolder.schedule(state); return true; }catch(e){return false;}
   }
   function clone(o){ return JSON.parse(JSON.stringify(o)); }
 
@@ -3667,6 +3667,7 @@
     if(id && state.agenda.some(function(item){return item.id===id;}))openItemDetail('agenda',id);
   });
   window.addEventListener('protocolo-native-back',function(){
+    if(window.DataFolder && DataFolder.back())return;
     if(confirmOverlay.classList.contains('open')){hideConfirm();return;}
     if(currentSheet){closeSheet();return;}
     var active=document.querySelector('.tabbtn.active').getAttribute('data-tab');
