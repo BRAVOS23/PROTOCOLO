@@ -227,15 +227,7 @@
         <div><span class="kicker" id="trainingDayDate">Hoje</span><h2 id="trainingDayTitle">Treinos de hoje</h2></div>
         <span class="progress-chip" id="trainChip">0/0 hoje</span>
       </div>
-      <div id="ownTraining"></div><details id="trainingAreas" class="training-areas"></details><div id="trainingActivities"></div>
-      <p id="trainingEmpty" class="lead" hidden>Sem treinos próprios ou da rotina para hoje. Podes adicionar um treino nesta aba.</p>
-      <div class="tbl-scroll">
-        <table class="week">
-          <thead><tr><th>Feito</th><th>Dia</th><th>Hora</th><th>Treino</th><th>Foco</th></tr></thead>
-          <tbody id="fitTraining"></tbody>
-        </table>
-      </div>
-      <p class="lead" style="margin-top:6px;font-size:12px;color:var(--ink-faint);">Marca o círculo quando terminares. Toca numa linha para editar hora, treino ou foco.</p>
+      <div id="ownTraining"></div>
       <div class="blk-head" style="margin-top:22px;">
         <div><span class="kicker">Como treinar</span><h2>Protocolos</h2></div>
         <button class="iconbtn" id="btnAddProtocolo" aria-label="Novo protocolo" type="button">
@@ -284,14 +276,13 @@
     <section class="blk" style="padding-top:20px;">
       <span class="kicker">Negócio</span>
       <h1 style="font-size:24px;">Tarefas centrais <em style="font-style:normal;color:var(--accent-strong);">DROP</em></h1>
-      <p class="lead" style="margin-top:8px;">O teu plano semanal de trabalho e as atividades associadas à rotina.</p>
+      <p class="lead" style="margin-top:8px;">O trabalho de hoje, com acesso ao plano de toda a semana.</p>
     </section>
     <section class="blk">
       <div class="blk-head">
-        <div><span class="kicker">Semana</span><h2>Foco por dia</h2></div>
+        <div><span class="kicker">Organização</span><h2>Plano de trabalho</h2></div>
       </div>
-      <div id="ownWork"></div><details id="workAreas" class="training-areas"></details><div id="workActivities"></div><p id="workEmpty" class="lead" hidden>Sem tarefas neste plano ou associadas à rotina. Podes adicionar tarefas nesta aba.</p><div id="workList"></div>
-      <p class="lead" style="margin-top:6px;font-size:12px;color:var(--ink-faint);">Toca numa linha para editar a tarefa ou o detalhe.</p>
+      <div id="ownWork"></div>
     </section>
     <footer class="page-footer">Protocolo — DROP, o negócio que financia o rumo.</footer>
   </section>
@@ -514,8 +505,8 @@
   </div>
   <section id="androidDownload" class="native-features">
     <div><span class="kicker">Para Android</span><h4>Atividades na tela inicial</h4><p>A versão instalável mostra as tarefas de hoje no widget e avisa das atividades com horário, sem conta ou mensalidade.</p></div>
-    <a class="btn" href="https://bravos23.github.io/PROTOCOLO/downloads/Protocolo-Pessoal.apk?v=3.13" download>Baixar Protocolo 3.13 para Android</a>
-    <p class="native-note">Versão 3.13 com visual preto e grafite e interface adaptada a PC e tablet. Se já usas o Protocolo 3.x, instala por cima, sem desinstalar: os dados ficam guardados. Se vens de uma instalação anterior à 3.0, mantém o app antigo e transfere os dados por Definições → Exportar dados / Importar dados.</p>
+    <a class="btn" href="https://bravos23.github.io/PROTOCOLO/downloads/Protocolo-Pessoal.apk?v=3.14" download>Baixar Protocolo 3.14 para Android</a>
+    <p class="native-note">Versão 3.14 com planos do dia e gestão semanal de Trabalho e Treinos. Se já usas o Protocolo 3.x, instala por cima, sem desinstalar: os dados ficam guardados. Se vens de uma instalação anterior à 3.0, mantém o app antigo e transfere os dados por Definições → Exportar dados / Importar dados.</p>
   </section>
   <section id="dataFolderSection" class="data-folder-card" hidden>
     <span class="kicker">Armazenamento no celular</span><h4>Pasta dos meus dados</h4>
@@ -526,7 +517,7 @@
     <small>Podes criar uma pasta Protocolo em Documentos. O app mantém os dados internos para funcionar offline. Para recuperar uma cópia, usa Importar dados e escolhe protocolo-backup.json. Mudar de pasta não importa nem apaga os ficheiros da anterior.</small>
   </section>
   <section id="nativeFeatures" class="native-features" hidden>
-    <div class="native-migration"><span class="kicker">Protocolo</span><h4>Protocolo 3.13 · traz os teus dados</h4><p>As atualizações do Protocolo 3.x mantêm os teus dados nesta instalação. Se vens de um app anterior à versão 3.0, exporta os dados no antigo e importa o ficheiro aqui em baixo. Confere os dados antes de remover o antigo. Numa primeira instalação, ativa os lembretes e adiciona o widget neste app.</p></div>
+    <div class="native-migration"><span class="kicker">Protocolo</span><h4>Protocolo 3.14 · traz os teus dados</h4><p>As atualizações do Protocolo 3.x mantêm os teus dados nesta instalação. Se vens de um app anterior à versão 3.0, exporta os dados no antigo e importa o ficheiro aqui em baixo. Confere os dados antes de remover o antigo. Numa primeira instalação, ativa os lembretes e adiciona o widget neste app.</p></div>
     <div><span class="kicker">Neste celular</span><h4>Lembretes das atividades e agenda</h4><p id="nativeReminderStatus" role="status">Os lembretes estão desativados.</p></div>
     <label class="field-label"><span>Avisar antes do evento</span><select id="nativeLeadMinutes"><option value="10">10 minutos antes</option><option value="30" selected>30 minutos antes</option><option value="60">1 hora antes</option><option value="1440">1 dia antes</option></select></label>
     <p class="native-note">As atividades do Início usam a hora que definiste (ex.: 05h40). Define uma hora para receber aviso; as atividades sem hora aparecem no widget. Eventos da agenda sem hora continuam considerados às 09:00.</p>

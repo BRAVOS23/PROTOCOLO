@@ -377,8 +377,8 @@
   /* ---------------- tabs ---------------- */
   var views = { inicio:'view-inicio', linguas:'view-linguas', forma:'view-forma', trabalho:'view-trabalho', vida:'view-vida' };
   function goTab(tab){
-    if(tab==='forma')renderFitStatic();
-    if(tab==='trabalho')renderWorkStatic();
+    if(tab==='forma'){sectionPlansUI.reset('training');renderFitStatic();}
+    if(tab==='trabalho'){sectionPlansUI.reset('work');renderWorkStatic();}
     if(weeklyRouteUI){weeklyRouteUI.capture();weeklyRouteUI.suspend();}
     Object.keys(views).forEach(function(k){
       document.getElementById(views[k]).classList.toggle('active', k===tab);
@@ -718,59 +718,17 @@
 
   /* ================= FORMA ================= */
   var openFitRowDay = null;
-  function renderTrainingAreas(){
-    var box=document.getElementById('trainingAreas'),wasOpen=box.open;
-    box.innerHTML='<summary>Escolher áreas de treino</summary><p>As atividades destas áreas aparecem aqui e contam para o progresso de Forma.</p><div class="training-area-options">'+state.areas.map(function(area){
-      return '<label class="training-area-option"><input type="checkbox" data-training-area="'+escAttr(area.id)+'"'+(ProtocolLogic.isTrainingArea(area)?' checked':'')+'><span class="area-dot" style="background:'+escAttr(area.color)+'"></span><span>'+escHtml(area.label)+'</span></label>';
-    }).join('')+'</div>';
-    box.open=wasOpen;
-    renderSectionActivityPicker('trainingActivities','training');
-    box.querySelectorAll('[data-training-area]').forEach(function(input){input.addEventListener('change',function(){
-      state.areas.find(function(area){return area.id===input.dataset.trainingArea;}).training=input.checked;
-      recomputeDerived(TODAY_ISO,TODAY_WEEKDAY);saveState();renderFitStatic();renderDashboard();
-    });});
-  }
   function renderFitStatic(){
     sectionPlansUI.render('training');
-    renderTrainingAreas();
-    document.getElementById('fitStats').innerHTML =
-      stat('Idade', FIT_META.age + ' anos') +
-      stat('Altura', FIT_META.heightCm + ' cm') +
-      stat('Treinos hoje', String(trainingActivitiesForDay(TODAY_WEEKDAY).length+sectionPlansUI.training(TODAY_WEEKDAY).length), false, true) +
-      stat('Meta', '−'+FIT_META.goalRate+' kg/sem', true);
-
-    var day=TODAY_WEEKDAY,dISO=TODAY_ISO;
-    document.getElementById('trainingDayTitle').textContent='Treinos de '+day.toLocaleLowerCase('pt-PT');
+    document.getElementById('fitStats').innerHTML=stat('Idade',FIT_META.age+' anos')+stat('Altura',FIT_META.heightCm+' cm')+stat('Treinos hoje',String(sectionPlansUI.training(TODAY_WEEKDAY).length),false,true)+stat('Meta','−'+FIT_META.goalRate+' kg/sem',true);
+    document.getElementById('trainingDayTitle').textContent='Plano de treino';
     document.getElementById('trainingDayDate').textContent='Hoje · '+fmtDateShort(TODAY);
-    document.getElementById('fitTraining').innerHTML = trainingActivitiesForDay(day).map(function(act){
-        var area = areaById(act.area);
-        if(act.id === openFitRowDay){
-          return '<tr class="editing-row" data-day="'+day+'" data-id="'+escAttr(act.id)+'"><td colspan="5" style="padding:10px 16px;">' +
-            '<div style="max-width:min(320px,80vw);">' +
-            '<div style="display:flex;gap:6px;margin-bottom:6px;">' +
-            '<input data-f="time" value="'+escAttr(act.time||'')+'" placeholder="Hora" style="width:90px;flex-shrink:0;border:1px solid var(--line-strong);border-radius:6px;padding:5px 7px;font-size:12px;font-family:var(--font-mono);">' +
-            '<input data-f="title" value="'+escAttr(act.title)+'" placeholder="Treino" style="flex:1;min-width:0;border:1px solid var(--line-strong);border-radius:6px;padding:5px 7px;font-size:12px;font-weight:600;"></div>' +
-            '<textarea data-f="detail" placeholder="Foco" style="width:100%;border:1px solid var(--line-strong);border-radius:6px;padding:5px 7px;font-size:12px;min-height:40px;font-family:inherit;">'+escHtml(act.detail||'')+'</textarea>' +
-            '<div class="form-actions" style="justify-content:flex-end;margin-top:6px;"><span style="display:flex;gap:8px;"><button class="btn ghost" data-act="cancelrow" type="button">Cancelar</button><button class="btn" data-act="saverow" type="button">Guardar</button></span></div>' +
-            '</div></td></tr>';
-        }
-        var checkbox = '<button type="button" class="done-check" '+(dISO>TODAY_ISO?'disabled ':'')+'aria-label="Marcar '+escAttr(act.title)+' em '+dISO+'" data-date="'+dISO+'" data-day="'+day+'" data-id="'+escAttr(act.id)+'" data-act="'+act.id+'">'+CHECK_SVG+'</button>';
-        return '<tr class="today" data-act="editrow" data-day="'+day+'" data-id="'+escAttr(act.id)+'" style="cursor:pointer;">' +
-          '<td>'+checkbox+'</td>' +
-          '<td class="day">'+day+'<small class="weekly-date">'+fmtDateShort(TODAY)+'</small></td>' +
-          '<td class="time mono">'+escHtml(act.time||'—')+'</td>' +
-          '<td><span class="area-tag area-vivid" style="--area-color:'+escAttr(area.color)+'"><span class="area-dot" style="background:'+escAttr(area.color)+'"></span>'+escHtml(act.title)+'</span></td>' +
-          '<td style="color:var(--ink-soft);font-size:12.5px;"><div class="weekly-detail"><span>'+escHtml(act.detail||'')+'</span><button class="ar-icon-btn" type="button" aria-label="Editar '+escAttr(act.title)+'">'+PENCIL_SVG+'</button></div></td>' +
-          '</tr>';
-    }).join('');
-
     renderProtocolosGrid();
     renderRefeicoesCards();
     renderRegrasGrid();
     renderAlimentosBoxes();
 
-    document.getElementById('trainingEmpty').hidden=!!document.querySelector('#fitTraining .done-check') || sectionPlansUI.training(TODAY_WEEKDAY).length>0;
-    bindTrainHandlers();
+    renderTrainProgress();
     renderWeightAll();
   }
 
@@ -1027,49 +985,8 @@
     saveState(); openRefeicaoHeadEdit = m.id; renderRefeicoesCards();
   });
 
-  function bindTrainHandlers(){
-    var table = document.getElementById('fitTraining');
-    table.querySelectorAll('.done-check[data-act]').forEach(function(el){
-      var d = el.getAttribute('data-date');
-      var day = el.getAttribute('data-day');
-      var actId = el.getAttribute('data-act');
-      el.classList.toggle('on', isActDone(d, actId));
-      el.setAttribute('aria-pressed',String(isActDone(d,actId)));
-      el.addEventListener('click', function(e){
-        e.stopPropagation();
-        toggleActivityDone(d, day, actId);
-        el.classList.toggle('on', isActDone(d, actId));
-        el.setAttribute('aria-pressed',String(isActDone(d,actId)));
-        renderTrainProgress();
-        renderDashboard();
-      });
-    });
-    table.querySelectorAll('[data-act="editrow"]').forEach(function(tr){
-      tr.addEventListener('click', function(){
-        openFitRowDay = tr.getAttribute('data-id');
-        renderFitStatic();
-      });
-    });
-    table.querySelectorAll('[data-act="cancelrow"]').forEach(function(btn){
-      btn.addEventListener('click', function(){ openFitRowDay=null; renderFitStatic(); });
-    });
-    table.querySelectorAll('[data-act="saverow"]').forEach(function(btn){
-      btn.addEventListener('click', function(){
-        var tr = btn.closest('[data-day]');
-        var day = tr.getAttribute('data-day');
-        var act = dayActivities(day).find(function(a){return a.id===tr.getAttribute('data-id');});
-        var time = tr.querySelector('[data-f="time"]').value.trim();
-        var title = tr.querySelector('[data-f="title"]').value.trim() || act.title;
-        var detail = tr.querySelector('[data-f="detail"]').value.trim();
-        updateActivity(day, act.id, { time:time, title:title, detail:detail });
-        openFitRowDay=null; renderFitStatic();
-      });
-    });
-    renderTrainProgress();
-  }
-
   function renderTrainProgress(){
-    var acts=trainingActivitiesForDay(TODAY_WEEKDAY).concat(sectionPlansUI.training(TODAY_WEEKDAY));
+    var acts=sectionPlansUI.training(TODAY_WEEKDAY);
     var done=acts.filter(function(act){return isActDone(TODAY_ISO,act.id);}).length;
     document.getElementById('trainChip').textContent=done+'/'+acts.length+' hoje';
     setRing('ringFit',acts.length?done/acts.length:0);
@@ -1201,12 +1118,6 @@
     if(isTrainingActivity(act))act.training=true;
     if(isWorkActivity(act))act.work=true;
   }
-  function sectionActivityPicker(section){
-    return '<details class="section-activity-picker"><summary>Associar atividades da rotina</summary><p>Escolhe as atividades que queres ver nesta aba. Os registos e horários continuam partilhados com o Início.</p>'+WEEKDAYS.map(function(day){var acts=dayActivities(day);if(!acts.length)return '';return '<details><summary>'+escHtml(day)+'</summary>'+acts.map(function(act){var selected=ProtocolLogic.activityInSection(act,state.areas,section);return '<label class="training-area-option"><input type="checkbox" data-section="'+section+'" data-section-day="'+escAttr(day)+'" data-section-id="'+escAttr(act.id)+'"'+(selected?' checked':'')+'><span>'+escHtml(act.title)+(act.time?' · '+escHtml(act.time):'')+'</span></label>';}).join('')+'</details>';}).join('')+'</details>';
-  }
-  function renderSectionActivityPicker(id,section){var box=document.getElementById(id),opened=Array.from(box.querySelectorAll('details')).map(function(d){return d.open;});box.innerHTML=sectionActivityPicker(section);box.querySelectorAll('details').forEach(function(d,i){d.open=!!opened[i];});bindSectionActivityPicker(box);}
-  function bindSectionActivityPicker(box){box.querySelectorAll('[data-section-id]').forEach(function(input){input.addEventListener('change',function(){var act=state.activities[input.dataset.sectionDay].find(function(a){return a.id===input.dataset.sectionId;});if(!act)return;act[input.dataset.section]=input.checked;recomputeDerived(TODAY_ISO,TODAY_WEEKDAY);saveState();renderFitStatic();renderWorkStatic();renderDashboard();});});}
-  function trainingActivitiesForDay(day){return dayActivities(day).filter(isTrainingActivity);}
   function areaById(id){
     var a = (state.areas||[]).filter(function(x){ return x.id===id; })[0];
     return a || { id:'outro', label:'Outro', color:'var(--ink-faint)' };
@@ -1245,7 +1156,7 @@
   }
   function recomputeDerived(dateISO, day){
     var acts = metricActivitiesForDate(dateISO,day);
-    var fitAny = acts.some(function(a){ return isTrainingActivity(a) && isActDone(dateISO, a.id); }) || sectionPlansUI.training(day).some(function(a){return isActDone(dateISO,a.id);});
+    var fitAny = sectionPlansUI.training(day).some(function(a){return isActDone(dateISO,a.id);});
     var langAny = acts.some(function(a){ return a.area==='linguas' && isActDone(dateISO, a.id); });
     if(fitAny) state.workouts[dateISO] = true; else delete state.workouts[dateISO];
     if(langAny || (state.vocabStudyDays[dateISO]||[]).length) state.langDone[dateISO] = true; else delete state.langDone[dateISO];
@@ -1299,75 +1210,7 @@
 
   /* ---- aba Trabalho (DROP) ---- */
   var openWorkRowDay = null;
-  function renderWorkAreas(){
-    var box=document.getElementById('workAreas'),wasOpen=box.open;
-    box.innerHTML='<summary>Escolher áreas de trabalho</summary><p>Seleciona as áreas das tuas tarefas, mesmo que tenham outro nome.</p><div class="training-area-options">'+state.areas.map(function(area){
-      return '<label class="training-area-option"><input type="checkbox" data-work-area="'+escAttr(area.id)+'"'+(ProtocolLogic.isWorkArea(area)?' checked':'')+'><span class="area-dot" style="background:'+escAttr(area.color)+'"></span><span>'+escHtml(area.label)+'</span></label>';
-    }).join('')+'</div>';box.open=wasOpen;
-    renderSectionActivityPicker('workActivities','work');
-    box.querySelectorAll('[data-work-area]').forEach(function(input){input.addEventListener('change',function(){state.areas.find(function(area){return area.id===input.dataset.workArea;}).work=input.checked;saveState();renderWorkStatic();});});
-  }
-  function renderWorkStatic(){
-    sectionPlansUI.render('work');
-    renderWorkAreas();
-    var weekdaysThisWeek = weekDates(TODAY);
-    document.getElementById('workList').innerHTML =
-      '<div class="tbl-scroll"><table class="week"><thead><tr><th>Feito</th><th>Dia</th><th>Tarefa</th><th>Detalhe</th></tr></thead><tbody>' +
-      WEEKDAYS.map(function(day, i){
-        return dayActivities(day).filter(isWorkActivity).map(function(act){
-          var dISO = iso(weekdaysThisWeek[i]);
-          var isToday = dISO === TODAY_ISO;
-          if(act.id === openWorkRowDay){
-            return '<tr class="editing-row" data-day="'+day+'" data-id="'+escAttr(act.id)+'"><td colspan="4" style="padding:10px 16px;">' +
-              '<div style="max-width:min(320px,80vw);">' +
-              '<input data-f="title" value="'+escAttr(act.title)+'" placeholder="Tarefa" style="width:100%;margin-bottom:6px;border:1px solid var(--line-strong);border-radius:6px;padding:5px 7px;font-size:12px;font-weight:600;">' +
-              '<textarea data-f="detail" placeholder="Detalhe" style="width:100%;border:1px solid var(--line-strong);border-radius:6px;padding:5px 7px;font-size:12px;min-height:40px;font-family:inherit;">'+escHtml(act.detail||'')+'</textarea>' +
-              '<div class="form-actions" style="justify-content:flex-end;margin-top:6px;"><span style="display:flex;gap:8px;"><button class="btn ghost" data-act="cancelrow" type="button">Cancelar</button><button class="btn" data-act="saverow" type="button">Guardar</button></span></div>' +
-              '</div></td></tr>';
-          }
-          var checkbox = '<button type="button" class="done-check" '+(dISO>TODAY_ISO?'disabled ':'')+'aria-label="Marcar '+escAttr(act.title)+' em '+dISO+'" data-date="'+dISO+'" data-day="'+day+'" data-id="'+escAttr(act.id)+'" data-act="'+act.id+'">'+CHECK_SVG+'</button>';
-          return '<tr'+(isToday?' class="today"':'')+' data-act="editrow" data-day="'+day+'" data-id="'+escAttr(act.id)+'" style="cursor:pointer;">' +
-            '<td>'+checkbox+activityDragHandle(act)+'</td><td class="day">'+day+'<small class="weekly-date">'+fmtDateShort(weekdaysThisWeek[i])+'</small></td><td>'+escHtml(act.title.replace(/^DROP\s*—\s*/,''))+'</td>' +
-            '<td style="color:var(--ink-soft);font-size:12.5px;"><div class="weekly-detail"><span>'+escHtml(act.detail||'')+'</span><button class="ar-icon-btn" type="button" aria-label="Editar '+escAttr(act.title)+'">'+PENCIL_SVG+'</button></div></td></tr>';
-        }).join('');
-      }).join('') + '</tbody></table></div>';
-
-    document.getElementById('workEmpty').hidden=!!document.querySelector('#workList .done-check') || state.sectionPlans.work.length>0;
-    var table = document.getElementById('workList');
-    WEEKDAYS.forEach(function(day){bindActivityReorder(table,day,'tr[data-act="editrow"]','data-id');});
-    table.querySelectorAll('.done-check').forEach(function(el){
-      var d = el.getAttribute('data-date'), day = el.getAttribute('data-day'), actId = el.getAttribute('data-act');
-      el.classList.toggle('on', isActDone(d, actId));
-      el.setAttribute('aria-pressed',String(isActDone(d,actId)));
-      el.addEventListener('click', function(e){
-        e.stopPropagation();
-        toggleActivityDone(d, day, actId);
-        el.classList.toggle('on', isActDone(d, actId));
-        el.setAttribute('aria-pressed',String(isActDone(d,actId)));
-        renderDashboard();
-      });
-    });
-    table.querySelectorAll('[data-act="editrow"]').forEach(function(tr){
-      tr.addEventListener('click', function(){
-        openWorkRowDay = tr.getAttribute('data-id');
-        renderWorkStatic();
-      });
-    });
-    table.querySelectorAll('[data-act="cancelrow"]').forEach(function(btn){
-      btn.addEventListener('click', function(){ openWorkRowDay=null; renderWorkStatic(); });
-    });
-    table.querySelectorAll('[data-act="saverow"]').forEach(function(btn){
-      btn.addEventListener('click', function(){
-        var tr = btn.closest('[data-day]');
-        var day = tr.getAttribute('data-day');
-        var act = dayActivities(day).find(function(a){return a.id===tr.getAttribute('data-id');});
-        var title = tr.querySelector('[data-f="title"]').value.trim() || act.title;
-        var detail = tr.querySelector('[data-f="detail"]').value.trim();
-        updateActivity(day, act.id, { title:title, detail:detail });
-        openWorkRowDay=null; renderWorkStatic();
-      });
-    });
-  }
+  function renderWorkStatic(){sectionPlansUI.render('work');}
 
   function activityDragHandle(act){
     return '<button type="button" class="activity-drag-handle" aria-label="Arrastar '+escAttr(act.title)+' para ordenar; usa as setas para cima e para baixo no teclado" title="Mantém pressionado e arrasta">⠿</button>';

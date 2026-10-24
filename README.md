@@ -107,17 +107,15 @@ Teste da integração de pastas com ponte Android simulada: `node tests/browser/
 
 Teste móvel da folha: `node tests/browser/ink-surface.cjs` cobre pinça com múltiplos toques pelo Chrome DevTools, movimento, escrita ampliada, borracha e histórico. Os gestos foram verificados no Chromium; a experiência da caneta exige confirmação num Android físico.
 
-### Atividades de Trabalho e Forma
+### Planos do dia · Trabalho e Forma
 
-As abas partilham as atividades e conclusões da rotina. **Escolher áreas** associa uma categoria inteira; **Associar atividades da rotina** permite incluir ou excluir atividades individualmente, sem as duplicar. As associações individuais persistem ao reiniciar e ao exportar/importar dados. Ao apagar uma área, as atividades passam para Outro e mantêm as ligações anteriores a Trabalho/Forma. IDs antigos de áreas ausentes e títulos originais DROP / treinos são reconhecidos de forma conservadora; outras áreas e exclusões explícitas são respeitadas. Forma continua limitada aos treinos do dia. A correção não recria atividades eliminadas: se também faltarem no Início, é necessário verificar uma exportação ou recuperar um backup.
+As duas abas apresentam apenas o plano do dia atual. **Gerir a semana** abre o seletor de sete dias: podes consultar, adicionar e editar tarefas/treinos de qualquer dia, incluindo dia, hora e detalhes. **Voltar a hoje**, fechar a gestão semanal ou voltar a entrar na aba restaura a vista de hoje. Guardar uma alteração mantém o dia que estás a gerir. O contador de treinos continua a referir-se a hoje.
 
-Teste móvel: `node tests/browser/sections.cjs`.
+As associações à rotina e as tabelas antigas foram retiradas. Os planos são independentes do Início. A migração `dailyPlansVersion` conserva as atividades anteriormente visíveis por associação como cópias independentes nos planos, preservando horários e conclusões e evitando repetir o mesmo título/dia. A rotina original e o seu histórico ficam intactos. A migração só corre uma vez; novas atividades da rotina deixam de criar associações automáticas. Os planos existentes em `sectionPlans` continuam guardados, sem reintroduzir elementos apagados. Exportação/importação e cópia automática incluem tudo.
 
-### Planos próprios restaurados em Trabalho e Forma
+Os planos originais do código (FIT_TRAINING e tarefas DROP) são usados apenas na inicialização de `sectionPlans` ausente. Não é possível reconstruir edições pessoais que existam apenas num backup antigo.
 
-`sectionPlans` guarda tarefas que pertencem apenas a estas abas, sem as inserir no Início. Na primeira abertura desta versão, os planos originais do código (FIT_TRAINING e tarefas DROP) são recuperados quando não existe uma atividade com o mesmo título e dia na rotina; tarefas já existentes não são substituídas. A inicialização acontece uma só vez: edições e eliminações posteriores são respeitadas, inclusive após exportar/importar. Trabalho apresenta a semana; Forma mostra apenas hoje. Ambos permitem adicionar, editar dia/hora/detalhes, apagar e marcar conclusões, guardadas por data e ID. Os treinos próprios contam para o indicador de treino, mas não para os princípios das atividades do Início. Tudo é incluído no backup automático. Os dados originais não permitem reconstruir edições pessoais que só existam numa exportação antiga.
-
-Teste: `node tests/browser/standalone-plans.cjs`.
+Testes móveis: `node tests/browser/sections.cjs` verifica migração, remoção das associações e preservação de dados; `node tests/browser/standalone-plans.cjs` verifica a vista diária e a edição semanal nas duas abas.
 
 ### Interface preto e grafite · PC, tablet e celular
 
