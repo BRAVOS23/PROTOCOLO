@@ -48,6 +48,17 @@
     var name=String(area.label||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase();
     return /\b(trabalho|drop|negocios?|profissional|work|e[ -]?commerce)\b/.test(name);
   }
+  function activityInSection(act,areas,section){
+    if(!act || (section!=='training' && section!=='work'))return false;
+    if(typeof act[section]==='boolean')return act[section];
+    var area=(areas||[]).find(function(a){return a.id===act.area;});
+    var matches=section==='training'?isTrainingArea:isWorkArea;
+    if(area && typeof area[section]==='boolean')return area[section];
+    if(matches(area))return true;
+    if(area && area.id!=='outro')return false;
+    if(section==='work')return act.area==='trabalho' || /^DROP\s*[—–:-]/i.test(act.title||'');
+    return act.area==='fitness' || /^(judo\b|tiros na areia\b|exerc[ií]cios de (lordose|hiperlordose)\b|descanso ativo\b|gym\b|treino\b)/i.test(act.title||'');
+  }
   function sortActivities(items){
     if(!(items||[]).some(function(a){return Number.isFinite(a.manualOrder);}))return sortSchedule(items);
     return (items||[]).map(function(item,index){return {item:item,index:index};}).sort(function(a,b){
@@ -119,7 +130,7 @@
   function sortSchedule(items,dateField,timeField){
     return (items||[]).map(function(item,index){return {item:item,index:index};}).sort(function(a,b){return compareScheduled(a.item,b.item,dateField,timeField)||a.index-b.index;}).map(function(row){return row.item;});
   }
-  var api={dayOrdinal:dayOrdinal,daysBetween:daysBetween,intervalProgress:intervalProgress,aifScores:aifScores,principlesScore:principlesScore,isTrainingArea:isTrainingArea,clockMinutes:clockMinutes,compareScheduled:compareScheduled,sortSchedule:sortSchedule,sortActivities:sortActivities,isWorkArea:isWorkArea,planDocumentSections:planDocumentSections,weeklyRouteModel:weeklyRouteModel,weeklyMissionDone:weeklyMissionDone,weeklyResumeMission:weeklyResumeMission};
+  var api={dayOrdinal:dayOrdinal,daysBetween:daysBetween,intervalProgress:intervalProgress,aifScores:aifScores,principlesScore:principlesScore,isTrainingArea:isTrainingArea,clockMinutes:clockMinutes,compareScheduled:compareScheduled,sortSchedule:sortSchedule,sortActivities:sortActivities,isWorkArea:isWorkArea,activityInSection:activityInSection,planDocumentSections:planDocumentSections,weeklyRouteModel:weeklyRouteModel,weeklyMissionDone:weeklyMissionDone,weeklyResumeMission:weeklyResumeMission};
   if(typeof module==='object' && module.exports) module.exports=api;
   else root.ProtocolLogic=api;
 })(typeof globalThis!=='undefined'?globalThis:this);

@@ -97,3 +97,17 @@ test('ordem manual vence os horários e novas atividades ficam no fim',()=>{
  const reset=acts.map(({manualOrder,...act})=>act);
  assert.deepEqual(sortActivities(reset).map(a=>a.id),['new','early','late']);
 });
+
+test('section membership survives missing areas and supports direct activity links',()=>{
+ const {activityInSection}=require('../js/logic.js');
+ const other=[{id:'outro',label:'Outro'}];
+ assert.equal(activityInSection({area:'trabalho',title:'Uma tarefa'},[],'work'),true);
+ assert.equal(activityInSection({area:'outro',title:'DROP — Campanhas'},other,'work'),true);
+ assert.equal(activityInSection({area:'fitness',title:'Treino antigo'},[],'training'),true);
+ assert.equal(activityInSection({area:'outro',title:'Exercícios de lordose'},other,'training'),true);
+ assert.equal(activityInSection({area:'outro',title:'Projeto',work:true},other,'work'),true);
+ assert.equal(activityInSection({area:'outro',title:'Treino',training:false},other,'training'),false);
+ assert.equal(activityInSection({area:'leitura',title:'Treino de leitura'},[{id:'leitura',label:'Leitura'}],'training'),false);
+ assert.equal(activityInSection({area:'outro',title:'Outro assunto'},other,'work'),false);
+ assert.equal(activityInSection({area:'custom',title:'Tarefa'},[{id:'custom',label:'Negócio'}],'work'),true);
+});

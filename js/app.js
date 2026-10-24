@@ -374,6 +374,8 @@
   /* ---------------- tabs ---------------- */
   var views = { inicio:'view-inicio', linguas:'view-linguas', forma:'view-forma', trabalho:'view-trabalho', vida:'view-vida' };
   function goTab(tab){
+    if(tab==='forma')renderFitStatic();
+    if(tab==='trabalho')renderWorkStatic();
     if(weeklyRouteUI){weeklyRouteUI.capture();weeklyRouteUI.suspend();}
     Object.keys(views).forEach(function(k){
       document.getElementById(views[k]).classList.toggle('active', k===tab);
@@ -719,6 +721,7 @@
       return '<label class="training-area-option"><input type="checkbox" data-training-area="'+escAttr(area.id)+'"'+(ProtocolLogic.isTrainingArea(area)?' checked':'')+'><span class="area-dot" style="background:'+escAttr(area.color)+'"></span><span>'+escHtml(area.label)+'</span></label>';
     }).join('')+'</div>';
     box.open=wasOpen;
+    renderSectionActivityPicker('trainingActivities','training');
     box.querySelectorAll('[data-training-area]').forEach(function(input){input.addEventListener('change',function(){
       state.areas.find(function(area){return area.id===input.dataset.trainingArea;}).training=input.checked;
       recomputeDerived(TODAY_ISO,TODAY_WEEKDAY);saveState();renderFitStatic();renderDashboard();
@@ -1188,10 +1191,17 @@
   function rememberAreaLinks(areas){
     (areas||[]).forEach(function(area){if(typeof area.training!=='boolean' && ProtocolLogic.isTrainingArea(area))area.training=true;if(typeof area.work!=='boolean' && ProtocolLogic.isWorkArea(area))area.work=true;});
   }
-  function isTrainingActivity(act){
-    var area=state.areas.find(function(a){return a.id===act.area;});
-    return area?ProtocolLogic.isTrainingArea(area):act.training===true || act.area==='fitness';
+  function isTrainingActivity(act){return ProtocolLogic.activityInSection(act,state.areas,'training');}
+  function isWorkActivity(act){return ProtocolLogic.activityInSection(act,state.areas,'work');}
+  function preserveActivityLinks(act){
+    if(isTrainingActivity(act))act.training=true;
+    if(isWorkActivity(act))act.work=true;
   }
+  function sectionActivityPicker(section){
+    return '<details class="section-activity-picker"><summary>Associar atividades da rotina</summary><p>Escolhe as atividades que queres ver nesta aba. Os registos e horários continuam partilhados com o Início.</p>'+WEEKDAYS.map(function(day){var acts=dayActivities(day);if(!acts.length)return '';return '<details><summary>'+escHtml(day)+'</summary>'+acts.map(function(act){var selected=ProtocolLogic.activityInSection(act,state.areas,section);return '<label class="training-area-option"><input type="checkbox" data-section="'+section+'" data-section-day="'+escAttr(day)+'" data-section-id="'+escAttr(act.id)+'"'+(selected?' checked':'')+'><span>'+escHtml(act.title)+(act.time?' · '+escHtml(act.time):'')+'</span></label>';}).join('')+'</details>';}).join('')+'</details>';
+  }
+  function renderSectionActivityPicker(id,section){var box=document.getElementById(id),opened=Array.from(box.querySelectorAll('details')).map(function(d){return d.open;});box.innerHTML=sectionActivityPicker(section);box.querySelectorAll('details').forEach(function(d,i){d.open=!!opened[i];});bindSectionActivityPicker(box);}
+  function bindSectionActivityPicker(box){box.querySelectorAll('[data-section-id]').forEach(function(input){input.addEventListener('change',function(){var act=state.activities[input.dataset.sectionDay].find(function(a){return a.id===input.dataset.sectionId;});if(!act)return;act[input.dataset.section]=input.checked;recomputeDerived(TODAY_ISO,TODAY_WEEKDAY);saveState();renderFitStatic();renderWorkStatic();renderDashboard();});});}
   function trainingActivitiesForDay(day){return dayActivities(day).filter(isTrainingActivity);}
   function areaById(id){
     var a = (state.areas||[]).filter(function(x){ return x.id===id; })[0];
@@ -1290,6 +1300,7 @@
     box.innerHTML='<summary>Escolher áreas de trabalho</summary><p>Seleciona as áreas das tuas tarefas, mesmo que tenham outro nome.</p><div class="training-area-options">'+state.areas.map(function(area){
       return '<label class="training-area-option"><input type="checkbox" data-work-area="'+escAttr(area.id)+'"'+(ProtocolLogic.isWorkArea(area)?' checked':'')+'><span class="area-dot" style="background:'+escAttr(area.color)+'"></span><span>'+escHtml(area.label)+'</span></label>';
     }).join('')+'</div>';box.open=wasOpen;
+    renderSectionActivityPicker('workActivities','work');
     box.querySelectorAll('[data-work-area]').forEach(function(input){input.addEventListener('change',function(){state.areas.find(function(area){return area.id===input.dataset.workArea;}).work=input.checked;saveState();renderWorkStatic();});});
   }
   function renderWorkStatic(){
@@ -1298,7 +1309,7 @@
     document.getElementById('workList').innerHTML =
       '<div class="tbl-scroll"><table class="week"><thead><tr><th>Feito</th><th>Dia</th><th>Tarefa</th><th>Detalhe</th></tr></thead><tbody>' +
       WEEKDAYS.map(function(day, i){
-        return dayActivities(day).filter(function(act){return ProtocolLogic.isWorkArea(state.areas.find(function(area){return area.id===act.area;}));}).map(function(act){
+        return dayActivities(day).filter(isWorkActivity).map(function(act){
           var dISO = iso(weekdaysThisWeek[i]);
           var isToday = dISO === TODAY_ISO;
           if(act.id === openWorkRowDay){
@@ -1511,7 +1522,7 @@
     panel.querySelectorAll('[data-area-delete]').forEach(function(button){button.addEventListener('click',function(){
       var id=button.closest('[data-area-id]').dataset.areaId, area=areaById(id);
       showConfirm('Apagar a área «'+area.label+'»? As tarefas ficam guardadas e passam para «'+areaById('outro').label+'».',function(){
-        WEEKDAYS.forEach(function(day){dayActivities(day).forEach(function(act){if(act.area===id)archiveCompletedActivity(act);});});
+        WEEKDAYS.forEach(function(day){dayActivities(day).forEach(function(act){if(act.area===id){preserveActivityLinks(act);archiveCompletedActivity(act);}});});
         state.areas=state.areas.filter(function(a){return a.id!==id;});
         WEEKDAYS.forEach(function(day){dayActivities(day).forEach(function(act){if(act.area===id) act.area='outro';});});
         if(current.value===id) current.value='outro';
@@ -1732,7 +1743,7 @@
       // atividades cuja área foi apagada passam a "Outro" — nada se perde.
       WEEKDAYS.forEach(function(day){
         (state.activities[day]||[]).forEach(function(act){
-          if(keptIds.indexOf(act.area)===-1){archiveCompletedActivity(act);act.area = 'outro';}
+          if(keptIds.indexOf(act.area)===-1){preserveActivityLinks(act);archiveCompletedActivity(act);act.area = 'outro';}
         });
       });
       state.areas = kept.map(function(a){ return Object.assign({},a,{label:a.label.trim()}); });
@@ -1743,7 +1754,7 @@
       renderActivityList();
       restoreAreaActivityDraft();
       renderDashboard();
-      renderFitStatic();
+      renderFitStatic();renderWorkStatic();
     });
   }
   // "Outro" é o destino das tarefas de áreas removidas. Os IDs estáveis

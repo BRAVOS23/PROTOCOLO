@@ -106,3 +106,9 @@ Verificação móvel dos cadernos: com o servidor local em 8080, `node tests/bro
 Teste da integração de pastas com ponte Android simulada: `node tests/browser/data-folder.cjs`. O seletor e a autorização persistente exigem validação num Android físico.
 
 Teste móvel da folha: `node tests/browser/ink-surface.cjs` cobre pinça com múltiplos toques pelo Chrome DevTools, movimento, escrita ampliada, borracha e histórico. Os gestos foram verificados no Chromium; a experiência da caneta exige confirmação num Android físico.
+
+### Atividades de Trabalho e Forma
+
+As abas partilham as atividades e conclusões da rotina. **Escolher áreas** associa uma categoria inteira; **Associar atividades da rotina** permite incluir ou excluir atividades individualmente, sem as duplicar. As associações individuais persistem ao reiniciar e ao exportar/importar dados. Ao apagar uma área, as atividades passam para Outro e mantêm as ligações anteriores a Trabalho/Forma. IDs antigos de áreas ausentes e títulos originais DROP / treinos são reconhecidos de forma conservadora; outras áreas e exclusões explícitas são respeitadas. Forma continua limitada aos treinos do dia. A correção não recria atividades eliminadas: se também faltarem no Início, é necessário verificar uma exportação ou recuperar um backup.
+
+Teste móvel: `node tests/browser/sections.cjs`.
