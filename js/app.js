@@ -289,6 +289,8 @@
   var state = loadState();
   saveState(); // persiste já qualquer limpeza feita pela migração (itens corrompidos removidos)
 
+  var sectionPlansUI=SectionPlans.create({state:function(){return state;},save:saveState,day:function(){return TODAY_WEEKDAY;},today:function(){return TODAY_ISO;},dates:function(){return weekDates(TODAY).map(iso);},confirm:showConfirm,changed:function(){recomputeDerived(TODAY_ISO,TODAY_WEEKDAY);saveState();renderFitStatic();renderWorkStatic();renderDashboard();}});
+
   /* ---------------- date helpers ---------------- */
   var WEEKDAYS_PT = ['Domingo','Segunda','Terça','Quarta','Quinta','Sexta','Sábado'];
   var MONTHS_PT_SHORT = ['jan','fev','mar','abr','mai','jun','jul','ago','set','out','nov','dez'];
@@ -728,11 +730,12 @@
     });});
   }
   function renderFitStatic(){
+    sectionPlansUI.render('training');
     renderTrainingAreas();
     document.getElementById('fitStats').innerHTML =
       stat('Idade', FIT_META.age + ' anos') +
       stat('Altura', FIT_META.heightCm + ' cm') +
-      stat('Treinos hoje', String(trainingActivitiesForDay(TODAY_WEEKDAY).length), false, true) +
+      stat('Treinos hoje', String(trainingActivitiesForDay(TODAY_WEEKDAY).length+sectionPlansUI.training(TODAY_WEEKDAY).length), false, true) +
       stat('Meta', '−'+FIT_META.goalRate+' kg/sem', true);
 
     var day=TODAY_WEEKDAY,dISO=TODAY_ISO;
@@ -765,7 +768,7 @@
     renderRegrasGrid();
     renderAlimentosBoxes();
 
-    document.getElementById('trainingEmpty').hidden=!!document.querySelector('#fitTraining .done-check');
+    document.getElementById('trainingEmpty').hidden=!!document.querySelector('#fitTraining .done-check') || sectionPlansUI.training(TODAY_WEEKDAY).length>0;
     bindTrainHandlers();
     renderWeightAll();
   }
@@ -1065,7 +1068,7 @@
   }
 
   function renderTrainProgress(){
-    var acts=trainingActivitiesForDay(TODAY_WEEKDAY);
+    var acts=trainingActivitiesForDay(TODAY_WEEKDAY).concat(sectionPlansUI.training(TODAY_WEEKDAY));
     var done=acts.filter(function(act){return isActDone(TODAY_ISO,act.id);}).length;
     document.getElementById('trainChip').textContent=done+'/'+acts.length+' hoje';
     setRing('ringFit',acts.length?done/acts.length:0);
@@ -1241,7 +1244,7 @@
   }
   function recomputeDerived(dateISO, day){
     var acts = metricActivitiesForDate(dateISO,day);
-    var fitAny = acts.some(function(a){ return isTrainingActivity(a) && isActDone(dateISO, a.id); });
+    var fitAny = acts.some(function(a){ return isTrainingActivity(a) && isActDone(dateISO, a.id); }) || sectionPlansUI.training(day).some(function(a){return isActDone(dateISO,a.id);});
     var langAny = acts.some(function(a){ return a.area==='linguas' && isActDone(dateISO, a.id); });
     if(fitAny) state.workouts[dateISO] = true; else delete state.workouts[dateISO];
     if(langAny || (state.vocabStudyDays[dateISO]||[]).length) state.langDone[dateISO] = true; else delete state.langDone[dateISO];
@@ -1304,6 +1307,7 @@
     box.querySelectorAll('[data-work-area]').forEach(function(input){input.addEventListener('change',function(){state.areas.find(function(area){return area.id===input.dataset.workArea;}).work=input.checked;saveState();renderWorkStatic();});});
   }
   function renderWorkStatic(){
+    sectionPlansUI.render('work');
     renderWorkAreas();
     var weekdaysThisWeek = weekDates(TODAY);
     document.getElementById('workList').innerHTML =
@@ -1327,7 +1331,7 @@
         }).join('');
       }).join('') + '</tbody></table></div>';
 
-    document.getElementById('workEmpty').hidden=!!document.querySelector('#workList .done-check');
+    document.getElementById('workEmpty').hidden=!!document.querySelector('#workList .done-check') || state.sectionPlans.work.length>0;
     var table = document.getElementById('workList');
     WEEKDAYS.forEach(function(day){bindActivityReorder(table,day,'tr[data-act="editrow"]','data-id');});
     table.querySelectorAll('.done-check').forEach(function(el){

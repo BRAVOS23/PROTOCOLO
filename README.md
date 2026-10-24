@@ -112,3 +112,9 @@ Teste móvel da folha: `node tests/browser/ink-surface.cjs` cobre pinça com mú
 As abas partilham as atividades e conclusões da rotina. **Escolher áreas** associa uma categoria inteira; **Associar atividades da rotina** permite incluir ou excluir atividades individualmente, sem as duplicar. As associações individuais persistem ao reiniciar e ao exportar/importar dados. Ao apagar uma área, as atividades passam para Outro e mantêm as ligações anteriores a Trabalho/Forma. IDs antigos de áreas ausentes e títulos originais DROP / treinos são reconhecidos de forma conservadora; outras áreas e exclusões explícitas são respeitadas. Forma continua limitada aos treinos do dia. A correção não recria atividades eliminadas: se também faltarem no Início, é necessário verificar uma exportação ou recuperar um backup.
 
 Teste móvel: `node tests/browser/sections.cjs`.
+
+### Planos próprios restaurados em Trabalho e Forma
+
+`sectionPlans` guarda tarefas que pertencem apenas a estas abas, sem as inserir no Início. Na primeira abertura desta versão, os planos originais do código (FIT_TRAINING e tarefas DROP) são recuperados quando não existe uma atividade com o mesmo título e dia na rotina; tarefas já existentes não são substituídas. A inicialização acontece uma só vez: edições e eliminações posteriores são respeitadas, inclusive após exportar/importar. Trabalho apresenta a semana; Forma mostra apenas hoje. Ambos permitem adicionar, editar dia/hora/detalhes, apagar e marcar conclusões, guardadas por data e ID. Os treinos próprios contam para o indicador de treino, mas não para os princípios das atividades do Início. Tudo é incluído no backup automático. Os dados originais não permitem reconstruir edições pessoais que só existam numa exportação antiga.
+
+Teste: `node tests/browser/standalone-plans.cjs`.
