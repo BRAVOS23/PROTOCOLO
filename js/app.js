@@ -283,7 +283,7 @@
     }catch(e){ return migrateNotionImports(freshDefaultState()); }
   }
   function saveState(){
-    try{ localStorage.setItem(STORE_KEY, JSON.stringify(state)); if(window.NativePlatform){NativePlatform.syncAgenda(state.agenda);NativePlatform.syncActivities(state.activities,state.activityDone);} if(window.DataFolder)DataFolder.schedule(state); return true; }catch(e){return false;}
+    try{ localStorage.setItem(STORE_KEY, JSON.stringify(state)); if(window.NativePlatform){NativePlatform.syncAgenda(state.agenda);NativePlatform.syncActivities(state.activities,state.activityDone);} if(window.DataFolder)DataFolder.schedule(state); return true; }catch(e){if(window.DataFolder)DataFolder.schedule(state);return false;}
   }
   function clone(o){ return JSON.parse(JSON.stringify(o)); }
 
@@ -3123,7 +3123,7 @@
   document.getElementById('dashOpenNotebooks').addEventListener('click',function(){goTab('vida');goVida('caderno');});
   document.getElementById('dashOpenChina').addEventListener('click',function(){var p=state.planos.find(function(p){return p.id==='plano-rota-china';});goTab('vida');if(p)openPlano(p.id);else goVida('planos');});
   function renderDashboard(){
-    var books=state.notebooks||[],pages=books.reduce(function(n,b){return n+(b.notes||[]).length;},0);document.getElementById('dashNotebookSummary').textContent=books.length?books.length+' cadernos · '+pages+' anotações':'Diário e anotações';
+    var books=state.notebooks||[],pages=books.reduce(function(n,b){return n+(b.notes||[]).filter(function(n){return !n.trashedAt;}).length;},0);document.getElementById('dashNotebookSummary').textContent=books.length?books.length+' cadernos · '+pages+' anotações':'Diário e anotações';
 
     renderProgressOverview();
     document.getElementById('dashDate').textContent = TODAY.toLocaleDateString('pt-PT',{ weekday:'long', day:'numeric', month:'long' });
@@ -3435,6 +3435,7 @@
         saveState();
         applyTheme(state.theme);
         renderAll();
+        if(vidaScreen==='caderno')journalUI.open();
         toast('Dados importados');
         closeSheet();
       }catch(err){ toast('Ficheiro inválido'); }
