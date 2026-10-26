@@ -100,7 +100,8 @@
       mission.fields.push(field?{label:field[1],text:field[2]}:{label:'',text:line});
     });return model;
   }
-  function weeklyMissionDone(record){return !!(record && record.action===true && record.proof===true && String(record.evidence||'').trim());}
+  function hasMissionPdf(record){var p=record&&record.evidencePdf;return !!(p && typeof p.id==='string' && /^pdf-[a-zA-Z0-9-]+$/.test(p.id) && Number(p.size)>0);}
+  function weeklyMissionDone(record){return !!(record && record.action===true && record.proof===true && (hasMissionPdf(record) || (record.proofVersion!==2 && String(record.evidence||'').trim())));}
   function weeklyResumeMission(model,progress,resume){
     var saved=model.missions.find(function(m){return resume && m.id===resume.missionId;});
     if(saved && !weeklyMissionDone((progress||{})[saved.id]))return saved;
@@ -130,7 +131,7 @@
   function sortSchedule(items,dateField,timeField){
     return (items||[]).map(function(item,index){return {item:item,index:index};}).sort(function(a,b){return compareScheduled(a.item,b.item,dateField,timeField)||a.index-b.index;}).map(function(row){return row.item;});
   }
-  var api={dayOrdinal:dayOrdinal,daysBetween:daysBetween,intervalProgress:intervalProgress,aifScores:aifScores,principlesScore:principlesScore,isTrainingArea:isTrainingArea,clockMinutes:clockMinutes,compareScheduled:compareScheduled,sortSchedule:sortSchedule,sortActivities:sortActivities,isWorkArea:isWorkArea,activityInSection:activityInSection,planDocumentSections:planDocumentSections,weeklyRouteModel:weeklyRouteModel,weeklyMissionDone:weeklyMissionDone,weeklyResumeMission:weeklyResumeMission};
+  var api={dayOrdinal:dayOrdinal,daysBetween:daysBetween,intervalProgress:intervalProgress,aifScores:aifScores,principlesScore:principlesScore,isTrainingArea:isTrainingArea,clockMinutes:clockMinutes,compareScheduled:compareScheduled,sortSchedule:sortSchedule,sortActivities:sortActivities,isWorkArea:isWorkArea,activityInSection:activityInSection,planDocumentSections:planDocumentSections,weeklyRouteModel:weeklyRouteModel,weeklyMissionDone:weeklyMissionDone,hasMissionPdf:hasMissionPdf,weeklyResumeMission:weeklyResumeMission};
   if(typeof module==='object' && module.exports) module.exports=api;
   else root.ProtocolLogic=api;
 })(typeof globalThis!=='undefined'?globalThis:this);

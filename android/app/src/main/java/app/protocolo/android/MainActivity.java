@@ -100,7 +100,10 @@ public final class MainActivity extends Activity {
                 fileCallback = callback;
                 try {
                     Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT).addCategory(Intent.CATEGORY_OPENABLE).setType("*/*");
-                    intent.putExtra(Intent.EXTRA_MIME_TYPES, new String[]{"application/json", "text/plain", "application/octet-stream"});
+                    boolean pdf=false;
+                    for(String type:params.getAcceptTypes()) if(type.contains("pdf")) pdf=true;
+                    if(pdf) intent.setType("application/pdf");
+                    else intent.putExtra(Intent.EXTRA_MIME_TYPES, new String[]{"application/json", "text/plain", "application/octet-stream"});
                     startActivityForResult(intent, IMPORT);
                 } catch (Exception e) { fileCallback.onReceiveValue(null); fileCallback = null; }
                 return true;
@@ -228,13 +231,14 @@ public final class MainActivity extends Activity {
             JSONArray files = new JSONArray(json);
             for (int i=0; i<files.length(); i++) {
                 JSONObject f=files.getJSONObject(i); String name=f.getString("name");
-                if (!name.matches("protocolo-backup\\.json|diario-[0-9]{4}-[0-9]{2}-[0-9]{2}\\.(md|svg)|caderno-[a-zA-Z0-9-]+\\.(md|svg)")) continue;
+                if (!name.matches("protocolo-backup\\.json|diario-[0-9]{4}-[0-9]{2}-[0-9]{2}\\.(md|svg)|caderno-[a-zA-Z0-9-]+\\.(md|svg)|prova-pdf-[a-zA-Z0-9-]+\\.pdf")) continue;
                 Uri target=existing.get(name);
                 if (target==null) target=android.provider.DocumentsContract.createDocument(getContentResolver(), parent, f.getString("mime"), name);
                 if (target==null) throw new java.io.IOException("Create failed");
                 try (OutputStream out=getContentResolver().openOutputStream(target,"wt")) {
                     if (out==null) throw new java.io.IOException("Write failed");
-                    out.write(f.getString("text").getBytes(StandardCharsets.UTF_8));
+                    if(name.endsWith(".pdf"))out.write(android.util.Base64.decode(f.getString("base64"),android.util.Base64.DEFAULT));
+                    else out.write(f.getString("text").getBytes(StandardCharsets.UTF_8));
                 }
             }
             getPreferences(0).edit().putLong("dataFolderLastSaved", System.currentTimeMillis()).remove("dataFolderError").apply();
@@ -365,13 +369,30 @@ public final class MainActivity extends Activity {
             });
         }
         @JavascriptInterface public void writeNotebook(String json) {
-            if (json == null || json.length() > 20000000) {
+            if (json == null || json.length() > 64000000) {
                 notebookSignal("Cópia demasiado grande para esta operação. Usa Exportar dados.", false, false); return;
             }
             notebookWriter.execute(() -> writeNotebookFiles(json));
         }
+        @JavascriptInterface public void openProofPdf(String base64) {
+            if(base64==null || base64.length()>15000000)return;
+            notebookWriter.execute(() -> {
+                try {
+                    byte[] bytes=android.util.Base64.decode(base64,android.util.Base64.DEFAULT);
+                    if(bytes.length>10485760 || bytes.length<5 || !new String(bytes,0,5,StandardCharsets.US_ASCII).equals("%PDF-"))throw new IllegalArgumentException();
+                    java.io.File directory=new java.io.File(getCacheDir(),"proofs");directory.mkdirs();
+                    java.io.File file=new java.io.File(directory,"prova-"+java.util.UUID.randomUUID()+".pdf");
+                    java.nio.file.Files.write(file.toPath(),bytes);
+                    Uri uri=Uri.parse("content://app.protocolo.personal.pdf/"+file.getName());
+                    runOnUiThread(() -> {
+                        try {Intent intent=new Intent(Intent.ACTION_VIEW).setDataAndType(uri,"application/pdf").addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);intent.setClipData(android.content.ClipData.newRawUri("PDF",uri));startActivity(intent);}
+                        catch(Exception e){signal("backup",false,"Não foi encontrado um leitor de PDF neste celular.");}
+                    });
+                }catch(Exception e){signal("backup",false,"Não foi possível abrir o PDF.");}
+            });
+        }
         @JavascriptInterface public void exportBackup(String json) {
-            if (json == null || json.length() > 10000000) return;
+            if (json == null || json.length() > 64000000) {signal("backup",false,"Backup demasiado grande. Usa a pasta de dados para guardar cópias.");return;}
             runOnUiThread(() -> {
                 if (pendingBackup != null) return;
                 pendingBackup = json;

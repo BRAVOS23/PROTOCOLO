@@ -8,7 +8,7 @@
     function model(plan){if(cachedText!==plan.documentText){cachedText=plan.documentText;cachedModel=ProtocolLogic.weeklyRouteModel(cachedText);}return cachedModel;}
     function current(){var p=config.getPlan();return p && p.weeklyRouteVersion && p.id===planId?p:null;}
     function record(plan,id,write){
-      if(write){if(!plan.weeklyProgress)plan.weeklyProgress={};if(!plan.weeklyProgress[id])plan.weeklyProgress[id]={action:false,proof:false,notes:'',evidence:'',scrollY:0};}
+      if(write){if(!plan.weeklyProgress)plan.weeklyProgress={};if(!plan.weeklyProgress[id])plan.weeklyProgress[id]={action:false,proof:false,proofVersion:2,scrollY:0};}
       return (plan.weeklyProgress||{})[id]||{};
     }
     function done(plan,id){return ProtocolLogic.weeklyMissionDone(record(plan,id));}
@@ -37,7 +37,7 @@
       box.querySelectorAll('[data-week-month-count]').forEach(function(el){var month=data.months.find(function(m){return m.id===el.dataset.weekMonthCount;});el.textContent=month.missions.filter(function(m){return done(plan,m.id);}).length+' / '+month.missions.length;});
       box.querySelectorAll('[data-week-year-count]').forEach(function(el){var list=data.missions.filter(function(m){return m.date.slice(0,4)===el.dataset.weekYearCount;});el.textContent=list.filter(function(m){return done(plan,m.id);}).length+' / '+list.length;});
       if(view==='mission' && activeId){
-        var r=record(plan,activeId),steps=(r.action?1:0)+(r.proof && String(r.evidence||'').trim()?1:0);
+        var r=record(plan,activeId),steps=(r.action?1:0)+(r.proof && (ProtocolLogic.hasMissionPdf(r) || done(plan,activeId))?1:0);
         box.querySelectorAll('[data-week-step]').forEach(function(input){input.checked=!!r[input.dataset.weekStep];input.closest('.weekly-field').classList.toggle('done',input.checked);});
         var count=box.querySelector('[data-week-step-count]');if(count)count.textContent=steps+' / 2';
       }
@@ -45,11 +45,11 @@
     function requireEvidence(plan,id){
       config.toast('Não marcar como concluído sem prova.');
       if(view!=='mission' || activeId!==id)showMission(plan,id,true);
-      else {var field=config.root().querySelector('[data-week-evidence]');field.scrollIntoView({block:'center',behavior:'instant'});field.focus({preventScroll:true});}
+      else {var field=config.root().querySelector('[for="weeklyPdfInput"]');field.tabIndex=0;field.scrollIntoView({block:'center',behavior:'instant'});field.focus({preventScroll:true});}
     }
     function setDone(plan,id,checked){
       var r=record(plan,id,true);
-      if(checked && !String(r.evidence||'').trim()){update(plan);requireEvidence(plan,id);return;}
+      if(checked && !ProtocolLogic.hasMissionPdf(r)){update(plan);requireEvidence(plan,id);return;}
       r.action=checked;r.proof=checked;r.done=ProtocolLogic.weeklyMissionDone(r);focusId=id;save();update(plan);
     }
     function bindChecks(plan){config.root().querySelectorAll('[data-week-done]').forEach(function(input){input.addEventListener('change',function(){setDone(plan,input.dataset.weekDone,input.checked);});});}
@@ -84,25 +84,23 @@
       config.root().innerHTML='<article class="weekly-route weekly-mission-page"><nav class="weekly-breadcrumb"><button type="button" data-week-index>ROTA PARA A CHINA 2029</button><span>› '+esc(month.heading)+'</span></nav><section class="weekly-hero"><h1>'+esc(mission.heading)+'</h1><label class="weekly-mission-completion"><input type="checkbox" data-week-done="'+esc(id)+'" aria-label="Concluir '+esc(mission.heading)+'"><strong>Semana '+esc(mission.number)+'</strong><span data-week-step-count></span></label></section>'+mission.fields.map(function(field){
         var step=field.label==='FAZ ISTO:'?'action':field.label==='PROVA DE CONCLUSÃO:'?'proof':null;
         return '<section class="weekly-field '+(step||'options')+'">'+(step?'<label class="weekly-field-label"><input type="checkbox" data-week-step="'+step+'"><strong>'+esc(field.label)+'</strong></label>':'<h2>'+esc(field.label)+'</h2>')+'<p>'+esc(field.text)+'</p></section>';
-      }).join('')+'<section class="weekly-journal"><label class="field-label"><span>Registo do processo</span><textarea data-week-notes>'+esc(r.notes||'')+'</textarea></label><label class="field-label"><span>Prova / referência</span><textarea data-week-evidence>'+esc(r.evidence||'')+'</textarea></label><span class="weekly-save-state" aria-live="polite" data-week-saved></span></section><nav class="weekly-navigation">'+(position>0?'<button class="btn ghost" type="button" data-week-previous>Anterior</button>':'')+'<button class="btn ghost" type="button" data-week-index>Missões</button>'+(position<data.missions.length-1?'<button class="btn" type="button" data-week-next>Seguinte</button>':'')+'</nav></article>';
+      }).join('')+ '<section class="weekly-journal weekly-pdf"><h2>Prova / referência</h2><p class="weekly-pdf-name" data-week-pdf-name>'+esc(r.evidencePdf?r.evidencePdf.name:'Nenhum PDF anexado')+'</p><label class="btn" for="weeklyPdfInput">'+(r.evidencePdf?'Substituir PDF':'Anexar PDF')+'</label><input id="weeklyPdfInput" type="file" accept="application/pdf,.pdf" data-week-pdf hidden><div class="weekly-pdf-actions"><button class="btn ghost" type="button" data-week-pdf-open '+(!r.evidencePdf?'hidden':'')+'>Abrir PDF</button><button class="btn ghost" type="button" data-week-pdf-remove '+(!r.evidencePdf?'hidden':'')+'>Remover PDF</button></div><small>PDF até 10 MB · guardado neste dispositivo</small><span class="weekly-save-state" role="status" data-week-saved></span></section><blockquote class="weekly-reflection">O resultado ajudou a tomar uma decisão ou a melhorar o perfil?</blockquote><nav class="weekly-navigation">'+(position>0?'<button class="btn ghost" type="button" data-week-previous>Anterior</button>':'')+'<button class="btn ghost" type="button" data-week-index>Missões</button>'+(position<data.missions.length-1?'<button class="btn" type="button" data-week-next>Seguinte</button>':'')+'</nav></article>';
       update(plan);bindChecks(plan);
       config.root().querySelectorAll('[data-week-step]').forEach(function(input){input.addEventListener('change',function(){
         var value=record(plan,id,true);
-        if(input.dataset.weekStep==='proof' && input.checked && !String(value.evidence||'').trim()){input.checked=false;requireEvidence(plan,id);return;}
+        if(input.dataset.weekStep==='proof' && input.checked && !ProtocolLogic.hasMissionPdf(value)){input.checked=false;requireEvidence(plan,id);return;}
         value[input.dataset.weekStep]=input.checked;value.done=ProtocolLogic.weeklyMissionDone(value);save();update(plan);
       });});
-      function bindText(selector,key){var field=config.root().querySelector(selector);field.addEventListener('input',function(){
-        var value=record(plan,id,true);value[key]=field.value;
-        if(key==='evidence' && !field.value.trim())value.proof=false;
-        value.done=ProtocolLogic.weeklyMissionDone(value);save();update(plan);config.root().querySelector('[data-week-saved]').textContent='Guardado';
-      });}
-      bindText('[data-week-notes]','notes');bindText('[data-week-evidence]','evidence');
+      var fileInput=config.root().querySelector('[data-week-pdf]');
+      fileInput.addEventListener('change',async function(){var file=this.files[0];if(!file)return;var status=config.root().querySelector('[data-week-saved]');status.textContent='A guardar PDF…';fileInput.disabled=true;try{var meta=await PDFVault.attach(file),value=record(plan,id,true);value.evidencePdf=meta;value.proofVersion=2;value.done=ProtocolLogic.weeklyMissionDone(value);save();if(current()===plan && activeId===id){config.root().querySelector('[data-week-pdf-name]').textContent=meta.name;config.root().querySelectorAll('[data-week-pdf-open],[data-week-pdf-remove]').forEach(function(b){b.hidden=false;});config.root().querySelector('[for="weeklyPdfInput"]').textContent='Substituir PDF';status.textContent='PDF guardado';update(plan);}}catch(e){config.toast(e.message||'Não foi possível guardar o PDF.');status.textContent='Não foi possível anexar o PDF.';}finally{fileInput.disabled=false;fileInput.value='';}});
+      config.root().querySelector('[data-week-pdf-open]').onclick=async function(){try{await PDFVault.open(record(plan,id).evidencePdf);}catch(e){config.toast(e.message);}};
+      config.root().querySelector('[data-week-pdf-remove]').onclick=function(){var value=record(plan,id,true);delete value.evidencePdf;value.proofVersion=2;value.proof=false;value.done=false;save();config.root().querySelector('[data-week-pdf-name]').textContent='Nenhum PDF anexado';config.root().querySelectorAll('[data-week-pdf-open],[data-week-pdf-remove]').forEach(function(b){b.hidden=true;});config.root().querySelector('[for="weeklyPdfInput"]').textContent='Anexar PDF';update(plan);};
       config.root().querySelectorAll('[data-week-index]').forEach(function(button){button.addEventListener('click',function(){capture();showIndex(plan,id,false);});});
       var previous=config.root().querySelector('[data-week-previous]'),next=config.root().querySelector('[data-week-next]');
       if(previous)previous.addEventListener('click',function(){capture();showMission(plan,data.missions[position-1].id);});
       if(next)next.addEventListener('click',function(){capture();showMission(plan,data.missions[position+1].id);});
       save();restore(plan,function(){
-        if(focusEvidence){var field=config.root().querySelector('[data-week-evidence]');field.scrollIntoView({block:'center',behavior:'instant'});field.focus({preventScroll:true});}
+        if(focusEvidence){var field=config.root().querySelector('[for="weeklyPdfInput"]');field.tabIndex=0;field.scrollIntoView({block:'center',behavior:'instant'});field.focus({preventScroll:true});}
         else window.scrollTo({top:r.scrollY||0,behavior:'instant'});
       });
     }

@@ -505,8 +505,8 @@
   </div>
   <section id="androidDownload" class="native-features">
     <div><span class="kicker">Para Android</span><h4>Atividades na tela inicial</h4><p>A versão instalável mostra as tarefas de hoje no widget e avisa das atividades com horário, sem conta ou mensalidade.</p></div>
-    <a class="btn" href="https://bravos23.github.io/PROTOCOLO/downloads/Protocolo-Pessoal.apk?v=3.14" download>Baixar Protocolo 3.14 para Android</a>
-    <p class="native-note">Versão 3.14 com planos do dia e gestão semanal de Trabalho e Treinos. Se já usas o Protocolo 3.x, instala por cima, sem desinstalar: os dados ficam guardados. Se vens de uma instalação anterior à 3.0, mantém o app antigo e transfere os dados por Definições → Exportar dados / Importar dados.</p>
+    <a class="btn" href="https://bravos23.github.io/PROTOCOLO/downloads/Protocolo-Pessoal.apk?v=3.15" download>Baixar Protocolo 3.15 para Android</a>
+    <p class="native-note">Versão 3.15 com comprovativos PDF nas missões da Rota para a China. Se já usas o Protocolo 3.x, instala por cima, sem desinstalar: os dados ficam guardados. Se vens de uma instalação anterior à 3.0, mantém o app antigo e transfere os dados por Definições → Exportar dados / Importar dados.</p>
   </section>
   <section id="dataFolderSection" class="data-folder-card" hidden>
     <span class="kicker">Armazenamento no celular</span><h4>Pasta dos meus dados</h4>
@@ -517,7 +517,7 @@
     <small>Podes criar uma pasta Protocolo em Documentos. O app mantém os dados internos para funcionar offline. Para recuperar uma cópia, usa Importar dados e escolhe protocolo-backup.json. Mudar de pasta não importa nem apaga os ficheiros da anterior.</small>
   </section>
   <section id="nativeFeatures" class="native-features" hidden>
-    <div class="native-migration"><span class="kicker">Protocolo</span><h4>Protocolo 3.14 · traz os teus dados</h4><p>As atualizações do Protocolo 3.x mantêm os teus dados nesta instalação. Se vens de um app anterior à versão 3.0, exporta os dados no antigo e importa o ficheiro aqui em baixo. Confere os dados antes de remover o antigo. Numa primeira instalação, ativa os lembretes e adiciona o widget neste app.</p></div>
+    <div class="native-migration"><span class="kicker">Protocolo</span><h4>Protocolo 3.15 · traz os teus dados</h4><p>As atualizações do Protocolo 3.x mantêm os teus dados nesta instalação. Se vens de um app anterior à versão 3.0, exporta os dados no antigo e importa o ficheiro aqui em baixo. Confere os dados antes de remover o antigo. Numa primeira instalação, ativa os lembretes e adiciona o widget neste app.</p></div>
     <div><span class="kicker">Neste celular</span><h4>Lembretes das atividades e agenda</h4><p id="nativeReminderStatus" role="status">Os lembretes estão desativados.</p></div>
     <label class="field-label"><span>Avisar antes do evento</span><select id="nativeLeadMinutes"><option value="10">10 minutos antes</option><option value="30" selected>30 minutos antes</option><option value="60">1 hora antes</option><option value="1440">1 dia antes</option></select></label>
     <p class="native-note">As atividades do Início usam a hora que definiste (ex.: 05h40). Define uma hora para receber aviso; as atividades sem hora aparecem no widget. Eventos da agenda sem hora continuam considerados às 09:00.</p>
@@ -638,6 +638,7 @@
 <script src="js/logic.js"></script>
 <script src="js/data.js"></script>
 <script src="js/native-platform.js"></script>
+<script src="js/pdf-vault.js"></script>
 <script src="js/weekly-route.js"></script>
 <dialog id="dataFolderPrompt" class="data-folder-prompt" aria-labelledby="dataFolderPromptTitle">
   <span class="kicker">Os teus dados, contigo</span><h2 id="dataFolderPromptTitle">Onde queres guardar os teus dados?</h2>

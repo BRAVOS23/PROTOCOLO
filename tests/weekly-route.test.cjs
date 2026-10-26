@@ -25,3 +25,12 @@ test('retoma a missão pendente guardada e avança depois de concluir com prova'
  model.missions.forEach(m=>progress[m.id]={action:true,proof:true,evidence:'Documento'});
  assert.equal(logic.weeklyResumeMission(model,progress,{missionId:'week-154'}).id,'week-154');
 });
+
+test('PDF proof is required for new records while old completed missions remain intact',()=>{
+ const r={action:true,proof:true,proofVersion:2,evidence:'Texto antigo'};
+ assert.equal(logic.weeklyMissionDone(r),false);
+ r.evidencePdf={id:'pdf-1234',name:'Prova.pdf',size:100};
+ assert.equal(logic.weeklyMissionDone(r),true);
+ delete r.evidencePdf;assert.equal(logic.weeklyMissionDone(r),false);
+ assert.equal(logic.weeklyMissionDone({action:true,proof:true,evidence:'Prova anterior'}),true);
+});

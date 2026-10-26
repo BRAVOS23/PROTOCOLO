@@ -3331,11 +3331,12 @@
     });
   });
 
-  document.getElementById('btnExport').addEventListener('click', function(){
+  document.getElementById('btnExport').addEventListener('click', async function(){
+    try{
     var exportData = clone(state);
     exportData.exportedAt = new Date().toISOString();
     exportData.aifHistory = aifHistory();
-    var backupJSON=JSON.stringify(exportData,null,2);
+    var backupJSON=JSON.stringify(await PDFVault.pack(exportData),null,2);
     if(window.NativePlatform && NativePlatform.available){NativePlatform.exportBackup(backupJSON);return;}
     var blob = new Blob([backupJSON], {type:'application/json'});
     var url = URL.createObjectURL(blob);
@@ -3344,6 +3345,7 @@
     document.body.appendChild(a); a.click(); a.remove();
     URL.revokeObjectURL(url);
     toast('Backup exportado');
+    }catch(e){toast('Não foi possível exportar os dados e PDFs.');}
   });
 
   function last30Days(){
@@ -3423,9 +3425,9 @@
     var file = e.target.files[0];
     if(!file) return;
     var reader = new FileReader();
-    reader.onload = function(){
+    reader.onload = async function(){
       try{
-        var data = JSON.parse(reader.result);
+        var data = await PDFVault.restore(JSON.parse(reader.result));
         var merged=Object.assign(freshDefaultState(),data);if(!Object.prototype.hasOwnProperty.call(data,'scheduleHistoryVersion'))merged.scheduleHistoryVersion=0;
         if(!Object.prototype.hasOwnProperty.call(data,'contentMigrationVersion') && Array.isArray(data.areas) && data.fitNotes && data.langNotes)merged.contentMigrationVersion=1;
         if(weeklyRouteUI)weeklyRouteUI.suspend();
