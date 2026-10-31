@@ -1507,3 +1507,14 @@ html.tablet-layout .topbar-inner{min-width:0}html.tablet-layout .wrap{min-width:
 #journalRoot .cover-2 .nb-cover-icon{color:#f472b6}
 #journalRoot .nb-cover:hover,#journalRoot .nb-note-card:hover{border-color:var(--accent)}
 .nb-note-card{border-radius:12px}.nb-preview{background:#faf9f6}.nb-note-grid{gap:20px}
+
+#settingsSheet .settings-help{margin:12px 0;color:var(--ink-faint);font-size:13px}
+#settingsSheet .settings-help summary{cursor:pointer;padding:8px 0;min-height:32px;display:flex;align-items:center;gap:8px}
+#settingsSheet .settings-help summary:before{content:'›'}
+#settingsSheet .settings-help[open] summary:before{content:'⌄'}
+#settingsSheet .settings-help p{line-height:1.6;margin:8px 0}
+#settingsSheet .settings-customize{padding:18px 0;border-bottom:1px solid var(--line)}
+#settingsSheet .settings-customize>summary{cursor:pointer;min-height:44px;display:flex;align-items:center;justify-content:space-between}
+#settingsSheet .settings-customize>summary:after{content:'＋';color:var(--ink-faint)}
+#settingsSheet .settings-customize[open]>summary:after{content:'−'}
+#settingsSheet .settings-customize #tabNameInputs{margin-top:12px}

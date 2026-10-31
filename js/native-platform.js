@@ -37,10 +37,10 @@
     document.getElementById('nativeLeadMinutes').value=String(status.leadMinutes||30);
     document.getElementById('nativeEnableReminders').textContent=status.enabled?'Desativar lembretes':'Ativar lembretes';
     document.getElementById('nativeEnableReminders').setAttribute('aria-pressed',String(!!status.enabled));
-    document.getElementById('nativeReminderStatus').textContent=!status.enabled?'Os lembretes estão desativados.':!status.notificationsAllowed?'As notificações estão bloqueadas no Android.':status.exactAllowed?'Lembretes ativos, mesmo com o app fechado.':'Lembretes ativos. Permite o horário exato para evitar atrasos do Android.';
+    document.getElementById('nativeReminderStatus').textContent=!status.enabled?'Desativadas':!status.notificationsAllowed?'Bloqueadas no Android':status.exactAllowed?'Ativas':'Ativas · horário exato por permitir';
     document.getElementById('nativeExactAlarms').hidden=!status.enabled||status.exactAllowed;
     document.getElementById('nativeNotificationSettings').hidden=!!status.notificationsAllowed||(!status.enabled&&!status.permissionRequested);
-    document.getElementById('nativeWidgetHint').textContent=status.widgetSupported?'Mostra as atividades do Início; desliza a lista para ver todas.':'Mantém pressionada a tela inicial e escolhe Widgets → Protocolo.';
+    document.getElementById('nativeWidgetHint').textContent=status.widgetSupported?'As tuas atividades de hoje.':'Mantém pressionada a tela inicial e escolhe Widgets → Protocolo.';
   }
   document.getElementById('nativeEnableReminders').addEventListener('click',function(){
     var status=JSON.parse(bridge.getStatus());if(status.enabled)bridge.disableReminders();else bridge.requestReminders();
