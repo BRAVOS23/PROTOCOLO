@@ -1479,3 +1479,31 @@ html.tablet-layout body:has(#view-vida.active #vida-caderno.active) .tabbtn[data
 .nb-workspace.notes-overview .nb-editor{padding:26px clamp(18px,2vw,32px)}
 @media(min-width:600px) and (max-width:900px){.nb-workspace .nb-sidebar{width:220px;padding-left:12px;padding-right:12px}.nb-workspace.notes-overview .nb-editor{padding:22px 18px}}
 html.tablet-layout .topbar-inner{min-width:0}html.tablet-layout .wrap{min-width:0}
+
+/* One notebook, one index: page navigation shares the editor's quiet visual language. */
+.nb-index-heading{font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:var(--nb-muted);margin:18px 10px 12px}
+.nb-index-note{border-bottom:1px solid var(--nb-line);padding:4px 0}
+.nb-index-note>summary{display:flex;align-items:center;gap:8px;cursor:pointer;min-height:46px;padding:8px 10px;list-style:none;font-size:13px}
+.nb-index-note>summary:before{content:'›';color:var(--nb-muted);transition:transform .15s}
+.nb-index-note[open]>summary:before{transform:rotate(90deg)}
+.nb-index-note>summary>span{flex:1;overflow-wrap:anywhere;min-width:0;font-weight:600}
+.nb-index-note>summary>small{color:var(--nb-muted);font-size:11px}
+.nb-index-pages{display:grid;gap:3px;padding:0 0 10px 12px}
+#journalRoot .nb-index-pages button{display:flex;align-items:center;gap:10px;text-align:left;width:100%;padding:10px;border:0;background:transparent;border-radius:10px}
+.nb-index-pages button>span:last-child{min-width:0;flex:1}
+.nb-index-pages strong{display:block;font-size:12px;font-weight:500}
+.nb-index-pages small{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:170px;font-size:11px;color:var(--nb-muted);margin-top:4px}
+.nb-page-number{display:grid;place-items:center;width:25px;height:33px;flex-shrink:0;border:1px solid var(--nb-line);border-radius:3px;color:var(--nb-muted);font-size:11px;background:var(--nb-bg)}
+#journalRoot .nb-index-pages [aria-current=page]{background:var(--accent-soft);color:var(--accent-strong)}
+#journalRoot .nb-index-pages [aria-current=page] .nb-page-number{border-color:var(--accent);color:var(--accent-strong)}
+.nb-sidebar-head>.kicker{font-size:10px;letter-spacing:.1em;color:var(--nb-muted)}
+.nb-workspace .nb-sidebar-head h2{font-size:19px;color:var(--nb-ink);line-height:1.4;margin:8px 0 18px;overflow-wrap:anywhere}
+#journalRoot .nb-cover{background:var(--nb-panel);color:var(--nb-ink);border:1px solid var(--nb-line);box-shadow:0 6px 20px #00000015}
+#journalRoot .nb-cover .nb-spine{background:#9b87ff;width:4px;inset:16px auto 16px 10px;border-radius:3px}
+#journalRoot .nb-cover.cover-1 .nb-spine{background:#2dd4bf}
+#journalRoot .nb-cover.cover-2 .nb-spine{background:#f472b6}
+#journalRoot .nb-cover-icon{color:#b1a2ff}
+#journalRoot .cover-1 .nb-cover-icon{color:#2dd4bf}
+#journalRoot .cover-2 .nb-cover-icon{color:#f472b6}
+#journalRoot .nb-cover:hover,#journalRoot .nb-note-card:hover{border-color:var(--accent)}
+.nb-note-card{border-radius:12px}.nb-preview{background:#faf9f6}.nb-note-grid{gap:20px}
