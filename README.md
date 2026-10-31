@@ -132,3 +132,9 @@ A partir de 768 px, a navegação fica numa barra lateral compacta. A partir de 
 Verificação responsiva: `node tests/browser/adaptive-layout.cjs` testa os intervalos de 360–1440 px, todas as abas, a navegação lateral, conservação de dados/eventos ao redimensionar, cadernos em tela cheia e a preferência de tema claro.
 
 Os anexos PDF têm armazenamento local em `js/pdf-vault.js`. Importar o backup restaura os ficheiros em IndexedDB antes de repor o estado. No APK, Abrir PDF usa um leitor instalado e uma autorização temporária de leitura do ficheiro; o provider não permite escrever nem aceder a outras pastas. No site, o PDF pode ser descarregado. A validação verifica tamanho e assinatura PDF; não analisa o conteúdo do documento.
+
+### Editor no tablet
+
+No tablet e PC (a partir de 701 px), o editor de tinta usa título/detalhes numa linha, ferramentas numa barra compacta e um rodapé único para zoom/páginas. As opções de escrita abrem sobre a folha, sem reduzir a área útil. O modo de foco continua a ampliar essa área. A primeira abertura num ecrã largo corrige vistas antigas inferiores a 80% para a largura da folha; a apresentação passa a `viewport.layoutVersion:2`, e os zooms escolhidos depois continuam guardados. Rodar o dispositivo preserva o centro lógico da página e os traços. Esta migração altera apenas a vista, não os desenhos.
+
+`node tests/browser/tablet-notebook.cjs` reproduz o caso de 1280×712, testa a área útil, popovers, rodapé, foco, zoom guardado e rotação. A validação é feita no Chromium com toque simulado; o resultado num tablet físico depende ainda do WebView e das barras do dispositivo.

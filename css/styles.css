@@ -1354,3 +1354,32 @@ span.mx[role="button"],span.del[role="button"]{ min-width:44px; min-height:44px;
 @media(max-width:700px){.nb-note-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}.nb-preview{height:150px}.nb-note-card small{font-size:10px;padding:6px 10px 12px}.nb-note-card strong{padding:12px 10px 0}.nb-workspace .nb-topbar>strong{max-width:95px}.nb-workspace.has-note .nb-topbar [data-menu]{margin-left:auto}.nb-workspace.has-note .nb-topbar>button{font-size:12px}.nb-overview-controls>input{flex-basis:100%}.nb-overview-controls select{flex:1}.nb-overview-head h1{font-size:27px}.nb-note-options[open]{top:28px}.nb-workspace .nb-blank{min-height:35vh}}
 @media(min-width:701px){.nb-workspace.has-note .nb-topbar [data-menu]{display:flex}.nb-workspace.has-note:not(.drawer-open) .nb-sidebar{display:none}.nb-workspace.has-note .nb-editor{max-width:none}.nb-focus .nb-sidebar{display:none!important}}
 .nb-editor{position:relative}.nb-page-picker{position:absolute;bottom:60px;left:16px;right:16px;z-index:20;max-height:45vh;overflow:auto;display:grid;grid-template-columns:repeat(auto-fill,minmax(84px,1fr));gap:10px;padding:14px;border:1px solid var(--nb-line);border-radius:16px;background:var(--nb-panel);box-shadow:0 8px 30px #0005}.nb-page-picker button{padding:6px}.nb-page-picker button>div{height:100px;background:#fff;color:#222;overflow:hidden;border-radius:4px;margin-bottom:5px}.nb-page-picker .nb-preview-text{padding:8px;font-size:8px}.nb-page-picker [aria-pressed=true]{border-color:var(--accent);background:var(--accent-soft)}.nb-page-picker .nb-preview-ink{height:100%;width:100%}.nb-page-picker span{font-size:12px}
+
+/* Tablet writing workspace: compact chrome, one footer, full-width page. */
+@media(min-width:701px){
+ #journalRoot.nb-workspace.has-note .nb-topbar{min-height:48px;height:48px;padding:4px 12px}
+ #journalRoot.nb-workspace.has-note .nb-topbar>button{min-height:40px;padding:6px 10px}
+ #journalRoot.nb-workspace.has-note .nb-topbar strong{font-size:13px}
+ #journalRoot.nb-workspace.ink-mode .nb-editor{padding:4px 12px 0;min-height:0}
+ #journalRoot.nb-workspace.ink-mode .nb-paper-head{display:flex;align-items:center;gap:16px;min-height:42px;flex-shrink:0}
+ #journalRoot.nb-workspace.ink-mode .nb-paper-head [data-note-title]{flex:1;width:auto;min-width:0;min-height:38px;height:38px;padding:4px 0!important;font-size:18px!important;line-height:1.3}
+ #journalRoot.nb-workspace.ink-mode .nb-note-meta{flex:0 0 auto;gap:12px;margin:0;min-height:38px}
+ #journalRoot.nb-workspace.ink-mode .nb-note-meta [data-saved]{font-size:11px}
+ #journalRoot.nb-workspace.ink-mode .nb-note-options[open]{top:36px}
+ #journalRoot.nb-workspace.ink-mode .nb-toolbar{position:relative;display:flex;flex-direction:row;align-items:center;justify-content:space-between;gap:12px;min-height:56px;height:56px;padding:4px 0;z-index:10}
+ #journalRoot.nb-workspace.ink-mode .nb-main-tools{flex:0 1 540px;max-width:540px;min-width:0;width:auto}
+ #journalRoot.nb-workspace.ink-mode .nb-main-tools [data-tool]{min-height:44px;height:44px;padding:4px 6px}
+ #journalRoot.nb-workspace.ink-mode .nb-writing-settings{position:relative;flex:0 0 auto;margin:0;padding:0;border:0;background:transparent}
+ #journalRoot.nb-workspace.ink-mode .nb-writing-settings>summary{min-height:40px;padding:8px 12px;border:1px solid var(--nb-line);border-radius:10px;font-size:12px}
+ #journalRoot.nb-workspace.ink-mode .nb-writing-settings .nb-pen-options{position:absolute;right:0;top:44px;z-index:20;width:min(350px,80vw);max-height:50dvh;overflow:auto;padding:16px;background:var(--nb-panel);border:1px solid var(--nb-line);border-radius:14px;box-shadow:0 8px 28px #0005}
+ #journalRoot.nb-workspace.ink-mode .nb-sheet{margin:0 -12px;min-height:0}
+ #journalRoot.nb-workspace.ink-mode .nb-ink-viewport{background:#292929}
+ #journalRoot.nb-workspace.ink-mode .nb-pagination{height:44px;min-height:44px;justify-content:flex-end;padding:4px 12px 4px 190px;gap:6px;border-top:1px solid var(--nb-line);background:var(--nb-panel)}
+ #journalRoot.nb-workspace.ink-mode .nb-pagination button{min-height:36px;padding:4px 11px}
+ #journalRoot.nb-workspace.ink-mode .nb-page-controls{position:absolute;left:8px;bottom:4px;z-index:3;display:flex;width:174px;height:36px;gap:4px;padding:0;border:0;background:transparent}
+ #journalRoot.nb-workspace.ink-mode .nb-page-controls button{min-height:36px;height:36px;padding:4px 10px}
+ #journalRoot.nb-workspace.nb-focus .nb-paper-head{display:none}
+ #journalRoot.nb-workspace.nb-focus .nb-toolbar{justify-content:flex-start}
+}
+#journalRoot [data-zoom-reset]{display:inline-flex;align-items:center;justify-content:center;gap:3px;white-space:nowrap}
+@media(min-width:701px){#journalRoot.nb-workspace.ink-mode .nb-page-controls{width:220px}#journalRoot.nb-workspace.ink-mode .nb-page-controls button{flex-shrink:0}#journalRoot.nb-workspace.ink-mode .nb-pagination{padding-left:240px}}
