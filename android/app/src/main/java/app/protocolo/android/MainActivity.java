@@ -269,6 +269,14 @@ public final class MainActivity extends Activity {
                 }
             });
         }
+        @JavascriptInterface public String getDeviceProfile() {
+            Configuration config=getResources().getConfiguration();
+            int size=config.screenLayout & Configuration.SCREENLAYOUT_SIZE_MASK;
+            int smallest=config.smallestScreenWidthDp;
+            boolean tablet=smallest>=600 || (smallest>=480 && size>=Configuration.SCREENLAYOUT_SIZE_LARGE);
+            try {return new JSONObject().put("tablet",tablet).put("smallestWidthDp",smallest).toString();}
+            catch(Exception e){return "{}";}
+        }
         @JavascriptInterface public String getStatus() {
             try {
                 return new JSONObject().put("enabled", AgendaStore.prefs(MainActivity.this).getBoolean("enabled", false))

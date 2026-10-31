@@ -1,7 +1,8 @@
-const CACHE = 'protocolo-v51';
+const CACHE = 'protocolo-v52';
 const SHELL = [
   './',
   './index.html',
+  './js/device-layout.js',
   './css/styles.css',
   './js/logic.js',
   './js/native-platform.js',

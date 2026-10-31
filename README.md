@@ -127,7 +127,7 @@ Testes móveis: `node tests/browser/sections.cjs` verifica migração, remoção
 
 O tema escuro usa superfícies neutras pretas e grafite, mantendo violeta e turquesa nos destaques. A atualização troca a preferência antiga Auto para o novo tema escuro uma única vez; uma escolha explícita de Claro é respeitada. Podes voltar a Claro/Auto/Escuro nas Definições.
 
-A partir de 768 px, a navegação fica numa barra lateral compacta. A partir de 1100 px, mostra nomes, atalhos de Cadernos e Definições e um Início em duas colunas. Abaixo de 768 px, mantém a navegação inferior. O dashboard reutiliza os mesmos elementos e registos ao redimensionar; não duplica tarefas nem inventa valores para os gráficos. Os atalhos de cadernos e Rota para a China usam os dados atuais. O PWA permite orientação vertical e horizontal, e o APK mantém o fundo nativo coerente com o tema escolhido.
+No Android, o app usa o perfil de ecrã do sistema para manter a navegação lateral de tablet nas duas orientações (desde que a janela tenha pelo menos 480 px úteis). Celulares mantêm a barra inferior. No navegador, considera o ecrã e a largura disponível, incluindo tablets verticais com 600 px CSS. A partir de 1100 px, mostra nomes, atalhos de Cadernos e Definições e um Início em duas colunas. O dashboard reutiliza os mesmos elementos e registos ao redimensionar; não duplica tarefas nem inventa valores para os gráficos. Os atalhos de cadernos e Rota para a China usam os dados atuais. O PWA permite orientação vertical e horizontal, e o APK mantém o fundo nativo coerente com o tema escolhido.
 
 Verificação responsiva: `node tests/browser/adaptive-layout.cjs` testa os intervalos de 360–1440 px, todas as abas, a navegação lateral, conservação de dados/eventos ao redimensionar, cadernos em tela cheia e a preferência de tema claro.
 
@@ -144,3 +144,9 @@ O editor tem título, indicador de páginas, Nova página e menu de opções no 
 A barra lateral contém filtros Todas as notas/Favoritas/Lixeira, acesso aos cadernos e Definições. Na grelha existe apenas uma pesquisa, na área principal; ao editar uma nota, a pesquisa e a lista de notas ficam na barra lateral. Gestão do caderno não aparece na barra lateral, e os controlos de pasta/cópias foram retirados tanto da biblioteca como dos cadernos. **Definições → Dados e cópias de segurança** reúne a pasta, exportação e importação. O atalho suspende a vista do caderno para o modal ficar acessível e restaura-a ao fechar, incluindo pelo botão Voltar do Android. A cópia automática continua a funcionar.
 
 Teste: `node tests/browser/notebook-navigation.cjs` verifica estas separações, renomear/cancelar, confirmação de eliminação, troca de cadernos, regresso das Definições e preservação das notas.
+
+### Rotação e identificação do dispositivo
+
+`js/device-layout.js` é carregado antes do CSS e volta a calcular o modo ao rodar/redimensionar. No APK, `getDeviceProfile()` usa `smallestScreenWidthDp` e a classe de tamanho Android, sem depender apenas da largura atual do WebView. O CSS da barra lateral usa a classe `tablet-layout`, e os componentes de caderno adaptam-se também aos 600 px de um tablet vertical. Conteúdo e número de colunas continuam a depender do espaço útil. Não há migração dos dados pessoais nem recriação das atividades ao rodar.
+
+`node tests/browser/device-rotation.cjs` verifica os perfis Android simulados de tablet e celular, orientações a partir de 533 px, abas sem overflow e a alternativa de navegador sem ponte nativa. O reconhecimento do modelo físico precisa de confirmação no dispositivo.
