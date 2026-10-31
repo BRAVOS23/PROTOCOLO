@@ -1423,3 +1423,25 @@ span.mx[role="button"],span.del[role="button"]{ min-width:44px; min-height:44px;
 }
 #journalRoot.nb-workspace.nb-focus .nb-main-tools [data-tool]{font-size:0;min-height:36px;height:36px;gap:0}
 #journalRoot.nb-workspace.nb-focus .nb-toolbar{min-height:44px;height:44px;padding:2px 0}
+
+/* Notebook sidebar is navigation only; settings and notebook actions have their own place. */
+.nb-workspace .nb-sidebar{display:flex;flex-direction:column;gap:0;padding:20px 14px 12px;overflow:hidden}
+.nb-workspace .nb-sidebar-head h2{font-size:15px;margin:0 0 16px;color:var(--nb-muted);font-weight:600}
+.nb-workspace .nb-filters{display:flex;flex-direction:column;gap:4px;margin-bottom:20px}
+#journalRoot .nb-filters button{width:100%;display:flex;align-items:center;justify-content:space-between;gap:12px;min-height:46px!important;padding:10px 12px!important;border-color:transparent;background:transparent;text-align:left;font-size:13px!important}
+#journalRoot .nb-filters button[aria-pressed=true]{border-color:var(--nb-line);background:var(--accent-soft);color:var(--accent-strong)}
+.nb-filters small{color:var(--nb-muted);font-size:11px;min-width:18px;text-align:right}
+.nb-sidebar-books{flex:1;min-height:0;overflow:auto;padding-top:14px;border-top:1px solid var(--nb-line)}
+.nb-sidebar-books h3{font-size:11px;letter-spacing:.04em;color:var(--nb-muted);font-weight:600;margin:0 10px 10px;text-transform:uppercase}
+#journalRoot .nb-sidebar-books button{display:flex;align-items:center;gap:9px;width:100%;min-height:46px;border:0;background:transparent;text-align:left;padding:10px 12px}
+.nb-sidebar-books strong{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:13px;font-weight:500}
+.nb-sidebar-books small{font-size:11px;color:var(--nb-muted)}
+#journalRoot .nb-sidebar-books [aria-current=page]{background:var(--surface-2);color:var(--ink)}
+.nb-workspace .nb-sidebar .nb-note-list{flex:1;min-height:0;overflow:auto;padding-bottom:12px}
+.nb-sidebar-footer{margin-top:auto;padding-top:12px;border-top:1px solid var(--nb-line);flex-shrink:0}
+#journalRoot .nb-sidebar-footer button{display:block;width:100%;min-height:44px;border:0;text-align:left;color:var(--nb-muted);background:transparent;padding:10px 12px}
+.nb-workspace .nb-topbar{position:relative;z-index:30}
+#journalRoot .nb-topbar>.nb-book-options,#journalRoot .nb-topbar>.nb-book-options[open]{position:static;width:40px;flex-shrink:0;background:transparent;border:0;padding:0;margin:0;box-shadow:none}
+.nb-book-options [data-book-rename-form] input{width:100%}.nb-book-options .form-actions{display:flex;gap:8px;justify-content:flex-end}.nb-book-options .form-actions button{width:auto}.nb-book-options [data-book-delete-panel] p{font-size:14px;line-height:1.7;overflow-wrap:anywhere;margin-bottom:14px}
+.settings-data-section{padding:18px 0;margin-bottom:20px;border-bottom:1px solid var(--line)}.settings-data-section>h4{font-size:21px;margin:6px 0}.settings-data-section>p{font-size:13px;line-height:1.7;color:var(--ink-soft);margin-bottom:14px}.settings-data-section .data-folder-card{margin:12px 0;background:var(--surface-2)}
+.nb-workspace.notes-overview .nb-editor{padding:26px clamp(18px,2vw,32px)}

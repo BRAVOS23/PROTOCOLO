@@ -3036,7 +3036,7 @@
     var vidaBtn = document.querySelector('.tabbtn[data-tab="vida"]');
     if(vidaBtn) vidaBtn.classList.toggle('has-today', (pendingShopping+pendentesOpen)>0 || (!!upcoming && daysUntil(upcoming.date)<=3));
   }
-  var journalUI=JournalUI.create({root:document.getElementById('journalRoot'),getState:function(){return state;},save:saveState,toast:toast});
+  var journalUI=JournalUI.create({root:document.getElementById('journalRoot'),getState:function(){return state;},save:saveState,toast:toast,openSettings:openNotebookSettings});
   document.getElementById('openJournal').addEventListener('click',function(){goVida('caderno');});
   function goVida(screen){
     if(weeklyRouteUI && screen!=='plano-detail'){weeklyRouteUI.capture();weeklyRouteUI.suspend();}
@@ -3220,7 +3220,8 @@
   var itemDetailSheet = document.getElementById('itemDetailSheet');
   var quickAddSheet = document.getElementById('quickAddSheet');
   var backdrop = document.getElementById('sheetBackdrop');
-  var currentSheet=null, sheetReturnFocus=null, sheetScrollY=0;
+  var currentSheet=null, sheetReturnFocus=null, sheetScrollY=0,notebookSettingsOpen=false;
+  function openNotebookSettings(){notebookSettingsOpen=true;document.getElementById('journalRoot').hidden=true;openSheet(settingsSheet);}
   function setBackgroundInert(value){
     document.querySelectorAll('.topbar,main.wrap,.tabbar,.fab-quickadd').forEach(function(el){el.inert=value;});
   }
@@ -3236,7 +3237,7 @@
   function closeSheet(){
     if(!currentSheet)return;
     currentSheet.classList.remove('open');currentSheet.inert=true;currentSheet.setAttribute('aria-hidden','true');currentSheet=null;
-    backdrop.classList.remove('open');setBackgroundInert(false);
+    backdrop.classList.remove('open');setBackgroundInert(false);if(notebookSettingsOpen){document.getElementById('journalRoot').hidden=false;notebookSettingsOpen=false;}
     document.body.style.position='';document.body.style.top='';document.body.style.width='';window.scrollTo({top:sheetScrollY,behavior:'instant'});
     var focus=sheetReturnFocus&&sheetReturnFocus.isConnected&&sheetReturnFocus.getClientRects().length?sheetReturnFocus:document.getElementById('btnSettings');
     if(focus)focus.focus({preventScroll:true});sheetReturnFocus=null;
@@ -3450,6 +3451,7 @@
       saveState();
       applyTheme(state.theme);
       renderAll();
+      if(vidaScreen==='caderno')journalUI.open();
       toast('Progresso reposto');
       closeSheet();
     }, { kicker:'Repor tudo', confirmLabel:'Repor' });
