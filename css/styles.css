@@ -1518,3 +1518,11 @@ html.tablet-layout .topbar-inner{min-width:0}html.tablet-layout .wrap{min-width:
 #settingsSheet .settings-customize>summary:after{content:'＋';color:var(--ink-faint)}
 #settingsSheet .settings-customize[open]>summary:after{content:'−'}
 #settingsSheet .settings-customize #tabNameInputs{margin-top:12px}
+
+/* A document is a continuous stack, while the sidebar is a compact note index. */
+.nb-workspace .nb-sidebar .nb-note-list{display:flex;flex-direction:column;justify-content:flex-start;gap:6px}
+.nb-workspace .nb-note-list>*{flex-shrink:0}
+.nb-document-count{font-size:11px;color:var(--nb-muted);white-space:nowrap;padding:0 6px}
+#journalRoot .nb-ink-viewport[data-paper=document] canvas{background:transparent!important}
+.nb-text-document{flex:1;min-width:0;overflow:auto;background:#292929;padding:16px;display:flex;flex-direction:column;gap:24px}
+#journalRoot.nb-workspace.has-note .nb-text-document textarea{flex:none;min-height:900px!important;height:900px!important;background:#fff;color:#222;resize:vertical}
