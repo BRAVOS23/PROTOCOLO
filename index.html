@@ -8,7 +8,7 @@
 
 <link rel="manifest" href="manifest.webmanifest">
 <meta name="theme-color" content="#F6F6F7" media="(prefers-color-scheme: light)">
-<meta name="theme-color" content="#101010" media="(prefers-color-scheme: dark)">
+<meta name="theme-color" content="#000000" media="(prefers-color-scheme: dark)">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Protocolo">
@@ -21,6 +21,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@500;600&display=swap" rel="stylesheet">
 <script src="js/device-layout.js"></script>
 <link rel="stylesheet" href="css/styles.css">
+<link rel="stylesheet" href="css/refinement.css">
 </head>
 <body>
 
@@ -45,7 +46,6 @@
       <span class="greet" id="dashDate">—</span>
       <h1>O teu dia, com intenção.</h1>
 
-      <p class="hero-subtitle">Um passo de cada vez. O que vais cumprir hoje?</p>
       <div class="day-progress"><strong id="dayProgressText"></strong><div class="day-progress-track"><span id="dayProgressFill"></span></div></div>
       <div class="streak-row">
         <span class="streak-chip"><span class="dot" style="background:var(--cat-lang)"></span>Línguas <span class="n" id="streakLang">0</span> dias</span>
@@ -70,16 +70,6 @@
       </div>
     </div>
 
-    <section class="blk aif-block">
-      <div class="cycle-box" id="cycleBox"></div>
-    </section>
-
-
-
-
-
-    <a class="btn ghost progress-shortcut" href="#progressOverview">Ver o meu histórico · semana e mês ↓</a>
-
     <section class="blk" id="dashAgendaBlk" hidden>
       <div class="blk-head"><div><span class="kicker">Agenda</span><h2>A caminho</h2></div></div>
       <div id="dashAgenda"></div>
@@ -92,7 +82,7 @@
 
     <section class="blk" id="dashToday">
       <div class="blk-head hoje-head">
-        <div><span class="kicker">Hoje</span><h2 id="hojeTitle">Marca o que fizeste</h2><span id="todayCount" class="today-count"></span></div>
+        <div><h2 id="hojeTitle">Atividades de hoje</h2><span id="todayCount" class="today-count"></span></div>
         <div style="display:flex; align-items:center; gap:8px;">
           <span class="daytype-badge" id="daytypeBadge">—</span>
           <button class="iconbtn" id="btnEditDay" aria-label="Editar atividades" type="button">
@@ -103,25 +93,33 @@
       <div id="todayOrderControls" class="activity-order-controls"></div><div class="today-list" id="todayList"></div>
     </section>
 
-    <section class="blk" id="dashDestinations"><div class="blk-head"><h2>Continua o teu percurso</h2></div><div class="dash-destinations"><button class="dash-destination" id="dashOpenNotebooks" type="button"><span class="destination-icon">▤</span><span><strong>Os meus cadernos</strong><small id="dashNotebookSummary">Diário e anotações</small></span><span aria-hidden="true">›</span></button><button class="dash-destination" id="dashOpenChina" type="button"><span class="destination-icon">◎</span><span><strong>Rota para a China</strong><small>Continuar as minhas missões</small></span><span aria-hidden="true">›</span></button></div></section>
+    <section class="blk aif-block">
+      <div class="cycle-box" id="cycleBox"></div>
+    </section>
+
+
+
+
+
+    <section class="blk" id="progressOverview">
+      <details id="progressDisclosure" class="reference-panel"><summary><span>Histórico e progresso</span><small>Semana e mês</small></summary><div id="progressContent" class="reference-body"></div></details>
+    </section>
+
+
+    <section class="blk" id="dashDestinations"><div class="blk-head"><h2>Acesso rápido</h2></div><div class="dash-destinations"><button class="dash-destination" id="dashOpenNotebooks" type="button"><span class="destination-icon">▤</span><span><strong>Os meus cadernos</strong><small id="dashNotebookSummary">Diário e anotações</small></span><span aria-hidden="true">›</span></button><button class="dash-destination" id="dashOpenChina" type="button"><span class="destination-icon">◎</span><span><strong>Rota para a China</strong><small>Continuar as minhas missões</small></span><span aria-hidden="true">›</span></button></div></section>
     <details class="dashboard-insights"><summary><span>Protocolo</span><small>Autenticidade, intensidade e fidelidade</small></summary>
     <section class="blk aif-block">
-      <div class="blk-head"><div><span class="kicker">O que o Protocolo mede</span><h2>Protocolo</h2></div></div>
+
       <div class="aif-rings" id="aifRings"></div>
       <div class="aif-detail-box" id="aifDetailBox"></div>
       <div class="aif-total" id="aifTotal"></div>
       <div class="aif-streak-row" id="aifStreakStats"></div>
       <div class="aif-strip" id="aifStrip"></div>
-      <p class="aif-rule-text">A regra é uma só: nunca falhar dois dias seguidos. Um dia mau é ruído. Dois seguidos é o início de uma desistência.</p>
     </section>
     </details>
 
-    <section class="blk" id="progressOverview">
-      <div class="blk-head"><div><span class="kicker">O teu percurso</span><h2>Visão geral</h2></div></div>
-      <div id="progressContent"></div>
-    </section>
 
-    <footer class="page-footer">Protocolo — feito por medida para o teu inglês e a tua forma física.</footer>
+
 
     <button class="fab-quickadd" id="btnQuickAdd" aria-label="Adicionar tarefa ou evento" type="button">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
@@ -149,7 +147,7 @@
 
     <section class="blk" id="lg-rotina">
       <div class="blk-head">
-        <div><span class="kicker">Sem mexer na agenda</span><h2>Rotina semanal</h2></div>
+        <div><h2>Rotina semanal</h2></div>
         <span class="progress-chip" id="vocabChip">0/0 vocab</span>
       </div>
       <div id="langRotinaNotes"></div>
@@ -158,9 +156,9 @@
 
     <div id="langMonths"></div>
 
-    <section class="blk" id="lg-recursos">
+    <section class="blk" id="lg-recursos"><details class="reference-panel"><summary>Recursos e referências</summary><div class="reference-body">
       <div class="blk-head">
-        <div><span class="kicker">Onde praticar</span><h2>Recursos</h2></div>
+        <div><h2>Recursos</h2></div>
         <button class="iconbtn" id="btnAddRecurso" aria-label="Novo recurso" type="button">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
         </button>
@@ -179,32 +177,45 @@
         <summary>Fontes usadas para este plano</summary>
         <ol id="langSources"></ol>
       </details>
-    </section>
+    </div></details></section>
 
-    <footer class="page-footer">Rota para B1 — revisão do plano original de @itsteacherlais.</footer>
   </section>
 
   <!-- ===================== FORMA ===================== -->
   <section class="view" id="view-forma">
     <section class="blk" style="padding-top:20px;">
-      <span class="kicker">Plano pessoal · treino e alimentação</span>
-      <h1 style="font-size:24px;">Judo, Tiros e Emagrecimento</h1>
-      <p class="lead" style="margin-top:8px;">Meta: <b style="color:var(--ink)">−1 kg/semana</b> · tigela de 450 ml como medida padrão</p>
+      <span class="kicker">Bem-estar</span>
+      <h1 style="font-size:24px;">Treino e alimentação</h1>
       <div class="stats" id="fitStats"></div>
     </section>
 
     <section class="blk">
       <div class="subtabs-wrap"><div class="subtabs">
-        <button data-anchor="#ft-peso">Peso</button>
         <button data-anchor="#ft-treino">Treino</button>
+        <button data-anchor="#ft-peso">Peso</button>
         <button data-anchor="#ft-alimentacao">Alimentação</button>
         <button data-anchor="#ft-regras">Regras</button>
         <button data-anchor="#ft-alimentos">Alimentos</button>
       </div></div>
     </section>
 
+    <section class="blk" id="ft-treino">
+      <div class="blk-head">
+        <div><span class="kicker" id="trainingDayDate">Hoje</span><h2 id="trainingDayTitle">Treinos de hoje</h2></div>
+        <span class="progress-chip" id="trainChip">0/0 hoje</span>
+      </div>
+      <div id="ownTraining"></div>
+      <details class="reference-panel training-reference"><summary>Protocolos de treino</summary><div class="reference-body">      <div class="blk-head" style="margin-top:22px;">
+        <div><span class="kicker">Como treinar</span><h2>Protocolos</h2></div>
+        <button class="iconbtn" id="btnAddProtocolo" aria-label="Novo protocolo" type="button">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+        </button>
+      </div>
+      <div id="fitProtocolosNotes"></div></div></details>
+    </section>
+
     <section class="blk" id="ft-peso">
-      <div class="blk-head"><div><span class="kicker">Tracker</span><h2>Registo de peso</h2></div></div>
+      <div class="blk-head"><div><h2>Registo de peso</h2></div></div>
       <div class="card pad weight-card">
         <div class="weight-top">
           <div class="weight-now">
@@ -216,26 +227,11 @@
         <svg class="weight-chart" id="fitWeightChart" viewBox="0 0 300 120" preserveAspectRatio="none"></svg>
         <div class="weight-chart-empty" id="fitWeightEmpty" hidden></div>
         <form class="weight-form" id="weightForm">
-          <input type="number" step="0.1" min="30" max="300" inputmode="decimal" placeholder="ex.: 98.5" id="weightInput" required>
+          <input type="number" step="0.1" min="30" max="300" inputmode="decimal" aria-label="Peso em quilogramas" placeholder="Peso em kg" id="weightInput" required>
           <button class="btn" type="submit">Registar</button>
         </form>
         <div class="weight-log" id="weightLog"></div>
       </div>
-    </section>
-
-    <section class="blk" id="ft-treino">
-      <div class="blk-head">
-        <div><span class="kicker" id="trainingDayDate">Hoje</span><h2 id="trainingDayTitle">Treinos de hoje</h2></div>
-        <span class="progress-chip" id="trainChip">0/0 hoje</span>
-      </div>
-      <div id="ownTraining"></div>
-      <div class="blk-head" style="margin-top:22px;">
-        <div><span class="kicker">Como treinar</span><h2>Protocolos</h2></div>
-        <button class="iconbtn" id="btnAddProtocolo" aria-label="Novo protocolo" type="button">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
-        </button>
-      </div>
-      <div id="fitProtocolosNotes"></div>
     </section>
 
     <section class="blk" id="ft-alimentacao">
@@ -245,11 +241,11 @@
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
         </button>
       </div>
-      <p class="lead">Almoço = tigela cheia · Jantar = tigela 3/4 · Pequeno-almoço e merenda = tigela a metade. Escolhe sempre 1 carboidrato por refeição.</p>
+      <details class="settings-help nutrition-help"><summary>Medidas e orientação</summary><p>Tigela de 450 ml: almoço = cheia; jantar = 3/4; pequeno-almoço e merenda = metade. Escolhe 1 carboidrato por refeição. As metas são um ponto de partida; consulta um profissional para acompanhamento personalizado.</p></details>
       <div id="fitRefeicoesNotes"></div>
     </section>
 
-    <section class="blk" id="ft-regras">
+    <section class="blk" id="ft-regras"><details class="reference-panel"><summary>Regras de treino</summary><div class="reference-body">
       <div class="blk-head">
         <div><span class="kicker">Consistência</span><h2>Regras de ouro</h2></div>
         <button class="iconbtn" id="btnAddRegra" aria-label="Nova regra" type="button">
@@ -257,9 +253,9 @@
         </button>
       </div>
       <div id="fitRegrasNotes"></div>
-    </section>
+    </div></details></section>
 
-    <section class="blk" id="ft-alimentos">
+    <section class="blk" id="ft-alimentos"><details class="reference-panel"><summary>Guia de alimentos</summary><div class="reference-body">
       <div class="blk-head">
         <div><span class="kicker">Base</span><h2>Alimentos</h2></div>
         <button class="iconbtn" id="btnAddAlimento" aria-label="Novo grupo de alimentos" type="button">
@@ -267,25 +263,19 @@
         </button>
       </div>
       <div id="fitAlimentosNotes"></div>
-    </section>
+    </div></details></section>
 
-    <footer class="page-footer">Pesa-te a cada 2 semanas — a fórmula é ponto de partida, a balança manda. Consulta um profissional de saúde para acompanhamento personalizado.</footer>
   </section>
 
   <!-- ===================== TRABALHO ===================== -->
   <section class="view" id="view-trabalho">
     <section class="blk" style="padding-top:20px;">
       <span class="kicker">Negócio</span>
-      <h1 style="font-size:24px;">Tarefas centrais <em style="font-style:normal;color:var(--accent-strong);">DROP</em></h1>
-      <p class="lead" style="margin-top:8px;">O trabalho de hoje, com acesso ao plano de toda a semana.</p>
+      <h1 style="font-size:24px;">O teu trabalho</h1>
     </section>
     <section class="blk">
-      <div class="blk-head">
-        <div><span class="kicker">Organização</span><h2>Plano de trabalho</h2></div>
-      </div>
       <div id="ownWork"></div>
     </section>
-    <footer class="page-footer">Protocolo — DROP, o negócio que financia o rumo.</footer>
   </section>
 
   <!-- ===================== VIDA ===================== -->
@@ -294,19 +284,18 @@
     <!-- Hub: resumo de cada área -->
     <div class="subview active" id="vida-hub">
       <section class="blk" style="padding-top:20px;">
-        <span class="kicker">Organização</span>
-        <h1 style="font-size:24px;">Vida <em style="font-style:normal;color:var(--accent-strong);">fora da rotina</em></h1>
+
+        <h1 style="font-size:24px;">O teu espaço</h1>
       </section>
       <section class="blk">
         <button class="btn" id="openJournal" type="button" style="width:100%;margin-bottom:16px">▤ Os meus cadernos</button><div class="hub-cards" id="vidaHubCards"></div>
       </section>
-      <footer class="page-footer">Protocolo — o resto da vida que sustenta a rotina.</footer>
-    </div>
+      </div>
 
     <div class="subview" id="vida-caderno"><div class="detail-head"><button class="backbtn" data-vida-back type="button" aria-label="Voltar">‹</button><h2>Cadernos</h2></div><section class="blk" id="journalRoot"></section></div>
     <!-- Compras -->
     <div class="subview" id="vida-compras">
-      <div class="detail-head"><button class="backbtn" data-vida-back type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 6-6 6 6 6"></path></svg></button><h2>Compras</h2></div>
+      <div class="detail-head"><button class="backbtn" aria-label="Voltar" data-vida-back type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 6-6 6 6 6"></path></svg></button><h2>Compras</h2></div>
       <section class="blk" style="padding-top:16px;">
         <div class="day-picker" id="shoppingListPicker" style="margin-bottom:12px;"></div>
         <div id="shoppingListCurrent" style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;"></div>
@@ -324,7 +313,7 @@
 
     <!-- Agenda -->
     <div class="subview" id="vida-agenda">
-      <div class="detail-head"><button class="backbtn" data-vida-back type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 6-6 6 6 6"></path></svg></button><h2>Agenda</h2></div>
+      <div class="detail-head"><button class="backbtn" aria-label="Voltar" data-vida-back type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 6-6 6 6 6"></path></svg></button><h2>Agenda</h2></div>
       <section class="blk" style="padding-top:16px;">
         <form class="mini-form" id="agendaForm">
           <input id="agendaDate" type="date" required>
@@ -338,7 +327,7 @@
 
     <!-- Pendentes -->
     <div class="subview" id="vida-pendentes">
-      <div class="detail-head"><button class="backbtn" data-vida-back type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 6-6 6 6 6"></path></svg></button><h2>Pendentes</h2></div>
+      <div class="detail-head"><button class="backbtn" aria-label="Voltar" data-vida-back type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 6-6 6 6 6"></path></svg></button><h2>Pendentes</h2></div>
       <section class="blk" style="padding-top:16px;">
         <p class="lead">Tarefas que não pertencem à rotina diária.</p>
         <form class="mini-form" id="pendentesForm">
@@ -354,7 +343,7 @@
 
     <!-- Planos futuros -->
     <div class="subview" id="vida-planos">
-      <div class="detail-head"><button class="backbtn" data-vida-back type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 6-6 6 6 6"></path></svg></button><h2>Planos futuros</h2>
+      <div class="detail-head"><button class="backbtn" aria-label="Voltar" data-vida-back type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 6-6 6 6 6"></path></svg></button><h2>Planos futuros</h2>
         <button class="iconbtn" id="btnAddPlano" aria-label="Novo plano" type="button" style="margin-left:auto;">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
         </button>
@@ -384,7 +373,7 @@
 
     <!-- Visão geral: junta as fases/marcos de todos os planos, um a seguir ao outro -->
     <div class="subview" id="vida-planos-overview">
-      <div class="detail-head"><button class="backbtn" data-vida-back="planos" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 6-6 6 6 6"></path></svg></button><h2>Visão geral</h2></div>
+      <div class="detail-head"><button class="backbtn" aria-label="Voltar" data-vida-back="planos" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 6-6 6 6 6"></path></svg></button><h2>Visão geral</h2></div>
       <section class="blk" style="padding-top:16px;">
         <div id="planosOverviewBox"></div>
       </section>
@@ -393,7 +382,7 @@
     <!-- Detalhe de um plano (estrutura reutilizável: contador + chips + fases/marcos + nota) -->
     <div class="subview" id="vida-plano-detail">
       <div class="detail-head">
-        <button class="backbtn" data-vida-back="planos" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 6-6 6 6 6"></path></svg></button>
+        <button class="backbtn" aria-label="Voltar" data-vida-back="planos" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 6-6 6 6 6"></path></svg></button>
         <h2 id="planoDetailTitle">Plano</h2>
         <button class="iconbtn" id="btnDeletePlano" aria-label="Apagar plano" type="button" style="margin-left:auto;color:var(--bad);">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"></path><path d="M10 11v6M14 11v6"></path></svg>
@@ -425,7 +414,7 @@
 
     <!-- Estudos -->
     <div class="subview" id="vida-estudos">
-      <div class="detail-head"><button class="backbtn" data-vida-back type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 6-6 6 6 6"></path></svg></button><h2>Estudos</h2></div>
+      <div class="detail-head"><button class="backbtn" aria-label="Voltar" data-vida-back type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 6-6 6 6 6"></path></svg></button><h2>Estudos</h2></div>
 
       <section class="blk" style="padding-top:16px;">
         <div class="subtabs-wrap"><div class="subtabs">
@@ -456,8 +445,7 @@
         <div class="plano-chips" id="estudoTiposBox"></div>
       </section>
 
-      <footer class="page-footer">Protocolo — o tempo que investes a estudar, contado.</footer>
-    </div>
+      </div>
 
   </section>
 
@@ -504,6 +492,21 @@
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
     </button>
   </div>
+  <section class="settings-group"><h4>Personalização</h4>
+  <div class="sheet-row"><div><div class="sl">Áreas da vida</div></div><button class="btn ghost" id="btnSettingsAreas" type="button">Gerir áreas</button></div>
+  <div class="sheet-row">
+    <div><div class="sl">Tema</div></div>
+    <div class="seg" id="themeSeg">
+      <button data-theme="light">Claro</button>
+      <button data-theme="system">Auto</button>
+      <button data-theme="dark">Escuro</button>
+    </div>
+  </div>
+  <details class="settings-customize">
+    <summary>Nomes das abas</summary>
+    <div id="tabNameInputs" style="display:flex; flex-direction:column; gap:8px;"></div>
+  </details>
+  </section>
   <section id="settingsDataSection" class="settings-data-section"><h4>Dados e segurança</h4>
   <section id="dataFolderSection" class="data-folder-card" hidden>
     <h4>Pasta de cópias</h4>
@@ -524,7 +527,7 @@
   </section>
   <section id="androidDownload" class="native-features">
     <h4>App Android</h4>
-    <a class="btn" href="https://bravos23.github.io/PROTOCOLO/downloads/Protocolo-Pessoal.apk?v=3.23" download>Baixar Protocolo 3.23</a>
+    <a class="btn" href="https://bravos23.github.io/PROTOCOLO/downloads/Protocolo-Pessoal.apk?v=3.24" download>Baixar Protocolo 3.24</a>
     <p class="native-note">Para atualizar, instala por cima, sem desinstalar.</p>
   </section>
   <section id="nativeFeatures" class="native-features" hidden>
@@ -536,26 +539,13 @@
     <button class="btn ghost" id="nativeNotificationSettings" type="button" hidden>Permitir notificações no Android</button>
     <div class="native-widget"><h4>Widget</h4><p id="nativeWidgetHint">Mostra todas as atividades de hoje, com horário e conclusão.</p><button class="btn ghost" id="nativeAddWidget" type="button">Adicionar widget</button></div>
   </section>
-  <div class="sheet-row"><div><div class="sl">Áreas da vida</div></div><button class="btn ghost" id="btnSettingsAreas" type="button">Gerir áreas</button></div>
-  <div class="sheet-row">
-    <div><div class="sl">Tema</div></div>
-    <div class="seg" id="themeSeg">
-      <button data-theme="light">Claro</button>
-      <button data-theme="system">Auto</button>
-      <button data-theme="dark">Escuro</button>
-    </div>
-  </div>
-  <details class="settings-customize">
-    <summary>Nomes das abas</summary>
-    <div id="tabNameInputs" style="display:flex; flex-direction:column; gap:8px;"></div>
-  </details>
   <div class="sheet-row">
     <div><div class="sl">Copiar resumo</div><div class="ss">Últimos 30 dias</div></div>
     <button class="btn ghost" id="btnCopySummary" type="button">Copiar</button>
   </div>
-  <div class="sheet-row">
-    <div><div class="sl">Repor tudo</div><div class="ss">Apaga os dados deste aparelho</div></div>
-    <button class="btn ghost" id="btnReset" type="button">Repor</button>
+  <div class="sheet-row settings-danger">
+    <div><div class="sl">Apagar dados</div><div class="ss">Apaga os dados deste aparelho</div></div>
+    <button class="btn ghost" id="btnReset" type="button">Apagar</button>
   </div>
 </div>
 

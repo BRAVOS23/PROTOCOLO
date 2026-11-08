@@ -400,7 +400,7 @@
   function renderTabNameInputs(){
     var box = document.getElementById('tabNameInputs');
     box.innerHTML = Object.keys(views).map(function(k){
-      return '<input data-tabkey="'+k+'" type="text" value="'+escAttr(state.tabLabels[k])+'" ' +
+      return '<input data-tabkey="'+k+'" aria-label="Nome da aba '+escAttr(state.tabLabels[k])+'" type="text" value="'+escAttr(state.tabLabels[k])+'" ' +
         'style="border:1px solid var(--line); background:var(--surface-2); border-radius:8px; padding:8px 11px; font-size:13.5px; color:var(--ink); font-family:var(--font-body);">';
     }).join('');
     box.querySelectorAll('input').forEach(function(inp){
@@ -421,7 +421,7 @@
   document.querySelectorAll('.subtabs [data-anchor]').forEach(function(b){
     b.addEventListener('click', function(){
       var el = document.querySelector(b.getAttribute('data-anchor'));
-      if(el) el.scrollIntoView({behavior:'smooth', block:'start'});
+      if(el){el.querySelectorAll(':scope > details').forEach(function(d){d.open=true;});var parent=el.closest('details');if(parent)parent.open=true;el.scrollIntoView({behavior:'smooth',block:'start'});}
     });
   });
 
@@ -432,14 +432,13 @@
     return keys;
   }
 
+  var langOpenMonths={};
   function renderLangStatic(){
+    document.querySelectorAll('#langMonths details[data-month]').forEach(function(d){langOpenMonths[d.dataset.month]=d.open;});
     document.getElementById('langEyebrow').textContent = LANG_META.eyebrow;
-    document.getElementById('langSub').textContent = LANG_META.sub;
+    document.getElementById('langSub').textContent = 'O teu plano de inglês, semana a semana.';
     document.getElementById('langStats').innerHTML =
-      stat('Duração', LANG_META.weeks + ' sem') +
-      stat('Estudo ativo', LANG_META.hoursActive) +
-      stat('Total 13 sem', LANG_META.hoursTotal, true) +
-      stat('Meta', 'B1 funcional');
+      stat('Duração',LANG_META.weeks+' semanas')+stat('Por semana',LANG_META.hoursActive);
 
     renderRotinaCards();
     renderRecursosGrid();
@@ -447,8 +446,7 @@
     document.getElementById('langMonths').innerHTML = LANG_MONTHS.map(function(m){
       var weeksHtml = state.langWeeks.filter(function(w){ return w.monthId===m.id; }).map(renderWeek).join('');
       return '<section class="blk month-block '+m.id+'" id="lg-'+m.id+'">' +
-        '<div class="month-head"><h3>'+m.title+'</h3><span class="m-sub">'+m.sub+'</span></div>' +
-        '<div class="week-list">' + weeksHtml + '</div>' +
+        '<details class="reference-panel" data-month="'+m.id+'" '+((langOpenMonths[m.id]===undefined?false:langOpenMonths[m.id])?'open':'')+'><summary><span>'+m.title+'</span><small>'+m.sub+'</small></summary><div class="week-list reference-body">' + weeksHtml + '</div></details>' +
         '</section>';
     }).join('');
     bindWeekHandlers();
@@ -469,7 +467,7 @@
         return '<div class="sched-item"><span class="t">'+escHtml(it.t)+'</span><span class="d">'+escHtml(it.d)+'</span></div>';
       }).join('');
       return '<div class="sched-card '+variant+'" data-id="'+r.id+'" style="position:relative;">' +
-        '<button class="cardedit" data-act="edit" type="button" style="position:absolute;top:10px;right:10px;">'+PENCIL_SVG+'</button>' +
+        '<button class="cardedit" data-act="edit" aria-label="Editar" type="button" style="position:absolute;top:10px;right:10px;">'+PENCIL_SVG+'</button>' +
         '<div class="sched-head"><div class="days" style="padding-right:26px;">'+escHtml(r.days)+'</div><div class="time">'+escHtml(r.time)+'</div></div>' +
         '<div class="sched-body">'+items+'</div></div>';
     }).join('');
@@ -487,7 +485,7 @@
         '<div class="row2"><input data-f="days" value="'+escAttr(r.days)+'" placeholder="Dias"><input data-f="time" value="'+escAttr(r.time)+'" placeholder="Hora"></div>' +
         '<div id="rotinaItems-'+r.id+'">'+rows+'</div>' +
         '<button type="button" class="pc-add-meta" data-act="additem" style="color:var(--ink-soft);border-color:var(--line-strong);align-self:flex-start;">+ item</button>' +
-        '<div class="form-actions" style="justify-content:space-between;"><button class="btn ghost" data-act="del" type="button">Apagar</button><span style="display:flex;gap:8px;"><button class="btn ghost" data-act="cancel" type="button">Cancelar</button><button class="btn" data-act="save" type="button">Guardar</button></span></div>' +
+        '<div class="form-actions" style="justify-content:space-between;"><button class="btn ghost" data-act="del" aria-label="Apagar" type="button">Apagar</button><span style="display:flex;gap:8px;"><button class="btn ghost" data-act="cancel" type="button">Cancelar</button><button class="btn" data-act="save" type="button">Guardar</button></span></div>' +
       '</div></div>';
   }
   function bindRotinaHandlers(){
@@ -558,12 +556,12 @@
           '<input data-f="name" value="'+escAttr(r.name)+'" placeholder="Nome">' +
           '<select data-f="badgeType"><option value="official"'+(r.badgeType==='official'?' selected':'')+'>Oficial</option><option value="new"'+(r.badgeType==='new'?' selected':'')+'>Novo/Grátis</option></select>' +
           '<textarea data-f="desc" placeholder="Descrição">'+escHtml(r.desc)+'</textarea>' +
-          '<div class="form-actions" style="justify-content:space-between;"><button class="btn ghost" data-act="del" type="button">Apagar</button><span style="display:flex;gap:8px;"><button class="btn ghost" data-act="cancel" type="button">Cancelar</button><button class="btn" data-act="save" type="button">Guardar</button></span></div>' +
+          '<div class="form-actions" style="justify-content:space-between;"><button class="btn ghost" data-act="del" aria-label="Apagar" type="button">Apagar</button><span style="display:flex;gap:8px;"><button class="btn ghost" data-act="cancel" type="button">Cancelar</button><button class="btn" data-act="save" type="button">Guardar</button></span></div>' +
           '</div></div>';
       }
       var badgeLabel = r.badgeType === 'official' ? 'Oficial' : (r.badge || 'Novo');
       return '<div class="res-card" data-id="'+r.id+'" style="position:relative;">' +
-        '<button class="cardedit" data-act="edit" type="button" style="position:absolute;top:10px;right:10px;color:var(--ink-faint);background:var(--surface-2);">'+PENCIL_SVG+'</button>' +
+        '<button class="cardedit" data-act="edit" aria-label="Editar" type="button" style="position:absolute;top:10px;right:10px;color:var(--ink-faint);background:var(--surface-2);">'+PENCIL_SVG+'</button>' +
         '<div class="res-top" style="padding-right:26px;"><h4>'+escHtml(r.name)+'</h4><span class="badge '+r.badgeType+'">'+escHtml(badgeLabel)+'</span></div>' +
         '<p>'+escHtml(r.desc)+'</p></div>';
     }).join('');
@@ -621,7 +619,7 @@
       return i===0 ? '<span class="m-tag">'+escHtml(l)+'</span>' : '<p>'+escHtml(l)+'</p>';
     }).join('') + '</div>') : '';
     return '<div class="week-card" data-id="'+w.id+'"><div class="week-num">Sem<b>'+w.num+'</b>' +
-      '<button class="ar-icon-btn" data-act="editweek" style="margin-top:8px;" type="button">'+PENCIL_SVG+'</button></div>' +
+      '<button class="ar-icon-btn" data-act="editweek" aria-label="Editar semana" style="margin-top:8px;" type="button">'+PENCIL_SVG+'</button></div>' +
       '<div class="week-body">' +
       (gram ? '<div class="g-line"><span class="lab">Foco</span>'+gram+'</div>' : '') +
       (vocab ? '<ul class="vocab-list">'+vocab+'</ul>' : '') +
@@ -720,7 +718,7 @@
   var openFitRowDay = null;
   function renderFitStatic(){
     sectionPlansUI.render('training');
-    document.getElementById('fitStats').innerHTML=stat('Idade',FIT_META.age+' anos')+stat('Altura',FIT_META.heightCm+' cm')+stat('Treinos hoje',String(sectionPlansUI.training(TODAY_WEEKDAY).length),false,true)+stat('Meta','−'+FIT_META.goalRate+' kg/sem',true);
+    document.getElementById('fitStats').innerHTML='';
     document.getElementById('trainingDayTitle').textContent='Plano de treino';
     document.getElementById('trainingDayDate').textContent='Hoje · '+fmtDateShort(TODAY);
     renderProtocolosGrid();
@@ -742,14 +740,15 @@
         return '<div class="proto editing" data-id="'+p.id+'" style="grid-column:1/-1;">' +
           '<input data-f="title" type="text" value="'+escAttr(p.title)+'" style="width:100%;margin-bottom:6px;border:1px solid var(--line);background:var(--surface-2);border-radius:6px;padding:7px 9px;font-size:13px;font-weight:600;">' +
           '<textarea data-f="body" style="width:100%;min-height:60px;border:1px solid var(--line);background:var(--surface-2);border-radius:6px;padding:7px 9px;font-size:12.5px;font-family:inherit;">'+escHtml(p.body)+'</textarea>' +
-          '<div class="form-actions" style="justify-content:space-between;margin-top:8px;"><button class="btn ghost" data-act="del" type="button">Apagar</button><span style="display:flex;gap:8px;"><button class="btn ghost" data-act="cancel" type="button">Cancelar</button><button class="btn" data-act="save" type="button">Guardar</button></span></div>' +
+          '<div class="form-actions" style="justify-content:space-between;margin-top:8px;"><button class="btn ghost" data-act="del" aria-label="Apagar" type="button">Apagar</button><span style="display:flex;gap:8px;"><button class="btn ghost" data-act="cancel" type="button">Cancelar</button><button class="btn" data-act="save" type="button">Guardar</button></span></div>' +
           '</div>';
       }
       return '<div class="proto" data-id="'+p.id+'" style="position:relative;">' +
-        '<button class="cardedit" data-act="edit" type="button" style="position:absolute;top:10px;right:10px;background:var(--surface-2);color:var(--ink-faint);">'+PENCIL_SVG+'</button>' +
+        '<button class="cardedit" data-act="edit" aria-label="Editar" type="button" style="position:absolute;top:10px;right:10px;background:var(--surface-2);color:var(--ink-faint);">'+PENCIL_SVG+'</button>' +
         '<h3 style="padding-right:22px;">'+escHtml(p.title)+'</h3><p>'+escHtml(p.body)+'</p></div>';
     }).join('');
     var box2 = box;
+    box2.querySelectorAll('[data-act="editrow"],[data-act="addrow"]').forEach(function(row){row.onkeydown=function(e){if(e.key==='Enter'||e.key===' '){e.preventDefault();row.click();}};});
     box2.querySelectorAll('[data-act="edit"]').forEach(function(btn){
       btn.addEventListener('click', function(){ openProtoEdit = btn.closest('[data-id]').getAttribute('data-id'); renderProtocolosGrid(); });
     });
@@ -797,10 +796,11 @@
           '</div>';
       }
       return '<div class="rule" data-id="'+r.id+'" style="position:relative;">' +
-        '<button class="cardedit" data-act="edit" type="button" style="position:absolute;top:8px;right:8px;width:20px;height:20px;background:none;border:none;color:var(--ink-faint);padding:0;">'+PENCIL_SVG+'</button>' +
+        '<button class="cardedit" data-act="edit" aria-label="Editar" type="button" style="position:absolute;top:8px;right:8px;width:20px;height:20px;background:none;border:none;color:var(--ink-faint);padding:0;">'+PENCIL_SVG+'</button>' +
         '<div class="k">'+escHtml(r.title)+'</div><p class="v">'+escHtml(r.body)+'</p></div>';
     }).join('');
     var box2 = box;
+    box2.querySelectorAll('[data-act="editrow"],[data-act="addrow"]').forEach(function(row){row.onkeydown=function(e){if(e.key==='Enter'||e.key===' '){e.preventDefault();row.click();}};});
     box2.querySelectorAll('[data-act="edit"]').forEach(function(btn){
       btn.addEventListener('click', function(){ openRegraEdit = btn.closest('[data-id]').getAttribute('data-id'); renderRegrasGrid(); });
     });
@@ -874,7 +874,9 @@
   var MEAL_TAG_COLOR = { judo:'var(--cat-fit)', tiros:'var(--warn)', rest:'var(--ink-faint)' };
   var openRefeicaoHeadEdit = null;
   var openRefeicaoRowEdit = null;
+  var mealOpen={};
   function renderRefeicoesCards(){
+    document.querySelectorAll('.mealcard[data-id]').forEach(function(card){mealOpen[card.dataset.id]=card.open;});
     var box = document.getElementById('fitRefeicoesNotes');
     box.innerHTML = state.fitNotes.refeicoes.map(function(m){
       var headEditing = m.id === openRefeicaoHeadEdit;
@@ -885,8 +887,7 @@
             '<select data-f="tag" style="border:1px solid var(--line-strong);border-radius:6px;font-size:12px;"><option value="judo"'+(m.tag==='judo'?' selected':'')+'>Verde</option><option value="tiros"'+(m.tag==='tiros'?' selected':'')+'>Âmbar</option><option value="rest"'+(m.tag==='rest'?' selected':'')+'>Neutro</option></select></div>' +
             '<div class="form-actions" style="justify-content:space-between;"><button class="btn ghost" data-act="delcard" type="button">Apagar cartão</button><span style="display:flex;gap:8px;"><button class="btn ghost" data-act="cancelhead" type="button">Cancelar</button><button class="btn" data-act="savehead" type="button">Guardar</button></span></div>' +
           '</div>'
-        : '<div class="head" style="background:'+(MEAL_TAG_COLOR[m.tag]||'var(--ink-faint)')+';cursor:pointer;" data-act="edithead">' +
-            '<h3>'+escHtml(m.title)+'</h3><span>'+escHtml(m.days)+'</span></div>';
+        : '<button type="button" class="btn ghost meal-edit" data-act="edithead">Editar plano alimentar</button>';
 
       var rows = m.rows.map(function(r){
         if(m.id+'|'+r.id === openRefeicaoRowEdit){
@@ -898,16 +899,18 @@
             '<div class="form-actions" style="justify-content:space-between;margin-top:6px;"><button class="btn ghost" data-act="delrow" type="button">Apagar</button><span style="display:flex;gap:8px;"><button class="btn ghost" data-act="cancelrow" type="button">Cancelar</button><button class="btn" data-act="saverow" type="button">Guardar</button></span></div>' +
             '</td></tr>';
         }
-        return '<tr data-rid="'+r.id+'" data-act="editrow" style="cursor:pointer;">' +
+        return '<tr data-rid="'+r.id+'" data-act="editrow" tabindex="0" role="button" aria-label="Editar '+escAttr(r.name)+'" style="cursor:pointer;">' +
           '<td class="mtime">'+escHtml(r.time)+'</td><td class="mname">'+escHtml(r.name)+'</td>' +
           '<td>'+escHtml(r.desc)+(r.note?'<span class="note">'+escHtml(r.note)+'</span>':'')+'</td></tr>';
       }).join('');
 
-      return '<div class="mealcard" data-id="'+m.id+'">' + headHtml +
-        '<table><tbody>'+rows+'<tr data-act="addrow"><td colspan="3" style="text-align:center;color:var(--ink-faint);font-size:12px;cursor:pointer;padding:10px;">+ adicionar refeição</td></tr></tbody></table></div>';
+      var expanded=mealOpen[m.id]===undefined?String(m.days).toLowerCase().includes(TODAY_WEEKDAY.slice(0,3).toLowerCase()):mealOpen[m.id];
+      return '<details class="mealcard '+escAttr(m.tag)+'" data-id="'+m.id+'" '+(expanded||headEditing||String(openRefeicaoRowEdit||'').startsWith(m.id+'|')?'open':'')+'><summary class="head"><h3>'+escHtml(m.title)+'</h3><span class="days">'+escHtml(m.days)+'</span></summary>' + headHtml +
+        '<table><tbody>'+rows+'<tr data-act="addrow" tabindex="0" role="button" aria-label="Adicionar refeição"><td colspan="3" style="text-align:center;color:var(--ink-faint);font-size:12px;cursor:pointer;padding:10px;">+ adicionar refeição</td></tr></tbody></table></details>';
     }).join('');
 
     var box2 = box;
+    box2.querySelectorAll('[data-act="editrow"],[data-act="addrow"]').forEach(function(row){row.onkeydown=function(e){if(e.key==='Enter'||e.key===' '){e.preventDefault();row.click();}};});
     box2.querySelectorAll('[data-act="edithead"]').forEach(function(el){
       el.addEventListener('click', function(){ openRefeicaoHeadEdit = el.closest('[data-id]').getAttribute('data-id'); openRefeicaoRowEdit=null; renderRefeicoesCards(); });
     });
@@ -1052,10 +1055,10 @@
       if(cur){
         nowEl.innerHTML = cur.kg.toFixed(1) + ' <span>kg</span>';
       } else {
-        nowEl.innerHTML = FIT_META.startWeight + ' <span>kg · inicial</span>';
+        nowEl.innerHTML = '— <span>kg</span>';
       }
       if(rate === null){
-        trendEl.className = 'weight-trend flat'; trendEl.textContent = 'regista 2+ pesagens';
+        trendEl.className = 'weight-trend flat'; trendEl.textContent = cur?'Falta mais um registo':'Sem registos';
       } else {
         var cls = rate <= -FIT_META.goalRate*0.6 ? 'good' : (rate < 0 ? 'warn' : 'bad');
         trendEl.className = 'weight-trend ' + cls;
@@ -1068,8 +1071,8 @@
     var log = document.getElementById('weightLog');
     log.innerHTML = state.weight.slice().reverse().map(function(e){
       var d = new Date(e.date+'T00:00:00');
-      return '<div class="weight-log-row"><span>'+fmtDateShort(d)+'</span><span class="mono">'+e.kg.toFixed(1)+' kg</span><span class="del" data-date="'+e.date+'">'+TRASH_SVG+'</span></div>';
-    }).join('') || '<div class="weight-log-row" style="color:var(--ink-faint)">Sem registos ainda.</div>';
+      return '<div class="weight-log-row"><span>'+fmtDateShort(d)+'</span><span class="mono">'+e.kg.toFixed(1)+' kg</span><button type="button" class="del" aria-label="Apagar registo de peso" data-date="'+e.date+'">'+TRASH_SVG+'</button></div>';
+    }).join('');
     log.querySelectorAll('.del').forEach(function(el){
       el.addEventListener('click', function(){ removeWeight(el.getAttribute('data-date')); });
     });
@@ -1078,14 +1081,14 @@
   function drawWeightChart(svg, emptyEl, entries){
     var W=300, H=120, padX=6, padY=14;
     if(entries.length < 2){
-      svg.hidden = true; svg.innerHTML = '';
+      svg.setAttribute('hidden',''); svg.innerHTML = '';
       emptyEl.hidden = false;
       emptyEl.innerHTML = entries.length===1 ?
         TREND_SVG + '<div class="wce-title">'+entries[0].kg.toFixed(1)+' kg</div><div class="wce-sub">Primeiro registo — falta mais um para veres a tendência.</div>' :
         TREND_SVG + '<div class="wce-title">Sem registos ainda</div><div class="wce-sub">Regista o teu peso para veres a tendência aqui.</div>';
       return;
     }
-    svg.hidden = false; emptyEl.hidden = true;
+    svg.removeAttribute('hidden'); emptyEl.hidden = true;
     var xs = entries.map(function(e){ return new Date(e.date).getTime(); });
     var ys = entries.map(function(e){ return e.kg; });
     var minX=Math.min.apply(null,xs), maxX=Math.max.apply(null,xs);
@@ -1221,7 +1224,7 @@
   }
   function renderOrderControl(box,day){
     var manual=dayActivities(day).some(function(act){return Number.isFinite(act.manualOrder);});
-    box.innerHTML='<span>'+ (manual?'Ordem manual':'Por horário')+' · segura ⠿ e arrasta</span>'+(manual?'<button type="button" class="btn ghost" data-reset-order>Usar horários</button>':'');
+    box.innerHTML='<span>'+ (manual?'Ordem manual':'Por horário')+'</span>'+(manual?'<button type="button" class="btn ghost" data-reset-order>Usar horários</button>':'');
     var reset=box.querySelector('[data-reset-order]');
     if(reset)reset.addEventListener('click',function(){dayActivities(day).forEach(function(act){delete act.manualOrder;});saveState();refreshActivityOrder();});
   }
@@ -1317,8 +1320,8 @@
         (act.detail ? '<div class="ar-detail">'+escHtml(act.detail)+'</div>' : '') +
       '</div>' +
       '<div class="ar-actions">' +
-        '<button class="ar-icon-btn" data-act="edit" type="button">'+PENCIL_SVG+'</button>' +
-        '<button class="ar-icon-btn danger" data-act="del" type="button">'+TRASH_SVG+'</button>' +
+        '<button class="ar-icon-btn" data-act="edit" aria-label="Editar" type="button">'+PENCIL_SVG+'</button>' +
+        '<button class="ar-icon-btn danger" data-act="del" aria-label="Apagar" type="button">'+TRASH_SVG+'</button>' +
       '</div></div>';
   }
 
@@ -1821,7 +1824,7 @@
   }
   function renderAifDetailBox(){
     var box=document.getElementById('aifDetailBox');
-    box.innerHTML='<p class="aif-scoring-note">Conclui a atividade e toca na chama quando a realizaste com autenticidade, intensidade e fidelidade. Uma marcação reúne os três princípios. As marcações antigas ficam guardadas; este registo conjunto começa em '+escHtml(state.principlesSince)+'.</p>';
+    box.innerHTML='<p class="aif-scoring-note">A chama marca uma atividade feita com autenticidade, intensidade e fidelidade.</p>';
   }
 
   function renderAifStreak(){
@@ -2273,7 +2276,7 @@
     function renderEdit(){
       var editBox = document.querySelector('#'+boxId+' .chip-edit-list');
       editBox.innerHTML = draft.map(function(c,i){
-        return '<div class="cat-edit-row" data-i="'+i+'"><input data-ci="'+i+'" value="'+escAttr(c)+'"><span class="mx" data-cidel="'+i+'">'+TRASH_SVG+'</span></div>';
+        return '<div class="cat-edit-row" data-i="'+i+'"><input data-ci="'+i+'" value="'+escAttr(c)+'"><span class="mx" data-cidel="'+i+'">'+TRASH_SVG+'</button></div>';
       }).join('') + '<button type="button" class="chip-add-btn" data-act="add">'+addLabel+'</button>';
       editBox.querySelectorAll('[data-ci]').forEach(function(inp){
         inp.addEventListener('input', function(){ draft[+inp.getAttribute('data-ci')] = inp.value; });
@@ -2762,7 +2765,7 @@
         '<span class="today-check'+(it.done?' on':'')+'">'+CHECK_SVG+'</span>' +
         '<div class="today-txt"><div class="tt">'+escHtml(it.text)+'</div>'+dueHtml+'</div>' +
         (isPendentes ? '<button class="ar-icon-btn" data-act="open" data-id="'+it.id+'" type="button" aria-label="Abrir">'+PENCIL_SVG+'</button>' : '') +
-        '<span class="del" data-id="'+it.id+'">'+TRASH_SVG+'</span></div>';
+        '<span class="del" data-id="'+it.id+'">'+TRASH_SVG+'</button></div>';
     }).join('') : '<p style="color:var(--ink-faint); font-size:13px;">Nada por aqui ainda.</p>';
 
     el.querySelectorAll('.today-item').forEach(function(row){
@@ -2843,7 +2846,7 @@
       return '<div class="today-item'+(it.done?' done':'')+'" data-id="'+it.id+'">' +
         '<span class="today-check'+(it.done?' on':'')+'">'+CHECK_SVG+'</span>' +
         '<div class="today-txt"><div class="tt">'+escHtml(it.text)+'</div></div>' +
-        '<span class="del" data-id="'+it.id+'">'+TRASH_SVG+'</span></div>';
+        '<span class="del" data-id="'+it.id+'">'+TRASH_SVG+'</button></div>';
     }).join('') : '<p style="color:var(--ink-faint); font-size:13px;">Lista vazia.</p>';
 
     el.querySelectorAll('.today-item').forEach(function(row){
@@ -3111,13 +3114,14 @@
     if(!days.some(function(d){ return iso(d)===progressSelected; })) progressSelected=iso(days[0]);
     var selected=progressSelected<=TODAY_ISO?progressRecords(progressSelected):[];
     html+='<div class="progress-day-detail"><h3>'+fmtDateHuman(new Date(progressSelected+'T00:00:00'))+'</h3>'+(selected.length?'<ul>'+selected.map(function(r){return '<li><span class="'+(r.done?'completed':'')+'">'+(r.done?'✓':'—')+'</span><div>'+escHtml(r.title)+'<small>'+escHtml(r.areaLabel||areaById(r.area).label)+'</small></div></li>';}).join('')+'</ul>':'<p class="overview-note">'+(progressSelected>TODAY_ISO?'Dia futuro.':'Sem atividades registadas neste dia.')+'</p>')+'</div>';
-    html+='<p class="overview-note">✓ = tarefa cumprida. Sem marcação não significa falha. O histórico antigo contém as conclusões; os nomes de tarefas removidas antes desta atualização podem não estar disponíveis.</p>';
+    html+='<p class="overview-note">✓ Cumprida · — Sem marcação</p>';
     box.innerHTML=html;
     box.querySelectorAll('[data-progress-period]').forEach(function(b){b.addEventListener('click',function(){progressPeriod=b.dataset.progressPeriod;renderProgressOverview();});});
     box.querySelectorAll('[data-progress-view]').forEach(function(b){b.addEventListener('click',function(){progressView=b.dataset.progressView;renderProgressOverview();});});
     box.querySelectorAll('[data-progress-shift]').forEach(function(b){b.addEventListener('click',function(){var dir=+b.dataset.progressShift;progressRef=progressPeriod==='mes'?new Date(progressRef.getFullYear(),progressRef.getMonth()+dir,1):addDays(progressRef,dir*7);progressSelected=iso(progressDays()[0]);renderProgressOverview();});});
     box.querySelectorAll('[data-progress-date]').forEach(function(b){b.addEventListener('click',function(){progressSelected=b.dataset.progressDate;renderProgressOverview();});});
   }
+
 
   /* ================= DASHBOARD ================= */
   document.getElementById('dashOpenNotebooks').addEventListener('click',function(){goTab('vida');goVida('caderno');});
@@ -3129,12 +3133,13 @@
     document.getElementById('dashDate').textContent = TODAY.toLocaleDateString('pt-PT',{ weekday:'long', day:'numeric', month:'long' });
     document.getElementById('streakLang').textContent = computeStreak(state.langDone);
     document.getElementById('streakFit').textContent = computeStreak(state.workouts);
+    ['streakLang','streakFit'].forEach(function(id){var el=document.getElementById(id);el.closest('.streak-chip').hidden=Number(el.textContent)===0;});
 
     var dayType = DAY_TYPE[TODAY_WEEKDAY];
     var badge = document.getElementById('daytypeBadge');
     badge.textContent = DAY_TYPE_LABEL[dayType] || '—';
     badge.className = 'daytype-badge ' + dayType;
-    document.getElementById('hojeTitle').textContent = TODAY_WEEKDAY + ' — marca o que fizeste';
+    document.getElementById('hojeTitle').textContent = TODAY_WEEKDAY;
 
     var acts = dayActivities(TODAY_WEEKDAY);
     var completed=acts.filter(function(act){return isActDone(TODAY_ISO,act.id);}).length;
@@ -3277,7 +3282,7 @@
     });
     document.getElementById('quickAddDate').required = quickAddType === 'agenda';
     document.getElementById('quickAddHint').textContent = quickAddType === 'pendente'
-      ? 'Data e hora são opcionais — se definires, aparece um aviso no Início nas últimas 24h.'
+      ? 'Data e hora opcionais.'
       : 'A data é obrigatória para um evento.';
   }
   document.querySelectorAll('#quickAddSeg button').forEach(function(b){
@@ -3319,7 +3324,7 @@
     if(t==='light' || t==='dark') root.setAttribute('data-theme', t);
     else root.removeAttribute('data-theme');
     if(window.NativePlatform)NativePlatform.setAppearance(getComputedStyle(root).getPropertyValue('--paper').trim(),t==='dark'||(t==='system'&&window.matchMedia('(prefers-color-scheme: dark)').matches));
-    document.querySelectorAll('meta[name="theme-color"]').forEach(function(meta){meta.content=t==='system'?(meta.media.indexOf('dark')!==-1?'#101010':'#F6F6F7'):getComputedStyle(root).getPropertyValue('--paper').trim();});
+    document.querySelectorAll('meta[name="theme-color"]').forEach(function(meta){meta.content=t==='system'?(meta.media.indexOf('dark')!==-1?'#000000':'#F6F6F7'):getComputedStyle(root).getPropertyValue('--paper').trim();});
     document.querySelectorAll('#themeSeg button').forEach(function(b){
       b.classList.toggle('active', b.getAttribute('data-theme')===t);
     });
@@ -3483,7 +3488,7 @@
     root.querySelectorAll('input:not([type="hidden"]):not([type="checkbox"]):not([type="radio"]):not([type="file"]),select,textarea').forEach(function(field){
       if(field.closest('.notebook-root') || field.closest('.field-label') || field.closest('label')) return;
       var key=field.dataset.f||field.dataset.rf;
-      var name=field.getAttribute('aria-label') || fieldNames[key] || field.getAttribute('placeholder') || (field.type==='date'?'Data':field.tagName==='SELECT'?'Selecionar opção':'Nome');
+      var name=field.getAttribute('aria-label') || fieldNames[key] || field.getAttribute('placeholder') || (field.type==='date'?'Data':field.type==='time'?'Hora':field.tagName==='SELECT'?'Selecionar opção':'Nome');
       if(field.id==='estudoCustomStartInput') name='De';
       if(field.id==='estudoCustomEndInput') name='Até';
       var label=document.createElement('label'); label.className='field-label';

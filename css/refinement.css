@@ -1,0 +1,185 @@
+/* Shared interface rhythm: daily actions first, reference content on demand. */
+:root{--space-section:28px;--space-card:16px;--focus-ring:#9B72FF}
+body{line-height:1.55;-webkit-tap-highlight-color:transparent}
+button,a,input,select,textarea,summary{touch-action:manipulation}
+button{cursor:pointer}button:disabled{cursor:default;opacity:.45}
+button,a,summary,input,select,textarea{outline-offset:3px}
+:where(button,a,summary,input,select,textarea):focus-visible{outline:2px solid var(--focus-ring)}
+[hidden]{display:none!important}
+h1{font-size:clamp(26px,3.5vw,34px);line-height:1.2}
+h2{font-size:22px;line-height:1.3}h3{font-size:18px}
+section.blk{padding:var(--space-section) 0 0}
+.blk-head{gap:12px;margin-bottom:16px;align-items:center}
+.blk-head>div{min-width:0}.blk-head h2{margin:0}
+.kicker{font-family:var(--font-body);letter-spacing:.07em;font-size:10px;line-height:1.5}
+.kicker:empty{display:none}
+p.lead{font-size:14px;line-height:1.65;max-width:65ch}
+.topbar{border-bottom-color:var(--line)}.topbar-inner{min-height:64px}
+.wrap{padding-bottom:24px}
+.btn{box-shadow:none;white-space:normal;text-align:center;line-height:1.4;font-weight:650}
+.btn.ghost{background:transparent;border-color:var(--line);color:var(--ink-soft)}
+.btn.ghost:hover{border-color:var(--accent);color:var(--accent-strong);background:var(--accent-soft)}
+.btn.danger,.ar-icon-btn.danger{color:var(--bad)}
+.btn.danger{background:var(--bad-soft);border:1px solid var(--bad)}
+.iconbtn,.ar-icon-btn,.cardedit{border-radius:12px;min-width:44px;min-height:44px}
+.cardedit{width:44px!important;height:44px!important;padding:11px!important;display:grid;place-items:center}
+.cardedit svg{width:18px;height:18px}
+input,select,textarea{accent-color:var(--brand)}
+input:not([type=checkbox]):not([type=radio]):not([type=color]),select,textarea{font-size:16px}
+.form-actions{gap:10px;flex-wrap:wrap}.form-actions .btn{min-height:44px}
+/* Daily overview has one primary task list, then optional detail. */
+.hero{margin:16px 0 0;padding:20px;border-radius:20px;background:var(--surface);box-shadow:none}
+.hero h1{font-size:clamp(26px,3vw,34px)}
+.hero .day-progress{margin-top:16px}.hero .greet{margin-bottom:8px}
+.hero .ring-grid{margin-top:16px;gap:10px}
+.hero .ring-card{min-height:80px;padding:12px;border-radius:14px;box-shadow:none}
+.hero .rc-top svg{width:30px;height:30px}.hero .rc-sub{font-size:11px}
+.hero .streak-row:has(>.streak-chip:not([hidden])){margin-top:12px}
+.hero .streak-row:not(:has(>.streak-chip:not([hidden]))){display:none}
+.hoje-head .daytype-badge{font-size:10px;padding:6px 9px;max-width:150px;white-space:normal;text-align:center}
+#todayCount{font-size:11px;margin-top:6px}
+.today-list{gap:10px}.today-item{padding:16px 14px;border-radius:16px;box-shadow:none}
+.today-item .today-title{font-size:15px;line-height:1.45}
+.activity-order-controls{margin:0 0 12px;font-size:11px;color:var(--ink-faint)}
+.activity-drag-handle{opacity:.65;min-width:36px}.activity-drag-handle:hover{opacity:1}
+.progress-shortcut{margin-top:16px;min-height:44px;font-size:13px}
+.period-card{padding:16px 18px;border-radius:16px}.period-card .period-title{font-size:22px}
+.period-card .period-subtitle{font-size:12px}.period-card .cycle-sub{font-size:10px}
+#dashDestinations .dash-destinations{grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+#dashDestinations .dash-destination{padding:14px;min-height:90px;gap:10px;border-radius:16px}
+#dashDestinations .dash-destination>span:last-child{display:none}
+#dashDestinations .dash-destination strong{font-size:13px}
+#dashDestinations .dash-destination small{font-size:11px;line-height:1.4}
+#dashDestinations .destination-icon{font-size:23px}
+.dashboard-insights{margin-top:24px;border:1px solid var(--line);border-radius:16px;padding:0 16px}
+.dashboard-insights>summary{min-height:64px}.dashboard-insights .blk{padding-top:12px}
+/* Reusable disclosure: compact label outside, full editing controls inside. */
+.reference-panel{border:1px solid var(--line);border-radius:16px;background:var(--surface);overflow:hidden}
+.reference-panel>summary{list-style:none;display:flex;align-items:center;gap:12px;padding:16px;min-height:56px;cursor:pointer;font-size:15px;font-weight:650}
+.reference-panel>summary::-webkit-details-marker{display:none}
+.reference-panel>summary:after{content:'＋';margin-left:auto;flex-shrink:0;color:var(--accent-strong);font-size:19px;font-weight:400}
+.reference-panel[open]>summary:after{content:'−'}
+.reference-panel>summary>span{min-width:0}.reference-panel>summary small{font-size:11px;font-weight:400;color:var(--ink-faint)}
+.reference-body{padding:0 16px 16px}.reference-body>.blk-head{margin-top:8px!important}
+.reference-body>.blk-head h2{font-size:16px}.reference-body .kicker{display:none}
+.reference-panel[open]>summary{border-bottom:1px solid var(--line);margin-bottom:16px}
+.training-reference{margin-top:20px}.nutrition-help{margin:0 0 16px;font-size:13px;color:var(--ink-soft)}
+.nutrition-help summary{cursor:pointer;min-height:44px;display:flex;align-items:center;gap:8px;color:var(--accent-strong)}
+.nutrition-help p{padding:12px 16px;background:var(--surface);border-radius:12px;line-height:1.7}
+#fitStats:empty{display:none}#fitStats{margin-top:12px}.stat{padding:12px}
+#ft-treino>.blk-head{margin-bottom:0}#ft-treino>.blk-head h2{font-size:13px;color:var(--ink-faint);font-weight:500}
+#ft-treino>.blk-head .kicker{display:none}
+.section-own-head{margin:12px 0}.section-own-head h3{font-size:21px;line-height:1.3}
+.section-own-card{margin:10px 0;padding:16px;gap:12px;border-left-width:3px;border-radius:16px}
+.section-own-card h4{font-size:16px;margin:5px 0}.section-own-card p{margin:6px 0 0;font-size:13px;line-height:1.6}
+.section-own-card p:empty{display:none}.section-own-card small{font-size:11px}
+.section-plan-navigation{margin:8px 0 16px}.section-plan-navigation button{font-size:12px;min-height:44px}
+.section-own-form{padding:16px;border-radius:16px}.section-own-form input,.section-own-form textarea,.section-own-form select{box-sizing:border-box}
+.weight-form{gap:10px;flex-wrap:wrap}.weight-form input{min-width:100px;max-width:100%}
+.weight-chart-empty{min-height:140px}.weight-chart-empty .wce-sub{font-size:12px}
+.weight-log .del{border:0;background:transparent;min-height:44px;min-width:44px;justify-content:center;margin:-4px 0;color:var(--ink-faint)}
+.weight-log-row{align-items:center;gap:8px;min-height:44px}
+.subtabs{padding:4px 0 8px;gap:6px}.subtabs button{min-height:44px;border-radius:12px;font-size:12px;padding:10px 14px;flex-shrink:0}
+section:has(>.subtabs-wrap){padding-top:16px;padding-bottom:0}
+#langStats{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.week-list{display:grid;gap:12px}.week-card{margin:0;border-radius:12px;box-shadow:none}
+.week-card .week-num{min-width:58px}.vocab-list label{min-height:44px;align-items:center}
+.sched-card,.res-card,.proto-card,.gold,.mealcard{box-shadow:none}
+.sched-head{padding-right:60px}.sched-head .days{font-size:14px}
+.sched-card .sched-body{padding:14px 16px}.sched-item{padding:8px 0}
+.mealcard .head{background:var(--surface-2)!important;color:var(--ink)!important;border-left:3px solid var(--cat-fit);min-height:62px}
+.mealcard.tiros .head{border-left-color:var(--warn)}.mealcard.rest .head{border-left-color:var(--accent)}
+.mealcard .head h3{font-size:15px}.mealcard .head .days{color:var(--ink-soft);font-family:var(--font-body)}
+.hub-cards{gap:12px}.hcard{padding:18px 16px;border-radius:18px;box-shadow:none;min-height:88px}
+.hcard .hname{font-size:16px}.hcard .hsum{font-size:12px;line-height:1.5;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.hcard .hicn{border-radius:14px;width:44px;height:44px;flex-shrink:0}
+#openJournal{background:var(--surface);border:1px solid var(--line);color:var(--accent-strong);text-align:left;padding:18px;min-height:64px}
+.detail-head{gap:12px;min-height:64px}.detail-head h2{font-size:22px}
+.list-row{gap:12px;min-height:56px}.scroll-list{scrollbar-width:thin}
+.est-period-tabs{gap:6px}.est-period-tabs button{min-height:44px;font-size:12px;padding:10px 13px}
+.overview-controls{gap:8px;flex-wrap:wrap}.overview-stats{gap:12px;font-size:12px}
+.overview-note{font-size:12px;line-height:1.6}.progress-day-detail{margin-top:20px}
+/* Settings read as three simple groups; destructive actions are distinct. */
+#settingsSheet{padding:16px 20px 24px}#settingsSheet h3{font-size:22px;margin:0}
+#settingsSheet h4{font-size:15px;margin:0 0 12px}
+.settings-group,.settings-data-section{margin-top:24px;padding-top:20px;border-top:1px solid var(--line)}
+#settingsSheet .sheet-row{padding:16px 0;gap:12px;flex-wrap:wrap}
+#settingsSheet .sheet-row .sl{font-size:14px}.sheet-row .ss{max-width:36ch;line-height:1.5}
+#settingsSheet .sheet-row .btn{min-height:44px;padding:10px 14px;font-size:13px}
+#settingsSheet .native-features{padding:16px;background:var(--surface);border:1px solid var(--line);border-radius:16px;margin-top:20px}
+#settingsSheet .native-note,#nativeReminderStatus,#nativeWidgetHint{font-size:12px;line-height:1.6}
+#settingsSheet #androidDownload .btn{min-height:44px;font-size:13px}
+#settingsSheet .data-folder-card{padding:16px;background:var(--surface);border-radius:14px}
+#settingsSheet .data-folder-card h4{font-size:14px}#dataFolderName{font-size:13px}
+#settingsSheet .settings-customize{padding:8px 0;border-top:1px solid var(--line);border-bottom:0}
+#settingsSheet .settings-customize>summary{font-size:14px;font-weight:600}
+#settingsSheet .settings-danger{margin-top:16px;padding:16px;border:1px solid var(--bad-soft);border-radius:14px}
+#settingsSheet #btnReset{color:var(--bad);border-color:var(--bad-soft)}
+/* Notebook library and continuous editor share spacing with the rest of the app. */
+.nb-library-head h1{font-size:28px}.nb-library-head p{font-size:13px;margin-top:8px}
+.nb-library-head .kicker{display:none}.nb-books{gap:14px;margin:22px 0}
+#journalRoot .nb-cover{min-height:180px;padding:22px 18px 18px 28px;border-radius:8px 16px 16px 8px;box-shadow:none}
+.nb-cover strong{font-size:17px}.nb-create{gap:10px}.nb-recent{margin-top:28px}
+.nb-note-grid{align-content:start;gap:14px}.nb-note-list{align-content:start}
+.nb-note-link strong{font-size:13px}.nb-note-link small{font-size:11px}
+.nb-sidebar-head h2{font-size:18px!important}.nb-index-heading{margin-top:16px;margin-bottom:10px}
+.nb-overview-head h1{font-size:28px}.nb-overview-head p{font-size:13px}
+.nb-overview-controls input{min-width:140px}.nb-overview-controls select{font-size:13px;padding:10px}
+.nb-overview-controls{margin-top:20px;gap:8px}
+.nb-workspace .nb-ink-viewport{background:#080808!important}
+.weekly-route{padding-bottom:24px}.weekly-hero{box-shadow:none}
+.weekly-mission-row{gap:12px}.weekly-mission-row button{min-height:64px}
+.weekly-reflection{font-size:16px;padding:18px;line-height:1.6}
+@media(max-width:599px){
+ :root{--space-section:24px}.wrap{padding-left:16px;padding-right:16px}
+ .hero{padding:18px 16px}.hero h1{font-size:27px}
+ .hoje-head{align-items:flex-start}.hoje-head>div:last-child{gap:6px!important}
+ .hoje-head .daytype-badge{max-width:105px;font-size:9px}
+ #dashDestinations .dash-destination{flex-direction:column;align-items:flex-start;justify-content:flex-start}
+ .reference-panel>summary{flex-wrap:wrap;gap:6px;padding:14px}
+ .reference-panel>summary small{flex-basis:75%}.reference-body{padding:0 12px 14px}
+ .section-own-head h3{font-size:19px}.section-own-head .btn{font-size:12px;padding:10px 12px}
+ .section-plan-week button{min-height:56px}.section-own-card{padding:14px 12px;gap:10px}
+ .nb-overview-controls input{flex-basis:100%}.nb-overview-controls select{flex:1;min-width:0}
+ #settingsSheet #themeSeg{width:100%;margin-top:4px}.sheet-row #themeSeg button{flex:1;min-height:44px}
+ .form-actions{justify-content:flex-end}.form-actions .btn{flex:1 1 auto}
+}
+@media(min-width:600px) and (max-width:1099px){
+ .hero{padding:24px}.hub-cards{grid-template-columns:repeat(2,minmax(0,1fr))}
+ .sched-grid,.proto-grid{gap:16px}#langStats{grid-template-columns:repeat(4,minmax(0,1fr))}
+}
+@media(min-width:1100px){
+ .hero{background:transparent;padding:24px 0;border:0}
+ .hero .ring-grid{margin-top:0}.desktop-dashboard{gap:24px}
+ #dashDestinations .dash-destinations{grid-template-columns:1fr}
+ #dashDestinations .dash-destination{min-height:72px}
+ #langStats{grid-template-columns:repeat(4,minmax(0,1fr))}
+ .view>section.blk{max-width:1100px}.nb-library-head{max-width:700px}
+}
+@media(prefers-reduced-motion:reduce){*,*::before,*::after{scroll-behavior:auto!important;animation-duration:.01ms!important;transition-duration:.01ms!important}}
+/* Prevent dismissed dialogs from painting below the viewport on small screens. */
+.sheet:not(.open){visibility:hidden;pointer-events:none}
+.sheet.open{visibility:visible;pointer-events:auto}
+.hcard .hbody{display:flex;flex-direction:column;gap:4px;min-width:0}
+.hcard .hname,.hcard .hsum{display:block;max-width:100%;min-width:0;margin:0}
+.hcard .hname{overflow-wrap:anywhere}.hcard .hsum{white-space:nowrap}
+.stats{background:transparent;border:0;gap:10px}.stats .stat{background:var(--surface);border:1px solid var(--line);border-radius:14px}
+#fitStats:empty{display:none}
+#langStats{grid-template-columns:repeat(2,minmax(0,1fr))}
+.mealcard>.head{position:relative;padding-right:40px;flex-wrap:nowrap}
+.mealcard>.head:after{content:'＋';position:absolute;right:16px;color:var(--accent-strong)}
+.mealcard[open]>.head:after{content:'−'}
+.mealcard .meal-edit{display:block;margin:12px 16px 4px;min-height:44px;font-size:12px}
+.mealcard [data-act=editrow]:focus-visible{outline:2px solid var(--accent);outline-offset:-3px}
+/* Input rows align the action with its field rather than stretching the button. */
+.weight-form{align-items:flex-end}.weight-form .btn{height:48px;flex-shrink:0}
+.weight-chart-empty{min-height:100px;padding:20px 14px}
+.mealcard.tiros>.head{background:var(--surface-2)!important;color:var(--ink)!important}
+.sheet .field-label>span{font-size:12px}.sheet .field-label{gap:6px}
+@media(max-width:599px){#quickAddForm>.row2{grid-template-columns:repeat(2,minmax(0,1fr))}}
+/* An unchecked workout uses the same empty-circle convention as the daily routine. */
+.section-own-card .done-check:not(.on){color:transparent}
+.nb-overview-head>p:empty{display:none}
+.btn.danger:hover{background:var(--bad-soft);border-color:var(--bad);color:var(--bad)}
+.hcard .hcount{background:var(--brand);color:white}
+.today-check.on,.done-check.on{background:var(--fit-solid);border-color:var(--fit-solid);color:white}
