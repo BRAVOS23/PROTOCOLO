@@ -1,4 +1,4 @@
-const CACHE = 'protocolo-v59';
+const CACHE = 'protocolo-v60';
 const SHELL = [
   './',
   './index.html',
@@ -7,7 +7,7 @@ const SHELL = [
   './js/logic.js',
   './js/native-platform.js',
   './js/data.js',
-  './js/data-folder.js', './js/ink-surface.js', './js/journal.js', './js/section-plans.js', './js/home-cover.js', './js/workspace.js', './js/app.js', './js/adaptive-layout.js',
+  './js/data-folder.js', './js/ink-surface.js', './js/journal.js', './js/section-plans.js', './js/home-cover.js', './js/workspace.js', './js/page-blocks.js', './js/app.js', './js/adaptive-layout.js',
   './js/pdf-vault.js', './js/weekly-route.js',
   './manifest.webmanifest',
   './icons/icon-192.png',

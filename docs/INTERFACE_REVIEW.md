@@ -33,3 +33,11 @@ A missão deixa de repetir a semana no cabeçalho e no cartão de progresso. O t
 ## Espaço de páginas — versão 3.27
 
 Navegação lateral com nomes nas telas a partir de 1000 px; menu de páginas no celular e nos tablets estreitos. Pesquisa de destinos por nome, com Ctrl+K, teclado, Escape e botão de voltar do Android. Os caminhos em Vida permitem regressar ao índice sem percorrer a sequência de telas. Vida passa a ser um diretório com linhas e ícones, e os cadernos usam capas compactas. Tipografia, subtabs, referências e planos diários partilham uma linguagem de página. As rotinas e o conteúdo das missões permanecem no modelo existente. Testes: `tests/browser/workspace.cjs`, mais as verificações responsivas, de capa, cadernos e rota.
+
+## Páginas flexíveis — versão 3.28
+
+«Visitadas recentemente» reflete navegação real, sem duplicar destinos, e acompanha o backup. A divisão entre tarefas e análise pode ser arrastada nas telas largas ou ajustada com o teclado; a proporção é guardada. A rotina do Início tem vistas Lista/Tabela sobre os mesmos registos, incluindo conclusão, princípios e ordem manual.
+
+O botão Personalizar página permite acrescentar texto, títulos, checklists, imagens e divisórias entre secções existentes. Os blocos podem ser editados, arrastados, deslocados por botões/teclado e apagados com confirmação. As imagens são reduzidas localmente; os blocos, marcações e posições seguem em `pageBlocks` no backup completo. O conteúdo original das missões permanece separado. O editor de escrita à mão mantém a própria superfície de páginas.
+
+Em telas estreitas, as colunas passam para uma sequência vertical e a tabela tem rolagem horizontal. `tests/browser/flexible-pages.cjs` valida visitas, redimensionamento real com ponteiro, conclusão partilhada entre vistas, blocos de texto/imagem/checklist, arrasto, reordenação, cancelamento de eliminação, persistência e reorganização responsiva.

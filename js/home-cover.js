@@ -9,5 +9,5 @@
  function store(value){var state=c.state(),previous=state.homeCover;if(value)state.homeCover=value;else delete state.homeCover;if(c.save()===false){if(previous)state.homeCover=previous;else delete state.homeCover;c.save();throw Error('Sem espaço para guardar a capa. Exporta uma cópia dos dados.');}refresh();}
  choose.onclick=function(){input.click();};remove.onclick=function(){sequence++;try{store(null);status.textContent='';}catch(e){c.toast(e.message);}};
  input.onchange=async function(){var file=input.files[0];input.value='';if(!file)return;var ticket=++sequence,state=c.state();status.textContent='A preparar a capa…';try{var data=await resize(file);if(ticket!==sequence||state!==c.state())return;store({image:data});status.textContent='';}catch(e){if(ticket===sequence){status.textContent='';c.toast(e.message==='The source image cannot be decoded.'?'Não foi possível abrir esta imagem. Usa JPG, PNG ou WebP.':e.message);}}};
- refresh();return {refresh:refresh};
+ window.HomeCover.prepareImage=resize;refresh();return {refresh:refresh};
 }};})();

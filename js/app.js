@@ -3147,7 +3147,8 @@
     document.getElementById('dayProgressText').textContent=acts.length?completed+' de '+acts.length+' tarefas cumpridas hoje':'O teu dia está livre · adiciona uma tarefa';
     document.getElementById('dayProgressFill').style.width=(acts.length?completed/acts.length*100:0)+'%';
     document.getElementById('todayCount').textContent=acts.length?completed+'/'+acts.length:'';
-    document.getElementById('todayList').innerHTML = acts.length ? acts.map(function(act){
+    var tableView=state.routineView==='table';document.querySelectorAll('[data-routine-view]').forEach(function(b){b.classList.toggle('active',b.dataset.routineView===(tableView?'table':'list'));b.setAttribute('aria-pressed',String(b.dataset.routineView===(tableView?'table':'list')));});document.getElementById('todayList').classList.toggle('routine-table-mode',tableView);
+    var routineRows=acts.length ? acts.map(function(act){
       var area = areaById(act.area);
       var done = isActDone(TODAY_ISO, act.id);
       var sub = escHtml([act.time, act.detail].filter(Boolean).join(' · '));
@@ -3157,6 +3158,7 @@
       var flameHtml = showFlame
         ? '<button type="button" class="today-flame'+(!!state.activityPrinciples[fullKey(TODAY_ISO,act.id)]?' on':'')+'" data-flame="'+act.id+'" aria-pressed="'+!!state.activityPrinciples[fullKey(TODAY_ISO,act.id)]+'" aria-label="Segui os três princípios na atividade '+escAttr(act.title)+'?">'+FLAME_SVG+'</button>'
         : '';
+      if(tableView)return '<tr class="today-item'+(done?' done':'')+'" data-act="'+act.id+'"><td><button class="today-check'+(done?' on':'')+'" type="button" aria-pressed="'+done+'" aria-label="'+escAttr((done?'Desmarcar ':'Concluir ')+act.title)+'">'+CHECK_SVG+'</button></td><td><strong>'+escHtml(act.title)+'</strong>'+(act.detail?'<small>'+escHtml(act.detail)+'</small>':'')+'</td><td><span class="area-tag area-vivid" style="--area-color:'+escAttr(area.color)+'">'+escHtml(area.label)+'</span></td><td>'+escHtml(act.time||'—')+'</td><td>'+flameHtml+'</td><td>'+activityDragHandle(act)+'</td></tr>';
       return '<div class="today-item'+(done?' done':'')+'" data-act="'+act.id+'">' +
         '<button class="today-check'+(done?' on':'')+'" type="button" aria-pressed="'+done+'" aria-label="'+escAttr((done?'Desmarcar ':'Concluir ')+act.title)+'">'+CHECK_SVG+'</button>' +
         '<div class="today-txt"><div class="tt">'+escHtml(act.title)+'</div>' +
@@ -3165,11 +3167,13 @@
         '</div>';
     }).join('') : '<p style="color:var(--ink-faint); font-size:13px;">Sem atividades para hoje — toca no lápis para adicionar.</p>';
 
+    var routineList=document.getElementById('todayList');if(tableView&&acts.length){var list=routineList;list.innerHTML='<div class="routine-table-scroll"><table class="routine-table"><caption>Rotina de '+escHtml(TODAY_WEEKDAY)+'</caption><thead><tr><th scope="col">Feito</th><th scope="col">Atividade</th><th scope="col">Área</th><th scope="col">Hora</th><th scope="col">Princípios</th><th scope="col">Ordem</th></tr></thead><tbody>'+routineRows+'</tbody></table></div>';}else routineList.innerHTML=routineRows;
     renderOrderControl(document.getElementById('todayOrderControls'),TODAY_WEEKDAY);
     bindActivityReorder(document.getElementById('todayList'),TODAY_WEEKDAY,'.today-item','data-act');
     document.querySelectorAll('#todayList .today-item').forEach(function(el){
       el.addEventListener('click', function(ev){
         if(ev.target.closest('.today-flame,.activity-drag-handle')) return;
+        if(tableView&&!ev.target.closest('.today-check'))return;
         var actId = el.getAttribute('data-act');
         toggleActivityDone(TODAY_ISO, TODAY_WEEKDAY, actId);
         renderDashboard();
@@ -3466,6 +3470,7 @@
   /* ---------------- boot ---------------- */
   function renderAll(){
     homeCoverUI.refresh();
+    if(dashboardLayout)dashboardLayout.refresh();if(pageBlocks)pageBlocks.refresh();
     applyTabLabels();
     renderTabNameInputs();
     renderLangStatic();
@@ -3510,7 +3515,10 @@
 
   applyTheme(state.theme);
   renderAll();
-  WorkspaceUI.create({labels:function(){return state.tabLabels;},navigate:function(page){if(currentSheet)closeSheet();if(views[page]){goTab(page);if(page==='vida')goVida('hub');return;}goTab('vida');if(page==='china'){var plan=state.planos.find(function(p){return p.id==='plano-rota-china';});if(plan)openPlano(plan.id);else goVida('planos');}else goVida(page);}});
+  WorkspaceUI.create({state:function(){return state;},save:saveState,labels:function(){return state.tabLabels;},navigate:function(page){if(currentSheet)closeSheet();if(views[page]){goTab(page);if(page==='vida')goVida('hub');return;}goTab('vida');if(page==='china'){var plan=state.planos.find(function(p){return p.id==='plano-rota-china';});if(plan)openPlano(plan.id);else goVida('planos');}else goVida(page);}});
+  var dashboardLayout=DashboardLayout.create({state:function(){return state;},save:saveState});
+  var pageBlocks=PageBlocks.create({state:function(){return state;},save:saveState,toast:toast,confirm:showConfirm,page:function(){var view=document.querySelector('.view.active'),sub=view.id==='view-vida'?view.querySelector('.subview.active'):null,root=sub||view,key=(sub||view).id;if(sub&&sub.id==='vida-plano-detail'){key+=':'+openPlanoId;var plan=currentPlano();if(plan&&plan.weeklyResume&&plan.weeklyResume.view==='mission')key+=':'+plan.weeklyResume.missionId;root=sub.querySelector('.weekly-route')||sub;}return {root:root,key:key};}});
+  document.querySelectorAll('[data-routine-view]').forEach(function(button){button.onclick=function(){state.routineView=button.dataset.routineView;saveState();renderDashboard();};});
 
   function refreshCalendarDay(){
     var next=todayDate(), nextISO=iso(next);

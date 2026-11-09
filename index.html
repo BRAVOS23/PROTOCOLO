@@ -33,7 +33,7 @@
       <span class="mark" aria-hidden="true"><svg viewBox="0 0 100 100"><circle cx="50" cy="50" r="38" fill="none" stroke="var(--bar-track)" stroke-width="14"></circle><circle cx="50" cy="50" r="38" fill="none" stroke="var(--accent)" stroke-width="14" stroke-linecap="round" stroke-dasharray="170 69" transform="rotate(-90 50 50)"></circle></svg></span>
       <span class="name">Protocolo</span>
     </div>
-    <span class="page-title" id="pageTitle">Início</span><nav id="workspaceBreadcrumb" class="workspace-breadcrumb" aria-label="Caminho da página" hidden></nav><button class="workspace-search iconbtn" data-page-search type="button" aria-label="Encontrar página" title="Encontrar página · Ctrl+K"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5"/><path d="m16 16 5 5"/></svg></button>
+    <span class="page-title" id="pageTitle">Início</span><nav id="workspaceBreadcrumb" class="workspace-breadcrumb" aria-label="Caminho da página" hidden></nav><button id="pageCustomize" class="workspace-customize iconbtn" type="button" aria-label="Personalizar página" aria-pressed="false" title="Personalizar página">⊞</button><button class="workspace-search iconbtn" data-page-search type="button" aria-label="Encontrar página" title="Encontrar página · Ctrl+K"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5"/><path d="m16 16 5 5"/></svg></button>
     <button class="iconbtn" id="btnSettings" aria-label="Definições" type="button">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
     </button>
@@ -93,6 +93,7 @@
           </button>
         </div>
       </div>
+      <div class="routine-views seg" aria-label="Vista da rotina"><button type="button" data-routine-view="list">Lista</button><button type="button" data-routine-view="table">Tabela</button></div>
       <div id="todayOrderControls" class="activity-order-controls"></div><div class="today-list" id="todayList"></div>
     </section>
 
@@ -109,7 +110,7 @@
     </section>
 
 
-    <section class="blk" id="dashDestinations"><div class="blk-head"><h2>Acesso rápido</h2></div><div class="dash-destinations"><button class="dash-destination" id="dashOpenNotebooks" type="button"><span class="destination-icon">▤</span><span><strong>Os meus cadernos</strong><small id="dashNotebookSummary">Diário e anotações</small></span><span aria-hidden="true">›</span></button><button class="dash-destination" id="dashOpenChina" type="button"><span class="destination-icon">◎</span><span><strong>Rota para a China</strong><small>Continuar as minhas missões</small></span><span aria-hidden="true">›</span></button></div></section>
+    <section class="blk" id="dashDestinations"><div class="blk-head"><h2>Visitadas recentemente</h2></div><div class="dash-destinations"><div id="recentPagesList" class="recent-pages-list"></div><button class="dash-destination" id="dashOpenNotebooks" type="button" hidden><span class="destination-icon">▤</span><span><strong>Os meus cadernos</strong><small id="dashNotebookSummary">Diário e anotações</small></span><span aria-hidden="true">›</span></button><button class="dash-destination" id="dashOpenChina" type="button" hidden><span class="destination-icon">◎</span><span><strong>Rota para a China</strong><small>Continuar as minhas missões</small></span><span aria-hidden="true">›</span></button></div></section>
     <details class="dashboard-insights"><summary><span>Protocolo</span><small>Autenticidade, intensidade e fidelidade</small></summary>
     <section class="blk aif-block">
 
@@ -533,7 +534,7 @@
   </section>
   <section id="androidDownload" class="native-features">
     <h4>App Android</h4>
-    <a class="btn" href="https://bravos23.github.io/PROTOCOLO/downloads/Protocolo-Pessoal.apk?v=3.27" download>Baixar Protocolo 3.27</a>
+    <a class="btn" href="https://bravos23.github.io/PROTOCOLO/downloads/Protocolo-Pessoal.apk?v=3.28" download>Baixar Protocolo 3.28</a>
     <p class="native-note">Para atualizar, instala por cima, sem desinstalar.</p>
   </section>
   <section id="nativeFeatures" class="native-features" hidden>
@@ -649,7 +650,8 @@
 <script src="js/home-cover.js"></script>
 <dialog id="pageSearch" class="page-search-dialog" aria-labelledby="pageSearchTitle"><div class="page-search-head"><h2 id="pageSearchTitle">Encontrar página</h2><button type="button" data-search-close aria-label="Fechar pesquisa">×</button></div><input type="search" aria-label="Nome da página" placeholder="Para onde queres ir?" autocomplete="off"><div data-page-results class="page-search-results"></div></dialog>
 <script src="js/workspace.js"></script>
-<script src="js/app.js"></script>
 <script src="js/adaptive-layout.js"></script>
+<script src="js/page-blocks.js"></script>
+<script src="js/app.js"></script>
 </body>
 </html>
