@@ -288,6 +288,7 @@
   function clone(o){ return JSON.parse(JSON.stringify(o)); }
 
   var state = loadState();
+  var homeCoverUI=HomeCover.create({root:document.getElementById('homeCover'),state:function(){return state;},save:saveState,toast:toast});
   saveState(); // persiste já qualquer limpeza feita pela migração (itens corrompidos removidos)
 
   var sectionPlansUI=SectionPlans.create({state:function(){return state;},save:saveState,day:function(){return TODAY_WEEKDAY;},today:function(){return TODAY_ISO;},dates:function(){return weekDates(TODAY).map(iso);},confirm:showConfirm,changed:function(){recomputeDerived(TODAY_ISO,TODAY_WEEKDAY);saveState();renderFitStatic();renderWorkStatic();renderDashboard();}});
@@ -3464,6 +3465,7 @@
 
   /* ---------------- boot ---------------- */
   function renderAll(){
+    homeCoverUI.refresh();
     applyTabLabels();
     renderTabNameInputs();
     renderLangStatic();

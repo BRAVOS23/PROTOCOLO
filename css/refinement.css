@@ -183,3 +183,40 @@ section:has(>.subtabs-wrap){padding-top:16px;padding-bottom:0}
 .btn.danger:hover{background:var(--bad-soft);border-color:var(--bad);color:var(--bad)}
 .hcard .hcount{background:var(--brand);color:white}
 .today-check.on,.done-check.on{background:var(--fit-solid);border-color:var(--fit-solid);color:white}
+/* Page composition: a personal cover and quiet section lines, without nested boxes. */
+.home-cover{position:relative;margin:14px 0 0;min-height:38px}
+.home-cover-image{display:block;width:100%;height:210px;object-fit:cover;object-position:center;border-radius:12px}
+.home-cover-actions{display:flex;gap:8px;align-items:center}
+.home-cover-actions button{font:inherit;font-size:12px;min-height:36px;padding:7px 12px;background:transparent;border:1px solid transparent;border-radius:8px;color:var(--ink-faint);cursor:pointer}
+.home-cover-actions button:hover{background:var(--surface-2);color:var(--ink)}
+.has-cover .home-cover-actions{position:absolute;bottom:12px;right:12px;padding:3px;background:#000b;border-radius:10px}
+.has-cover .home-cover-actions button{color:#fff}.has-cover .home-cover-actions button:hover{background:#ffffff26}
+.home-cover-status{display:block;font-size:12px;color:var(--ink-faint)}
+.home-cover-status:empty{display:none}
+#view-inicio .hero{background:transparent;border:0;border-radius:0;padding:20px 0;margin:0}
+#view-inicio .today-item{background:transparent;border:0;border-bottom:1px solid var(--line);border-radius:0;padding:16px 0}
+#view-inicio .today-item.done{background:transparent}
+#view-inicio .today-item:hover{background:color-mix(in srgb,var(--surface) 60%,transparent)}
+#view-inicio .today-list{gap:0}
+#view-inicio .reference-panel,#view-inicio .dashboard-insights{background:transparent;border:0;border-radius:0;padding:0}
+#view-inicio .reference-panel>summary,#view-inicio .dashboard-insights>summary{padding:12px 0;border-bottom:1px solid var(--line);border-radius:0;min-height:52px}
+#view-inicio .reference-body{padding:16px 0}
+#view-inicio .period-card{background:transparent;border:0;border-bottom:1px solid var(--line);border-radius:0;padding:0 0 20px}
+#view-inicio .dash-destination{background:transparent;border:0;border-bottom:1px solid var(--line);border-radius:0;padding-left:0;padding-right:0}
+#view-inicio .todayCount{background:transparent}
+/* References elsewhere read as simple toggles, rather than a stack of drawers. */
+.reference-panel{background:transparent;border:0;border-radius:0}
+.reference-panel>summary{padding-left:0;padding-right:0;border-bottom:1px solid var(--line)}
+.reference-panel>summary:after{content:'›';font-size:22px}
+.reference-panel[open]>summary:after{content:'⌄'}
+.reference-body{padding-left:0;padding-right:0}
+@media(min-width:1100px){
+ #view-inicio .hero{display:grid;grid-template-columns:minmax(0,1.3fr) minmax(300px,1fr);padding:24px 0;gap:0 36px;align-items:center}
+ #view-inicio .hero .ring-grid{grid-column:2;grid-row:1 / span 5;align-self:center}
+ #view-inicio .desktop-dashboard{margin-top:12px;gap:48px;grid-template-columns:minmax(0,1.4fr) minmax(320px,1fr)}
+ #view-inicio .desktop-dashboard #dashToday,#view-inicio .dashboard-side>section.blk{padding:0;background:transparent;border:0;border-radius:0}
+ #view-inicio .dashboard-side{gap:26px;padding-top:8px}
+ #view-inicio .dashboard-side>.aif-block{padding:0}
+ .home-cover-image{height:240px}
+}
+@media(max-width:599px){.home-cover-image{height:160px;border-radius:8px}.has-cover .home-cover-actions{right:8px;bottom:8px}.home-cover-actions button{font-size:11px}}

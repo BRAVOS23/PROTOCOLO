@@ -21,3 +21,7 @@ Objetivo: fundo preto real, ações diárias fáceis de encontrar, cores vivas n
 Perfis de navegador isolados, larguras de celular, tablet e computador. Teste `tests/browser/interface-review.cjs` percorre as cinco abas, destinos de Vida, histórico, edição de línguas, refeições, peso, cancelamento de rascunhos e definições. Os testes existentes cobrem rotina, cópia/ordem, planos diários, cadernos/gestos, rotação, pasta de cópias e missões/PDF. As ações destrutivas usam dados sintéticos nos testes; não foram usadas informações pessoais.
 
 A compilação e os testes de ponte nativa simulada não substituem a validação física de caneta, widget e permissões num Android real.
+
+## 9 de novembro — composição de página
+
+Capa pessoal opcional no Início, escolhida no aparelho e reduzida antes de guardar. A imagem acompanha Exportar/Importar e a pasta de cópias; ficheiros inválidos ou falta de espaço preservam a capa anterior. O seletor Android distingue imagens, PDFs e backups. O ciclo fica na coluna lateral nas telas grandes, eliminando a linha alta vazia do cabeçalho. Secções e referências usam divisórias e toggles simples em vez de caixas encaixadas. Verificação em `tests/browser/home-cover.cjs`, incluindo persistência, recuperação do backup, falta de espaço e rotação de layout.

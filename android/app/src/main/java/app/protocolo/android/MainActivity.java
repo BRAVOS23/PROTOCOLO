@@ -100,9 +100,10 @@ public final class MainActivity extends Activity {
                 fileCallback = callback;
                 try {
                     Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT).addCategory(Intent.CATEGORY_OPENABLE).setType("*/*");
-                    boolean pdf=false;
-                    for(String type:params.getAcceptTypes()) if(type.contains("pdf")) pdf=true;
+                    boolean pdf=false, image=false;
+                    for(String type:params.getAcceptTypes()) { if(type.contains("pdf")) pdf=true; if(type.startsWith("image/")) image=true; }
                     if(pdf) intent.setType("application/pdf");
+                    else if(image) intent.setType("image/*");
                     else intent.putExtra(Intent.EXTRA_MIME_TYPES, new String[]{"application/json", "text/plain", "application/octet-stream"});
                     startActivityForResult(intent, IMPORT);
                 } catch (Exception e) { fileCallback.onReceiveValue(null); fileCallback = null; }
