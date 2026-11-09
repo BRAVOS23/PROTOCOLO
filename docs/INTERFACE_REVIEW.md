@@ -25,3 +25,7 @@ A compilação e os testes de ponte nativa simulada não substituem a validaçã
 ## 9 de novembro — composição de página
 
 Capa pessoal opcional no Início, escolhida no aparelho e reduzida antes de guardar. A imagem acompanha Exportar/Importar e a pasta de cópias; ficheiros inválidos ou falta de espaço preservam a capa anterior. O seletor Android distingue imagens, PDFs e backups. O ciclo fica na coluna lateral nas telas grandes, eliminando a linha alta vazia do cabeçalho. Secções e referências usam divisórias e toggles simples em vez de caixas encaixadas. Verificação em `tests/browser/home-cover.cjs`, incluindo persistência, recuperação do backup, falta de espaço e rotação de layout.
+
+## Missões — página de leitura
+
+A missão deixa de repetir a semana no cabeçalho e no cartão de progresso. O texto integral aparece em blocos tipográficos simples, com a alternativa em destaque discreto e o anexo PDF junto da prova. Uma única marcação conclui a missão, exigindo o PDF como antes. Os dados existentes de ação/prova permanecem compatíveis. Os testes de rota validam texto exato, anexos, conclusão, exportação/importação e retoma; `tests/browser/mission-page.cjs` verifica a composição em celular e tablet.

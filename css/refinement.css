@@ -220,3 +220,33 @@ section:has(>.subtabs-wrap){padding-top:16px;padding-bottom:0}
  .home-cover-image{height:240px}
 }
 @media(max-width:599px){.home-cover-image{height:160px;border-radius:8px}.has-cover .home-cover-actions{right:8px;bottom:8px}.home-cover-actions button{font-size:11px}}
+/* Missions are reading pages, with one completion action beside their evidence. */
+.weekly-route .weekly-hero{background:transparent;border:0;border-radius:0;padding:16px 0}
+.weekly-route .weekly-hero h1{font-size:26px;line-height:1.4;margin-bottom:16px}
+.weekly-route .weekly-year,.weekly-route .weekly-month{background:transparent;border:0;border-radius:0;padding-left:0;padding-right:0}
+.weekly-route .weekly-month-list{gap:0}
+.weekly-route .weekly-mission-row{background:transparent;border:0;border-bottom:1px solid var(--line);border-radius:0;padding:14px 0}
+.weekly-route .weekly-mission-row.done{background:transparent;border-color:var(--line)}
+.weekly-route.weekly-mission-page{display:flex;flex-direction:column;gap:0;max-width:820px;margin:0 auto;padding:8px 0 32px}
+.weekly-page-month{display:block;font-size:12px;color:var(--ink-faint);margin-bottom:12px}
+.weekly-mission-page .weekly-hero{padding:20px 0 28px;border-bottom:1px solid var(--line);margin-bottom:28px}
+.weekly-mission-page .weekly-hero h1{font-size:clamp(22px,2.3vw,28px);margin:0;line-height:1.5;font-weight:700}
+.weekly-mission-page .weekly-field{padding:0;margin:0 0 28px;background:transparent;border:0;border-radius:0}
+.weekly-mission-page .weekly-field h2{font-size:12px;letter-spacing:.035em;color:var(--accent-strong);font-weight:650;line-height:1.5}
+.weekly-mission-page .weekly-field p{font-size:16px;line-height:1.8;margin:10px 0 0;color:var(--ink-soft)}
+.weekly-mission-page .weekly-field.options{border-left:2px solid var(--line);padding-left:16px}
+.weekly-mission-page .weekly-field.options h2{color:var(--ink-faint)}
+.weekly-mission-page .weekly-field.proof h2{color:var(--cat-fit)}
+.weekly-mission-page .weekly-pdf{margin-top:18px;padding:16px 0 0;border-top:1px dashed var(--line);background:transparent;border-radius:0}
+.weekly-mission-page .weekly-pdf-name{font-size:13px;color:var(--ink-faint);margin-bottom:10px}
+.weekly-attachment-actions{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.weekly-mission-page .weekly-pdf .btn{margin:0;min-height:44px;font-size:13px;padding:10px 14px}
+.weekly-mission-page .weekly-pdf small{font-size:11px;margin-top:10px}
+.weekly-mission-page .weekly-mission-completion{display:flex;align-items:center;gap:12px;margin:0;padding:16px 0;border:0;border-top:1px solid var(--line);border-bottom:1px solid var(--line);border-radius:0;background:transparent;min-height:64px;cursor:pointer}
+.weekly-mission-page .weekly-mission-completion.done{background:transparent;border-color:var(--line)}
+.weekly-mission-completion strong{font-size:14px}.weekly-mission-completion>span{color:var(--ink-faint);font-size:12px}
+.weekly-mission-completion.done>span{color:var(--cat-fit)}
+.weekly-mission-page .weekly-reflection{background:transparent;border-radius:0;margin:26px 0;padding:0 0 0 16px;border-left:2px solid var(--cat-fit);font-size:15px;line-height:1.7;font-weight:500;color:var(--ink-soft)}
+.weekly-mission-page .weekly-navigation{margin-top:8px;padding-top:16px;border-top:1px solid var(--line)}
+@media(max-width:599px){.weekly-mission-page .weekly-hero{padding-top:12px;margin-bottom:24px}.weekly-mission-page .weekly-field{margin-bottom:24px}.weekly-mission-page .weekly-field p{font-size:15px}.weekly-mission-completion>span{font-size:11px}}
+#vida-plano-detail .weekly-route.weekly-mission-page{max-width:820px}
