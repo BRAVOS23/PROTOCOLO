@@ -29,3 +29,7 @@ Capa pessoal opcional no Início, escolhida no aparelho e reduzida antes de guar
 ## Missões — página de leitura
 
 A missão deixa de repetir a semana no cabeçalho e no cartão de progresso. O texto integral aparece em blocos tipográficos simples, com a alternativa em destaque discreto e o anexo PDF junto da prova. Uma única marcação conclui a missão, exigindo o PDF como antes. Os dados existentes de ação/prova permanecem compatíveis. Os testes de rota validam texto exato, anexos, conclusão, exportação/importação e retoma; `tests/browser/mission-page.cjs` verifica a composição em celular e tablet.
+
+## Espaço de páginas — versão 3.27
+
+Navegação lateral com nomes nas telas a partir de 1000 px; menu de páginas no celular e nos tablets estreitos. Pesquisa de destinos por nome, com Ctrl+K, teclado, Escape e botão de voltar do Android. Os caminhos em Vida permitem regressar ao índice sem percorrer a sequência de telas. Vida passa a ser um diretório com linhas e ícones, e os cadernos usam capas compactas. Tipografia, subtabs, referências e planos diários partilham uma linguagem de página. As rotinas e o conteúdo das missões permanecem no modelo existente. Testes: `tests/browser/workspace.cjs`, mais as verificações responsivas, de capa, cadernos e rota.

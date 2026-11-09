@@ -3510,6 +3510,7 @@
 
   applyTheme(state.theme);
   renderAll();
+  WorkspaceUI.create({labels:function(){return state.tabLabels;},navigate:function(page){if(currentSheet)closeSheet();if(views[page]){goTab(page);if(page==='vida')goVida('hub');return;}goTab('vida');if(page==='china'){var plan=state.planos.find(function(p){return p.id==='plano-rota-china';});if(plan)openPlano(plan.id);else goVida('planos');}else goVida(page);}});
 
   function refreshCalendarDay(){
     var next=todayDate(), nextISO=iso(next);
