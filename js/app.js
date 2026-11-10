@@ -3061,7 +3061,7 @@
 
   /* Histórico: os registos antigos mantêm-se; novas marcações guardam os nomes. */
   var progressPeriod = 'mes', progressView = 'calendario';
-  var progressRef = new Date(TODAY), progressSelected = TODAY_ISO;
+  var progressRef = new Date(TODAY), progressSelected = TODAY_ISO, progressDayExpanded=false;
   function progressDays(){
     if(progressPeriod==='semana') return weekDates(progressRef);
     var first=new Date(progressRef.getFullYear(),progressRef.getMonth(),1), end=new Date(progressRef.getFullYear(),progressRef.getMonth()+1,0), days=[];
@@ -3114,13 +3114,13 @@
     }
     if(!days.some(function(d){ return iso(d)===progressSelected; })) progressSelected=iso(days[0]);
     var selected=progressSelected<=TODAY_ISO?progressRecords(progressSelected):[];
-    html+='<div class="progress-day-detail"><h3>'+fmtDateHuman(new Date(progressSelected+'T00:00:00'))+'</h3>'+(selected.length?'<ul>'+selected.map(function(r){return '<li><span class="'+(r.done?'completed':'')+'">'+(r.done?'✓':'—')+'</span><div>'+escHtml(r.title)+'<small>'+escHtml(r.areaLabel||areaById(r.area).label)+'</small></div></li>';}).join('')+'</ul>':'<p class="overview-note">'+(progressSelected>TODAY_ISO?'Dia futuro.':'Sem atividades registadas neste dia.')+'</p>')+'</div>';
+    html+='<div class="progress-day-detail" '+(progressDayExpanded?'':'hidden')+'><h3>'+fmtDateHuman(new Date(progressSelected+'T00:00:00'))+'</h3>'+(selected.length?'<ul>'+selected.map(function(r){return '<li><span class="'+(r.done?'completed':'')+'">'+(r.done?'✓':'—')+'</span><div>'+escHtml(r.title)+'<small>'+escHtml(r.areaLabel||areaById(r.area).label)+'</small></div></li>';}).join('')+'</ul>':'<p class="overview-note">'+(progressSelected>TODAY_ISO?'Dia futuro.':'Sem atividades registadas neste dia.')+'</p>')+'</div>';
     html+='<p class="overview-note">✓ Cumprida · — Sem marcação</p>';
     box.innerHTML=html;
-    box.querySelectorAll('[data-progress-period]').forEach(function(b){b.addEventListener('click',function(){progressPeriod=b.dataset.progressPeriod;renderProgressOverview();});});
-    box.querySelectorAll('[data-progress-view]').forEach(function(b){b.addEventListener('click',function(){progressView=b.dataset.progressView;renderProgressOverview();});});
-    box.querySelectorAll('[data-progress-shift]').forEach(function(b){b.addEventListener('click',function(){var dir=+b.dataset.progressShift;progressRef=progressPeriod==='mes'?new Date(progressRef.getFullYear(),progressRef.getMonth()+dir,1):addDays(progressRef,dir*7);progressSelected=iso(progressDays()[0]);renderProgressOverview();});});
-    box.querySelectorAll('[data-progress-date]').forEach(function(b){b.addEventListener('click',function(){progressSelected=b.dataset.progressDate;renderProgressOverview();});});
+    box.querySelectorAll('[data-progress-period]').forEach(function(b){b.addEventListener('click',function(){progressPeriod=b.dataset.progressPeriod;progressDayExpanded=false;renderProgressOverview();});});
+    box.querySelectorAll('[data-progress-view]').forEach(function(b){b.addEventListener('click',function(){progressView=b.dataset.progressView;progressDayExpanded=false;renderProgressOverview();});});
+    box.querySelectorAll('[data-progress-shift]').forEach(function(b){b.addEventListener('click',function(){var dir=+b.dataset.progressShift;progressRef=progressPeriod==='mes'?new Date(progressRef.getFullYear(),progressRef.getMonth()+dir,1):addDays(progressRef,dir*7);progressSelected=iso(progressDays()[0]);progressDayExpanded=false;renderProgressOverview();});});
+    box.querySelectorAll('[data-progress-date]').forEach(function(b){b.addEventListener('click',function(){progressSelected=b.dataset.progressDate;progressDayExpanded=true;renderProgressOverview();});});
   }
 
 
@@ -3493,7 +3493,7 @@
       button.setAttribute('aria-label',button.classList.contains('danger')?'Apagar':'Editar');
     });
     root.querySelectorAll('input:not([type="hidden"]):not([type="checkbox"]):not([type="radio"]):not([type="file"]),select,textarea').forEach(function(field){
-      if(field.closest('.notebook-root') || field.closest('.field-label') || field.closest('label')) return;
+      if(field.classList.contains('block-inline-editor') || field.closest('.notebook-root') || field.closest('.field-label') || field.closest('label')) return;
       var key=field.dataset.f||field.dataset.rf;
       var name=field.getAttribute('aria-label') || fieldNames[key] || field.getAttribute('placeholder') || (field.type==='date'?'Data':field.type==='time'?'Hora':field.tagName==='SELECT'?'Selecionar opção':'Nome');
       if(field.id==='estudoCustomStartInput') name='De';

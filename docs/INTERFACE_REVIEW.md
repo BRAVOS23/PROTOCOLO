@@ -41,3 +41,9 @@ Navegação lateral com nomes nas telas a partir de 1000 px; menu de páginas no
 O botão Personalizar página permite acrescentar texto, títulos, checklists, imagens e divisórias entre secções existentes. Os blocos podem ser editados, arrastados, deslocados por botões/teclado e apagados com confirmação. As imagens são reduzidas localmente; os blocos, marcações e posições seguem em `pageBlocks` no backup completo. O conteúdo original das missões permanece separado. O editor de escrita à mão mantém a própria superfície de páginas.
 
 Em telas estreitas, as colunas passam para uma sequência vertical e a tabela tem rolagem horizontal. `tests/browser/flexible-pages.cjs` valida visitas, redimensionamento real com ponteiro, conclusão partilhada entre vistas, blocos de texto/imagem/checklist, arrasto, reordenação, cancelamento de eliminação, persistência e reorganização responsiva.
+
+## Edição contextual — versão 3.29
+
+Retirado o modo global que expunha botões e contornos em todos os blocos. Texto, título e checklist editam-se na própria página e guardam automaticamente. Uma lista compacta permite escolher o conteúdo a adicionar; imagens abrem o seletor de ficheiros diretamente. As ações ficam no bloco selecionado/ao passar o ponteiro, com apenas a pega e um pequeno menu. Os pontos de inserção deixam de ocupar espaço e ficam ocultos na leitura normal. O modelo `pageBlocks` mantém compatibilidade com os dados anteriores.
+
+A análise do Início fica aberta, com os detalhes de um dia apresentados mediante seleção da data. `tests/browser/quiet-blocks.cjs` verifica dados anteriores, escrita direta, seleção de imagem, ações contextuais, gravação e navegação no celular; os testes de páginas flexíveis continuam a verificar arrasto e as vistas da rotina.
