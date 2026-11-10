@@ -283,7 +283,7 @@
     }catch(e){ return migrateNotionImports(freshDefaultState()); }
   }
   function saveState(){
-    try{ localStorage.setItem(STORE_KEY, JSON.stringify(state)); if(window.NativePlatform){NativePlatform.syncAgenda(state.agenda);NativePlatform.syncActivities(state.activities,state.activityDone);} if(window.DataFolder)DataFolder.schedule(state); return true; }catch(e){if(window.DataFolder)DataFolder.schedule(state);return false;}
+    try{ localStorage.setItem(STORE_KEY, JSON.stringify(state)); if(window.NativePlatform){NativePlatform.syncAgenda(state.agenda);NativePlatform.syncActivities(state.activities,state.activityDone);if(NativePlatform.syncPhrases)NativePlatform.syncPhrases(state.phrases);} if(window.DataFolder)DataFolder.schedule(state); return true; }catch(e){if(window.DataFolder)DataFolder.schedule(state);return false;}
   }
   function clone(o){ return JSON.parse(JSON.stringify(o)); }
 
@@ -3014,6 +3014,7 @@
     var planosSub = planosCount ? (state.planos[0].title + (planosCount>1 ? ' + ' + (planosCount-1) : '')) : 'Nenhum ainda';
 
     var cards = [
+      { key:'frases', label:'Frases', sum:'Uma frase tua de hora a hora' },
       { key:'compras', label:'Compras', sum: state.shoppingLists.length + ' lista'+(state.shoppingLists.length===1?'':'s'), count: pendingShopping },
       { key:'agenda', label:'Agenda', sum: upcoming ? upcoming.title : 'Sem eventos', val: upcoming ? dueLabel(daysUntil(upcoming.date)) : '', valColor:'var(--accent-strong)' },
       { key:'pendentes', label:'Pendentes', sum:'Fora da rotina diária', count: pendentesOpen },
@@ -3026,7 +3027,7 @@
         ? (c.count > 0 ? '<span class="hcount">'+c.count+'</span>' : '')
         : (c.val ? '<span class="hval" style="color:'+(c.valColor||'var(--ink)')+'">'+c.val+'</span>' : '');
       return '<button class="hcard" data-vida-go="'+c.key+'" type="button">' +
-        '<span class="hicn '+c.key+'">'+HUB_ICONS[c.key]+'</span>' +
+        '<span class="hicn '+c.key+'">'+(HUB_ICONS[c.key]||'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M5 5h14v10H9l-4 4V5Z"/></svg>')+'</span>' +
         '<span class="hbody"><span class="hname">'+c.label+'</span><span class="hsum">'+escHtml(c.sum)+'</span></span>' +
         right +
         '<span class="hchev"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 6 6 6-6 6"></path></svg></span>' +
@@ -3040,6 +3041,7 @@
     var vidaBtn = document.querySelector('.tabbtn[data-tab="vida"]');
     if(vidaBtn) vidaBtn.classList.toggle('has-today', (pendingShopping+pendentesOpen)>0 || (!!upcoming && daysUntil(upcoming.date)<=3));
   }
+  var phrasesUI=PhraseUI.create({root:document.getElementById('phraseRoot'),state:function(){return state;},save:saveState,toast:toast,confirm:showConfirm});
   var journalUI=JournalUI.create({root:document.getElementById('journalRoot'),getState:function(){return state;},save:saveState,toast:toast,openSettings:openNotebookSettings});
   document.getElementById('openJournal').addEventListener('click',function(){goVida('caderno');});
   function goVida(screen){
@@ -3047,6 +3049,7 @@
     if(screen!=='plano-detail' && state.weeklyRouteTabId){delete state.weeklyRouteTabId;saveState();}
     vidaScreen = screen;
     if(screen==='caderno')journalUI.open();
+    if(screen==='frases')phrasesUI.render();
     document.querySelectorAll('#view-vida .subview').forEach(function(el){
       el.classList.toggle('active', el.id === (screen==='hub' ? 'vida-hub' : 'vida-'+screen));
     });
@@ -3470,6 +3473,7 @@
   /* ---------------- boot ---------------- */
   function renderAll(){
     homeCoverUI.refresh();
+    if(phrasesUI)phrasesUI.render();
     if(dashboardLayout)dashboardLayout.refresh();if(pageBlocks)pageBlocks.refresh();
     applyTabLabels();
     renderTabNameInputs();
@@ -3541,6 +3545,7 @@
     if(!window.NativePlatform || !NativePlatform.available)return;
     if(currentSheet)closeSheet();
     var id=event.detail&&event.detail.id;
+    if(id==='phrases'){goTab('vida');goVida('frases');return;}
     var activity=id && /^activity:(\d{4}-\d{2}-\d{2}):(.+)$/.exec(id);
     if(activity || id==='activities'){
       refreshCalendarDay();goTab('inicio');

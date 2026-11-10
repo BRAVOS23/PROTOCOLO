@@ -1,7 +1,7 @@
 /* Android local features. The website keeps its existing behavior without a bridge. */
 (function(){
   'use strict';
-  var bridge=window.ProtocoloNative, lastAgenda=null, lastActivities=null;
+  var bridge=window.ProtocoloNative, lastAgenda=null, lastActivities=null,lastPhrases=null;
   window.NativePlatform={
     available:!!bridge,
     setAppearance:function(color,dark){if(bridge && typeof bridge.setAppearance==='function')bridge.setAppearance(color,dark);},
@@ -25,6 +25,7 @@
       if(payload===lastAgenda)return;
       try{bridge.syncAgenda(payload);lastAgenda=payload;}catch(e){lastAgenda=null;}
     },
+    syncPhrases:function(value){if(!bridge||typeof bridge.syncPhrases!=='function'||!value)return;var items=Array.from(new Set((Array.isArray(value.items)?value.items:[]).filter(function(p){return p&&typeof p.text==='string';}).map(function(p){return p.text.trim();}).filter(function(t){return t&&t.length<=2000;})));var payload=JSON.stringify({items:items.slice(0,1000),enabled:!!value.enabled&&items.length>=2&&items.length<=1000});if(payload===lastPhrases)return;try{bridge.syncPhrases(payload);lastPhrases=payload;}catch(e){lastPhrases=null;}},
     exportBackup:function(json){if(!bridge)return false;bridge.exportBackup(json);return true;}
   };
   document.getElementById('androidDownload').hidden=!!bridge;

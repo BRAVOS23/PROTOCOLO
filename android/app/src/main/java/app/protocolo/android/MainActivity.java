@@ -34,7 +34,7 @@ import java.util.List;
 
 public final class MainActivity extends Activity {
     private static final String HOST = "protocolo.local";
-    private static final int IMPORT = 201, EXPORT = 202, NOTIFICATIONS = 203, NOTEBOOK = 204;
+    private static final int IMPORT = 201, EXPORT = 202, NOTIFICATIONS = 203, NOTEBOOK = 204, PHRASE_NOTIFICATIONS = 205;
     private final java.util.concurrent.ExecutorService notebookWriter = java.util.concurrent.Executors.newSingleThreadExecutor();
     private WebView web;
     private FrameLayout container;
@@ -45,6 +45,7 @@ public final class MainActivity extends Activity {
     @Override public void onCreate(Bundle saved) {
         super.onCreate(saved);
         ReminderController.createChannel(this);
+        PhraseController.channel(this);
         getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE);
         boolean dark = (getResources().getConfiguration().uiMode & Configuration.UI_MODE_NIGHT_MASK) == Configuration.UI_MODE_NIGHT_YES;
         int background = getPreferences(0).getInt("appearanceBackground", Color.BLACK);
@@ -138,7 +139,7 @@ public final class MainActivity extends Activity {
     }
     @Override protected void onResume() {
         super.onResume();
-        if (web != null) { ReminderController.reschedule(this); AgendaWidget.updateAll(this); signal("status", true, ""); }
+        if (web != null) { ReminderController.reschedule(this); PhraseController.schedule(this); AgendaWidget.updateAll(this); signal("status", true, ""); }
     }
     @Override protected void onSaveInstanceState(Bundle out) {
         super.onSaveInstanceState(out);
@@ -174,6 +175,7 @@ public final class MainActivity extends Activity {
     }
     @Override public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] results) {
         super.onRequestPermissionsResult(requestCode, permissions, results);
+        if(requestCode==PHRASE_NOTIFICATIONS){PhraseController.schedule(this);signal("phrases",true,results.length>0&&results[0]==PackageManager.PERMISSION_GRANTED?"Notificações de frases permitidas.":"Permite as notificações nas definições do Android.");return;}
         if (requestCode == NOTIFICATIONS) {
             boolean granted = results.length > 0 && results[0] == PackageManager.PERMISSION_GRANTED;
             AgendaStore.prefs(this).edit().putBoolean("enabled", granted).apply();
@@ -278,6 +280,10 @@ public final class MainActivity extends Activity {
             try {return new JSONObject().put("tablet",tablet).put("smallestWidthDp",smallest).toString();}
             catch(Exception e){return "{}";}
         }
+        @JavascriptInterface public String getPhraseStatus(){return PhraseController.status(MainActivity.this);}
+        @JavascriptInterface public void syncPhrases(String json){if(json==null||json.length()>2200000)return;runOnUiThread(()->{PhraseController.sync(MainActivity.this,json);signal("phrases",true,"");});}
+        @JavascriptInterface public void requestPhraseNotifications(){runOnUiThread(()->{if(!PhraseController.prefs(MainActivity.this).getBoolean("enabled",false))return;if(Build.VERSION.SDK_INT>=33&&checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS)!=PackageManager.PERMISSION_GRANTED){requestPermissions(new String[]{Manifest.permission.POST_NOTIFICATIONS},PHRASE_NOTIFICATIONS);return;}if(!PhraseController.allowed(MainActivity.this)){startActivity(new Intent(Settings.ACTION_APP_NOTIFICATION_SETTINGS).putExtra(Settings.EXTRA_APP_PACKAGE,getPackageName()));return;}PhraseController.schedule(MainActivity.this);signal("phrases",true,"");});}
+        @JavascriptInterface public void testPhraseNotification(){runOnUiThread(()->{PhraseController.fire(MainActivity.this,true);signal("phrases",true,"");});}
         @JavascriptInterface public String getStatus() {
             try {
                 return new JSONObject().put("enabled", AgendaStore.prefs(MainActivity.this).getBoolean("enabled", false))
