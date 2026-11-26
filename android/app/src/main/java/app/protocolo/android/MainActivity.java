@@ -398,7 +398,7 @@ public final class MainActivity extends Activity {
                     java.io.File directory=new java.io.File(getCacheDir(),"proofs");directory.mkdirs();
                     java.io.File file=new java.io.File(directory,"prova-"+java.util.UUID.randomUUID()+".pdf");
                     java.nio.file.Files.write(file.toPath(),bytes);
-                    Uri uri=Uri.parse("content://app.protocolo.personal.pdf/"+file.getName());
+                    Uri uri=Uri.parse("content://" + MainActivity.this.getPackageName() + ".pdf/" + file.getName());
                     runOnUiThread(() -> {
                         try {Intent intent=new Intent(Intent.ACTION_VIEW).setDataAndType(uri,"application/pdf").addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);intent.setClipData(android.content.ClipData.newRawUri("PDF",uri));startActivity(intent);}
                         catch(Exception e){signal("backup",false,"Não foi encontrado um leitor de PDF neste celular.");}

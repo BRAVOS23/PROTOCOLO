@@ -7,6 +7,9 @@ PROJECT = pathlib.Path(__file__).resolve().parents[1]
 APPLICATION_ID = 'app.protocolo.personal'
 NAMESPACE = 'app.protocolo.android'
 ARTIFACT = 'Protocolo-Pessoal.apk'
+SEPARATE_APPLICATION_ID = 'app.protocolo.recomeco'
+SEPARATE_ARTIFACT = 'Protocolo-Recomeco.apk'
+SEPARATE_LABEL = 'Protocolo Recomeço'
 
 
 def load_version(path=None):

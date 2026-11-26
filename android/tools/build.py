@@ -8,7 +8,7 @@ import shutil
 import subprocess
 import xml.etree.ElementTree as ET
 import zipfile
-from release_config import APPLICATION_ID, ARTIFACT, NAMESPACE, PROJECT, load_version
+from release_config import APPLICATION_ID, ARTIFACT, NAMESPACE, PROJECT, SEPARATE_APPLICATION_ID, SEPARATE_ARTIFACT, SEPARATE_LABEL, load_version
 from signing import signing_dir, validate
 from verify_apk import verify
 
@@ -17,7 +17,11 @@ parser = argparse.ArgumentParser(description=__doc__)
 parser.add_argument('--sdk', default=os.environ.get('ANDROID_SDK_ROOT', str(WEB.parent / 'android-tools/sdk')))
 parser.add_argument('--debug', action='store_true', help='Signed WebView inspection build; never distribute.')
 parser.add_argument('--unsigned', action='store_true', help='Compile without private keys for CI; cannot be installed.')
+parser.add_argument('--separate', action='store_true', help='Build the separately installed Protocolo Recomeço.')
 args = parser.parse_args()
+if args.separate and (args.debug or args.unsigned):
+    parser.error('--separate requires a signed release build')
+artifact = SEPARATE_ARTIFACT if args.separate else ARTIFACT
 if args.debug and args.unsigned:
     parser.error('--debug and --unsigned cannot be combined')
 version = load_version()
@@ -26,7 +30,8 @@ if ET.parse(source_manifest).getroot().get('package') != APPLICATION_ID:
     parser.error('The Android applicationId must remain app.protocolo.personal')
 if not args.unsigned:
     try:
-        key, password = validate(signing_dir())
+        folder = pathlib.Path(os.environ.get('PROTOCOLO_RECOMECO_SIGNING_DIR', str(WEB.parent / '.protocolo-recomeco-signing'))) if args.separate else signing_dir()
+        key, password = validate(folder, separate=args.separate)
     except ValueError as error:
         parser.exit(1, str(error) + '\n')
 sdk = pathlib.Path(args.sdk).resolve()
@@ -34,7 +39,7 @@ platform = sdk / 'platforms/android-35/android.jar'
 tools = sdk / 'build-tools/35.0.0'
 if not platform.exists() or not (tools / 'aapt2').exists():
     parser.exit(1, 'Install Android SDK platform 35 and build-tools 35.0.0; see android/README.md.\n')
-variant = 'unsigned' if args.unsigned else 'debug' if args.debug else 'personal'
+variant = 'recomeco' if args.separate else 'unsigned' if args.unsigned else 'debug' if args.debug else 'personal'
 build = PROJECT / 'build' / variant
 dist = PROJECT / 'dist'
 dist.mkdir(exist_ok=True)
@@ -50,6 +55,8 @@ entry = build / 'assets/web/index.html'
 entry.write_text('\n'.join(line for line in entry.read_text().splitlines() if 'fonts.googleapis.com' not in line and 'fonts.gstatic.com' not in line) + '\n')
 manifest = build / 'AndroidManifest.xml'
 text = source_manifest.read_text()
+if args.separate:
+    text = text.replace(APPLICATION_ID, SEPARATE_APPLICATION_ID).replace('android:label="Protocolo"', f'android:label="{SEPARATE_LABEL}"')
 manifest.write_text(text.replace('android:debuggable="false"', 'android:debuggable="true"') if args.debug else text)
 
 
@@ -66,7 +73,7 @@ with zipfile.ZipFile(build / 'unsigned.apk', 'a', zipfile.ZIP_DEFLATED) as apk:
     for dex in (build / 'dex').glob('*.dex'):
         apk.write(dex, dex.name)
 run(tools / 'zipalign', '-p', '-f', '4', build / 'unsigned.apk', build / 'aligned.apk')
-filename = ARTIFACT.replace('.apk', '-unsigned.apk') if args.unsigned else ARTIFACT.replace('.apk', '-debug.apk') if args.debug else ARTIFACT
+filename = artifact.replace('.apk', '-unsigned.apk') if args.unsigned else artifact.replace('.apk', '-debug.apk') if args.debug else artifact
 output = dist / filename
 if args.unsigned:
     shutil.copy2(build / 'aligned.apk', output)
@@ -75,12 +82,13 @@ else:
     run(tools / 'apksigner', 'verify', '--verbose', output)
 if not args.debug:
     try:
-        verify(output, sdk, unsigned=args.unsigned, previous=(WEB / 'downloads' / ARTIFACT) if (WEB / 'downloads' / ARTIFACT).exists() else None)
+        previous = WEB / 'downloads' / artifact
+        verify(output, sdk, unsigned=args.unsigned, previous=previous if previous.exists() else None, separate=args.separate)
     except (ValueError, subprocess.CalledProcessError):
         output.unlink(missing_ok=True)
         raise
 run(tools / 'zipalign', '-c', '-p', '4', output)
 if not args.unsigned and not args.debug:
-    (dist / (ARTIFACT + '.sha256')).write_text(hashlib.sha256(output.read_bytes()).hexdigest() + '  ' + ARTIFACT + '\n')
+    (dist / (artifact + '.sha256')).write_text(hashlib.sha256(output.read_bytes()).hexdigest() + '  ' + artifact + '\n')
 print('Unsigned CI build (not installable):' if args.unsigned else 'APK:', output)
 print('SHA-256:', hashlib.sha256(output.read_bytes()).hexdigest())

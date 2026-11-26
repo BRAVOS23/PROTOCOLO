@@ -19,14 +19,15 @@ def signing_dir():
     return pathlib.Path(os.environ.get('PROTOCOLO_SIGNING_DIR', str(PROJECT.parent.parent / '.protocolo-personal-signing'))).resolve()
 
 
-def expected_certificate():
-    value = (PROJECT / 'signing-certificate.sha256').read_text().strip().lower()
+def expected_certificate(separate=False):
+    filename = 'signing-certificate-recomeco.sha256' if separate else 'signing-certificate.sha256'
+    value = (PROJECT / filename).read_text().strip().lower()
     if len(value) != 64 or any(c not in '0123456789abcdef' for c in value):
         raise ValueError('Invalid public signing certificate fingerprint')
     return value
 
 
-def validate(folder):
+def validate(folder, separate=False):
     folder = pathlib.Path(folder)
     key, password = folder / 'personal.p12', folder / 'password.txt'
     if not key.is_file() or not password.is_file():
@@ -35,7 +36,7 @@ def validate(folder):
     result = subprocess.run(command, capture_output=True)
     if result.returncode:
         raise ValueError('Cannot open the signing key with this password. Restore the original matching files.')
-    if hashlib.sha256(result.stdout).hexdigest() != expected_certificate():
+    if hashlib.sha256(result.stdout).hexdigest() != expected_certificate(separate):
         raise ValueError('Signing certificate differs from Protocolo. Refusing to replace the installed app identity.')
     return key, password
 

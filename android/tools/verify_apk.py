@@ -8,7 +8,7 @@ import pathlib
 import re
 import subprocess
 import zipfile
-from release_config import APPLICATION_ID, PROJECT, load_version
+from release_config import APPLICATION_ID, PROJECT, SEPARATE_APPLICATION_ID, load_version
 from signing import expected_certificate
 
 
@@ -27,16 +27,19 @@ def metadata(apk, tools):
     return {'application_id': match[1], 'version_code': int(match[2]), 'version_name': match[3]}
 
 
-def verify(apk, sdk, unsigned=False, previous=None, require_newer=False):
+def verify(apk, sdk, unsigned=False, previous=None, require_newer=False, separate=False):
     apk = pathlib.Path(apk)
     tools = build_tools(sdk)
     result = metadata(apk, tools)
-    if result['application_id'] != APPLICATION_ID:
+    application_id = SEPARATE_APPLICATION_ID if separate else APPLICATION_ID
+    if result['application_id'] != application_id:
         raise ValueError('APK applicationId changed; this would be a different installation')
     version = load_version()
     if any(result[field] != version[field] for field in ('version_code', 'version_name')):
         raise ValueError('APK version does not match android/release.json')
     manifest = subprocess.check_output([str(tools / 'aapt2'), 'dump', 'xmltree', str(apk), '--file', 'AndroidManifest.xml'], text=True)
+    if separate and f'{application_id}.pdf' not in manifest:
+        raise ValueError('Separate APK must use its own PDF provider authority')
     if re.search(r'android:debuggable[^\n]*=true', manifest):
         raise ValueError('Debug APK cannot be distributed')
     with zipfile.ZipFile(apk) as archive:
@@ -46,7 +49,7 @@ def verify(apk, sdk, unsigned=False, previous=None, require_newer=False):
     if not unsigned:
         certificates = subprocess.check_output([str(tools / 'apksigner'), 'verify', '--print-certs', str(apk)], text=True)
         match = re.search(r'certificate SHA-256 digest: ([0-9a-f]{64})', certificates)
-        if not match or match[1] != expected_certificate():
+        if not match or match[1] != expected_certificate(separate):
             raise ValueError('APK signing certificate differs from the protected Protocolo identity')
         result['certificate_sha256'] = match[1]
     subprocess.run([str(tools / 'zipalign'), '-c', '-p', '4', str(apk)], check=True)
@@ -54,7 +57,7 @@ def verify(apk, sdk, unsigned=False, previous=None, require_newer=False):
         old = metadata(previous, tools)
         certificates = subprocess.check_output([str(tools / 'apksigner'), 'verify', '--print-certs', str(previous)], text=True)
         match = re.search(r'certificate SHA-256 digest: ([0-9a-f]{64})', certificates)
-        if not match or match[1] != expected_certificate():
+        if not match or match[1] != expected_certificate(separate):
             raise ValueError('Previous published APK does not match the protected signing certificate')
         if old['application_id'] != result['application_id']:
             raise ValueError('Cannot update the previous APK: applicationId differs')
@@ -70,11 +73,12 @@ def main():
     parser.add_argument('--sdk', default=os.environ.get('ANDROID_SDK_ROOT', str(PROJECT.parent.parent / 'android-tools/sdk')))
     parser.add_argument('--unsigned', action='store_true')
     parser.add_argument('--previous')
+    parser.add_argument('--separate', action='store_true')
     parser.add_argument('--require-newer', action='store_true')
     parser.add_argument('--output')
     args = parser.parse_args()
     try:
-        result = verify(args.apk, args.sdk, args.unsigned, args.previous, args.require_newer)
+        result = verify(args.apk, args.sdk, args.unsigned, args.previous, args.require_newer, separate=args.separate)
         if args.output:
             pathlib.Path(args.output).write_text(json.dumps(result, indent=2) + '\n')
         print('APK identity, version, alignment' + (', signature' if not args.unsigned else ' (unsigned CI build)') + ' verified.')
