@@ -12,7 +12,11 @@ public final class EventReceiver extends BroadcastReceiver {
             ReminderController.createChannel(context);
             AgendaWidget.updateAll(context);
             ReminderController.reschedule(context);
-            PhraseController.schedule(context);
+            if (Intent.ACTION_TIME_CHANGED.equals(intent.getAction()) || Intent.ACTION_TIMEZONE_CHANGED.equals(intent.getAction())) {
+                PhraseController.resetSchedule(context);
+            } else {
+                PhraseController.schedule(context);
+            }
         }
     }
 }

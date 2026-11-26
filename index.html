@@ -73,11 +73,6 @@
       </div>
     </div>
 
-    <section class="blk" id="dashAgendaBlk" hidden>
-      <div class="blk-head"><div><span class="kicker">Agenda</span><h2>A caminho</h2></div></div>
-      <div id="dashAgenda"></div>
-    </section>
-
     <section class="blk" id="dashPendentesBlk" hidden>
       <div class="blk-head"><div><span class="kicker">Pendentes</span><h2>Prazo a chegar</h2></div></div>
       <div id="dashPendentes"></div>
@@ -378,7 +373,7 @@
 
     <!-- Visão geral: junta as fases/marcos de todos os planos, um a seguir ao outro -->
     <div class="subview" id="vida-planos-overview">
-      <div class="detail-head"><button class="backbtn" aria-label="Voltar" data-vida-back="planos" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 6-6 6 6 6"></path></svg></button><h2>Visão geral</h2></div>
+      <div class="detail-head"><button class="backbtn" aria-label="Voltar" data-vida-back type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 6-6 6 6 6"></path></svg></button><h2>Visão geral</h2></div>
       <section class="blk" style="padding-top:16px;">
         <div id="planosOverviewBox"></div>
       </section>
@@ -387,7 +382,7 @@
     <!-- Detalhe de um plano (estrutura reutilizável: contador + chips + fases/marcos + nota) -->
     <div class="subview" id="vida-plano-detail">
       <div class="detail-head">
-        <button class="backbtn" aria-label="Voltar" data-vida-back="planos" type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 6-6 6 6 6"></path></svg></button>
+        <button class="backbtn" aria-label="Voltar" data-vida-back type="button"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m15 6-6 6 6 6"></path></svg></button>
         <h2 id="planoDetailTitle">Plano</h2>
         <button class="iconbtn" id="btnDeletePlano" aria-label="Apagar plano" type="button" style="margin-left:auto;color:var(--bad);">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"></path><path d="M10 11v6M14 11v6"></path></svg>
@@ -486,7 +481,7 @@
       <span>Vida</span>
     </button>
     <button class="rail-shortcut" id="railNotebooks" type="button" aria-label="Cadernos"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="5" y="3" width="15" height="18" rx="2"/><path d="M9 3v18M3 7h4M3 12h4M3 17h4"/></svg><span>Cadernos</span></button>
-    <div class="workspace-pages"><span class="workspace-nav-label">Acesso direto</span><button type="button" data-page-destination="china"><span aria-hidden="true">◎</span><span>Rota para a China</span></button><button type="button" data-page-destination="agenda"><span aria-hidden="true">▦</span><span>Agenda</span></button><button type="button" data-page-destination="estudos"><span aria-hidden="true">◷</span><span>Estudos</span></button></div>
+    <div class="workspace-pages"><span class="workspace-nav-label">Acesso direto</span><button type="button" data-page-destination="china"><span aria-hidden="true">◎</span><span>Rota para a China</span></button><button type="button" data-page-destination="estudos"><span aria-hidden="true">◷</span><span>Estudos</span></button></div>
     <button class="rail-shortcut rail-settings" id="railSettings" type="button" aria-label="Definições"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="4"/><path d="M12 2v3m0 14v3M2 12h3m14 0h3M5 5l2 2m10 10 2 2M5 19l2-2M17 7l2-2"/></svg><span>Definições</span></button>
   </div>
 </nav>
@@ -596,14 +591,10 @@
 <div class="sheet" id="quickAddSheet" role="dialog" aria-modal="true" aria-label="Adicionar rápido">
   <div class="grabber"></div>
   <div style="display:flex;align-items:center;justify-content:space-between;">
-    <h3>Adicionar rápido</h3>
+    <h3>Adicionar tarefa</h3>
     <button class="iconbtn" id="btnCloseQuickAdd" aria-label="Fechar" type="button">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
     </button>
-  </div>
-  <div class="seg" id="quickAddSeg" style="margin-bottom:14px;">
-    <button type="button" data-type="pendente" class="active">Tarefa</button>
-    <button type="button" data-type="agenda">Evento</button>
   </div>
   <form id="quickAddForm" class="activity-edit-form" style="padding:0;">
     <input id="quickAddTitle" type="text" placeholder="Título" required>

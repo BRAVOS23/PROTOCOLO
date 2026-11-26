@@ -1937,7 +1937,7 @@
       state.planos = state.planos.filter(function(x){ return x.id!==p.id; });
       saveState();
       renderPlanosList();
-      goVida('planos');
+      goVida('hub');
     });
   });
 
@@ -2550,10 +2550,10 @@
       if(useMonthly) return MONTHS_PT_SHORT[+key.slice(5,7)-1];
       return fmtDateShort(new Date(key+'T00:00:00'));
     }
-    var map = {};
+    var map = Object.create(null);
     log.forEach(function(e){
       var k = keyOf(e.date);
-      map[k] = map[k] || {};
+      map[k] = map[k] || Object.create(null);
       map[k][e.materia] = (map[k][e.materia]||0) + e.minutos;
     });
     var keys;
@@ -2574,39 +2574,51 @@
       var d = new Date(r.start);
       while(d <= r.end){ keys.push(iso(d)); d = addDays(d,1); }
     }
-    return keys.map(function(k){ return { key:k, label:labelOf(k), byMateria: map[k]||{} }; });
+    return keys.map(function(k){ return { key:k, label:labelOf(k), byMateria: map[k]||Object.create(null) }; });
   }
-  function lineChartHTML(series, labels, format, description){
-    var W=420, H=220, left=55, right=20, top=18, bottom=40;
-    var max = Math.max(1, Math.max.apply(null, series.reduce(function(all,s){ return all.concat(s.values); }, [])));
-    max=Math.max(2,Math.ceil(max/2)*2);
+  function lineChartHTML(series, labels, format, description, tradingStyle){
+    var W=420, H=220, left=tradingStyle?20:55, right=tradingStyle?55:20, top=18, bottom=40;
+    var max=series.reduce(function(high,s){ return s.values.reduce(function(n,v){return Math.max(n,v);},high); },1);
+    var divisions=tradingStyle?4:2;
+    max=Math.max(divisions,Math.ceil(max/divisions)*divisions);
     function x(i){ return labels.length===1 ? (W+left-right)/2 : left+i*(W-left-right)/Math.max(1,labels.length-1); }
     function y(v){ return H-bottom-v/max*(H-top-bottom); }
-    var grid = [0,0.5,1].map(function(f){
-      return '<line x1="'+left+'" x2="'+(W-right)+'" y1="'+y(max*f)+'" y2="'+y(max*f)+'" stroke="var(--line)"/><text x="'+(left-7)+'" y="'+(y(max*f)+4)+'" text-anchor="end">'+escHtml(format(max*f))+'</text>';
+    var grid = Array.from({length:divisions+1},function(_,i){return i/divisions;}).map(function(f){
+      return '<line x1="'+left+'" x2="'+(W-right)+'" y1="'+y(max*f)+'" y2="'+y(max*f)+'" stroke="var(--line)"/><text x="'+(tradingStyle?W-right+7:left-7)+'" y="'+(y(max*f)+4)+'" text-anchor="'+(tradingStyle?'start':'end')+'">'+escHtml(format(max*f))+'</text>';
     }).join('');
     var tickIndices=[0,1,2,3,4].map(function(n){return Math.round(n*(labels.length-1)/4);});
     var ticks = labels.map(function(label,i){
       if(tickIndices.indexOf(i)===-1) return '';
-      return '<text x="'+x(i)+'" y="'+(H-12)+'" text-anchor="middle">'+escHtml(label)+'</text>';
+      var guide=tradingStyle?'<line class="study-chart-guide" x1="'+x(i)+'" x2="'+x(i)+'" y1="'+top+'" y2="'+(H-bottom)+'"/>':'';
+      return guide+'<text x="'+x(i)+'" y="'+(H-12)+'" text-anchor="middle">'+escHtml(label)+'</text>';
     }).join('');
     var lines = series.map(function(s){
       var path=s.values.map(function(v,i){ return (i?'L':'M')+x(i).toFixed(1)+','+y(v).toFixed(1); }).join(' ');
-      return '<path d="'+path+'" fill="none" stroke="'+s.color+'" stroke-width="2.5" stroke-linejoin="round"/>'+s.values.map(function(v,i){
-        return '<circle cx="'+x(i)+'" cy="'+y(v)+'" r="'+(labels.length>62?2:3.5)+'" fill="'+s.color+'"><title>'+escHtml(s.name+' · '+labels[i]+' · '+format(v))+'</title></circle>';
+      var area=tradingStyle&&series.length===1&&labels.length>1?
+        '<path d="'+path+' L'+x(labels.length-1)+','+y(0)+' L'+x(0)+','+y(0)+' Z" fill="'+s.color+'" opacity=".13"/>':'';
+      return area+'<path d="'+path+'" fill="none" stroke="'+s.color+'" stroke-width="2.5" stroke-linejoin="round"/>'+s.values.map(function(v,i){
+        return '<circle cx="'+x(i)+'" cy="'+y(v)+'" r="'+(tradingStyle&&i===labels.length-1?4:labels.length>31?1.8:3)+'" fill="'+s.color+'"><title>'+escHtml(s.name+' · '+labels[i]+' · '+format(v))+'</title></circle>';
       }).join('');
     }).join('');
-    return '<div class="line-chart"><svg viewBox="0 0 '+W+' '+H+'" role="img" aria-label="'+escAttr(description)+'">'+grid+ticks+lines+'</svg></div>';
+    return '<div class="line-chart'+(tradingStyle?' study-chart':'')+'"><svg viewBox="0 0 '+W+' '+H+'" role="img" aria-label="'+escAttr(description)+'">'+grid+ticks+lines+'</svg></div>';
   }
   function estudoLinesHTML(buckets){
     var names = [];
     buckets.forEach(function(b){ Object.keys(b.byMateria).forEach(function(m){ if(names.indexOf(m)===-1) names.push(m); }); });
     var series = names.map(function(name){ return { name:name, color:estudoColorFor(name), values:buckets.map(function(b){ return b.byMateria[name]||0; }) }; });
-    return lineChartHTML(series, buckets.map(function(b){ return b.key.length===7 ? b.label+' '+b.key.slice(0,4) : b.label; }), function(n){ return Math.round(n)+' min'; }, 'Tempo de estudo por matéria ao longo do período, em minutos');
+    var labels=buckets.map(function(b){ return b.key.length===7 ? b.label+' '+b.key.slice(2,4) : b.label; });
+    function minutes(n){return Math.round(n)+' min';}
+    var total={name:'Tempo total',color:'var(--study-trend)',values:buckets.map(function(bucket){
+      return Object.values(bucket.byMateria).reduce(function(sum,value){return sum+value;},0);
+    })};
+    return '<h3 class="study-chart-title">Tempo total</h3>'+
+      lineChartHTML([total],labels,minutes,'Tempo de estudo total ao longo do período, em minutos',true)+
+      '<h3 class="study-chart-title">Por matéria</h3>'+
+      lineChartHTML(series,labels,minutes,'Tempo de estudo por matéria ao longo do período, em minutos',true);
   }
   function renderEstudoTempo(){
     var log = estudoLogInRange();
-    var byMateria = {};
+    var byMateria = Object.create(null);
     log.forEach(function(e){ byMateria[e.materia] = (byMateria[e.materia]||0) + e.minutos; });
     var data = Object.keys(byMateria).map(function(m){ return { materia:m, minutes:byMateria[m] }; }).sort(function(a,b){ return b.minutes-a.minutes; });
     var total = data.reduce(function(s,d){ return s+d.minutes; },0);
@@ -2721,7 +2733,7 @@
         saveState();
         closeSheet();
         if(type === 'pendente'){ renderChecklist('pendentes','pendentesList'); renderDashPendentes(); }
-        else { renderAgenda(); renderDashAgenda(); }
+        else { renderAgenda(); }
         renderVidaHub();
       });
     });
@@ -2747,7 +2759,7 @@
       saveState();
       closeSheet();
       if(type === 'pendente'){ renderChecklist('pendentes','pendentesList'); renderDashPendentes(); }
-      else { renderAgenda(); renderDashAgenda(); }
+      else { renderAgenda(); }
       renderVidaHub();
     });
 
@@ -2922,7 +2934,7 @@
       btn.addEventListener('click', function(ev){
         ev.stopPropagation();
         state.agenda = state.agenda.filter(function(x){ return x.id!==btn.getAttribute('data-id'); });
-        saveState(); renderAgenda(); renderDashAgenda();
+        saveState(); renderAgenda();
       });
     });
     list.querySelectorAll('.list-row[data-id]').forEach(function(row){
@@ -2942,25 +2954,7 @@
     saveState();
     document.getElementById('agendaForm').reset();
     renderAgenda();
-    renderDashAgenda();
   });
-
-  function renderDashAgenda(){
-    var upcoming = sortedAgenda().filter(function(ev){ return ev.date >= TODAY_ISO; }).slice(0, 3);
-    var blk = document.getElementById('dashAgendaBlk');
-    blk.hidden = upcoming.length === 0;
-    if(upcoming.length){
-      document.getElementById('dashAgenda').innerHTML = upcoming.map(function(ev){
-        var days = daysUntil(ev.date);
-        var soon = days <= 3;
-        return '<div class="today-item" style="cursor:default;">' +
-          '<span class="area-tag" style="background:'+(soon?'var(--accent-soft)':'var(--surface-2)')+'; color:'+(soon?'var(--accent-strong)':'var(--ink-soft)')+'; font-weight:700;">'+dueLabel(days)+'</span>' +
-          '<div class="today-txt"><div class="tt">'+escHtml(ev.title)+'</div>'+(ev.time?'<div class="ts">'+escHtml(ev.time)+'</div>':'')+'</div></div>';
-      }).join('');
-    }
-    var soonest = upcoming[0];
-    document.querySelector('.tabbtn[data-tab="vida"]').classList.toggle('has-today', !!soonest && daysUntil(soonest.date) <= 3);
-  }
 
   function pendentesDueSoon(){
     return state.pendentes.filter(function(it){
@@ -2997,28 +2991,15 @@
   /* ---- Vida: hub + navegação por ecrã (evita scroll infinito com tudo junto) ---- */
   var vidaScreen = 'hub';
   var HUB_ICONS = {
-    compras: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 6h15l-1.5 9h-12z"></path><path d="M6 6 5 2H2"></path><circle cx="9" cy="20" r="1"></circle><circle cx="18" cy="20" r="1"></circle></svg>',
-    agenda: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4.5" width="18" height="16" rx="2"></rect><path d="M3 9.5h18M8 2.5v4M16 2.5v4"></path></svg>',
     pendentes: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11l3 3L22 4"></path><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2h11"></path></svg>',
-    planos: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2 2 7l10 5 10-5-10-5Z"></path><path d="M2 17l10 5 10-5M2 12l10 5 10-5"></path></svg>',
     estudos: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path><path d="M12 7v5l3 2"></path></svg>',
   };
   function renderVidaHub(){
-    var pendingShopping = state.shoppingLists.reduce(function(s,l){ return s + l.items.filter(function(it){ return !it.done; }).length; }, 0);
-
-    var upcoming = sortedAgenda().filter(function(ev){ return ev.date >= TODAY_ISO; })[0];
-
     var pendentesOpen = state.pendentes.filter(function(p){ return !p.done; }).length;
 
-    var planosCount = state.planos.length;
-    var planosSub = planosCount ? (state.planos[0].title + (planosCount>1 ? ' + ' + (planosCount-1) : '')) : 'Nenhum ainda';
-
     var cards = [
-      { key:'frases', label:'Frases', sum:'Uma frase tua de hora a hora' },
-      { key:'compras', label:'Compras', sum: state.shoppingLists.length + ' lista'+(state.shoppingLists.length===1?'':'s'), count: pendingShopping },
-      { key:'agenda', label:'Agenda', sum: upcoming ? upcoming.title : 'Sem eventos', val: upcoming ? dueLabel(daysUntil(upcoming.date)) : '', valColor:'var(--accent-strong)' },
+      { key:'frases', label:'Frases', sum:'Dias e horários escolhidos por ti' },
       { key:'pendentes', label:'Pendentes', sum:'Fora da rotina diária', count: pendentesOpen },
-      { key:'planos', label:'Planos futuros', sum: planosSub },
       { key:'estudos', label:'Estudos', sum: state.estudoTimer ? 'A estudar: '+state.estudoTimer.materia : (state.estudoMaterias.length ? estudoFmtDuration(estudoWeekMinutes())+' esta semana' : 'Nenhuma matéria ainda') },
     ];
 
@@ -3039,7 +3020,7 @@
     });
 
     var vidaBtn = document.querySelector('.tabbtn[data-tab="vida"]');
-    if(vidaBtn) vidaBtn.classList.toggle('has-today', (pendingShopping+pendentesOpen)>0 || (!!upcoming && daysUntil(upcoming.date)<=3));
+    if(vidaBtn) vidaBtn.classList.toggle('has-today', pendentesOpen>0);
   }
   var phrasesUI=PhraseUI.create({root:document.getElementById('phraseRoot'),state:function(){return state;},save:saveState,toast:toast,confirm:showConfirm});
   var journalUI=JournalUI.create({root:document.getElementById('journalRoot'),getState:function(){return state;},save:saveState,toast:toast,openSettings:openNotebookSettings});
@@ -3129,7 +3110,7 @@
 
   /* ================= DASHBOARD ================= */
   document.getElementById('dashOpenNotebooks').addEventListener('click',function(){goTab('vida');goVida('caderno');});
-  document.getElementById('dashOpenChina').addEventListener('click',function(){var p=state.planos.find(function(p){return p.id==='plano-rota-china';});goTab('vida');if(p)openPlano(p.id);else goVida('planos');});
+  document.getElementById('dashOpenChina').addEventListener('click',function(){var p=state.planos.find(function(p){return p.id==='plano-rota-china';});goTab('vida');if(p)openPlano(p.id);else goVida('hub');});
   function renderDashboard(){
     var books=state.notebooks||[],pages=books.reduce(function(n,b){return n+(b.notes||[]).filter(function(n){return !n.trashedAt;}).length;},0);document.getElementById('dashNotebookSummary').textContent=books.length?books.length+' cadernos · '+pages+' anotações':'Diário e anotações';
 
@@ -3202,7 +3183,6 @@
     renderVocabProgress();
     renderTrainProgress();
     renderWeightAll();
-    renderDashAgenda();
     renderDashPendentes();
     updateTabDots();
   }
@@ -3282,23 +3262,7 @@
   document.getElementById('btnCloseQuickAdd').addEventListener('click', closeSheet);
   backdrop.addEventListener('click', closeSheet);
 
-  /* ---- atalho rápido no Início: cria uma tarefa (pendente) ou um evento (agenda) ---- */
-  var quickAddType = 'pendente';
-  function renderQuickAddType(){
-    document.querySelectorAll('#quickAddSeg button').forEach(function(b){
-      b.classList.toggle('active', b.getAttribute('data-type') === quickAddType);
-    });
-    document.getElementById('quickAddDate').required = quickAddType === 'agenda';
-    document.getElementById('quickAddHint').textContent = quickAddType === 'pendente'
-      ? 'Data e hora opcionais.'
-      : 'A data é obrigatória para um evento.';
-  }
-  document.querySelectorAll('#quickAddSeg button').forEach(function(b){
-    b.addEventListener('click', function(){ quickAddType = b.getAttribute('data-type'); renderQuickAddType(); });
-  });
   document.getElementById('btnQuickAdd').addEventListener('click', function(){
-    quickAddType = 'pendente';
-    renderQuickAddType();
     document.getElementById('quickAddForm').reset();
     openSheet(quickAddSheet);
   });
@@ -3309,20 +3273,11 @@
     var time = document.getElementById('quickAddTime').value;
     var detail = document.getElementById('quickAddDetail').value.trim();
     if(!title) return;
-    if(quickAddType === 'agenda'){
-      if(!date) return;
-      state.agenda.push({ id:'ag'+Date.now().toString(36)+Math.random().toString(36).slice(2,5), date:date, time:time||'', title:title, detail:detail });
-      saveState();
-      renderAgenda();
-      renderDashAgenda();
-      toast('Evento criado.');
-    } else {
-      state.pendentes.push({ id:'p'+Date.now().toString(36)+Math.random().toString(36).slice(2,5), text:title, done:false, due:date||null, dueTime:time||null, detail:detail });
-      saveState();
-      renderChecklist('pendentes','pendentesList');
-      renderDashPendentes();
-      toast('Tarefa criada.');
-    }
+    state.pendentes.push({ id:'p'+Date.now().toString(36)+Math.random().toString(36).slice(2,5), text:title, done:false, due:date||null, dueTime:time||null, detail:detail });
+    saveState();
+    renderChecklist('pendentes','pendentesList');
+    renderDashPendentes();
+    toast('Tarefa criada.');
     renderVidaHub();
     closeSheet();
   });
@@ -3519,7 +3474,7 @@
 
   applyTheme(state.theme);
   renderAll();
-  WorkspaceUI.create({state:function(){return state;},save:saveState,labels:function(){return state.tabLabels;},navigate:function(page){if(currentSheet)closeSheet();if(views[page]){goTab(page);if(page==='vida')goVida('hub');return;}goTab('vida');if(page==='china'){var plan=state.planos.find(function(p){return p.id==='plano-rota-china';});if(plan)openPlano(plan.id);else goVida('planos');}else goVida(page);}});
+  WorkspaceUI.create({state:function(){return state;},save:saveState,labels:function(){return state.tabLabels;},navigate:function(page){if(currentSheet)closeSheet();if(views[page]){goTab(page);if(page==='vida')goVida('hub');return;}goTab('vida');if(page==='china'){var plan=state.planos.find(function(p){return p.id==='plano-rota-china';});if(plan)openPlano(plan.id);else goVida('hub');}else goVida(page);}});
   var dashboardLayout=DashboardLayout.create({state:function(){return state;},save:saveState});
   var pageBlocks=PageBlocks.create({state:function(){return state;},save:saveState,toast:toast,confirm:showConfirm,page:function(){var view=document.querySelector('.view.active'),sub=view.id==='view-vida'?view.querySelector('.subview.active'):null,root=sub||view,key=(sub||view).id;if(sub&&sub.id==='vida-plano-detail'){key+=':'+openPlanoId;var plan=currentPlano();if(plan&&plan.weeklyResume&&plan.weeklyResume.view==='mission')key+=':'+plan.weeklyResume.missionId;root=sub.querySelector('.weekly-route')||sub;}return {root:root,key:key};}});
   document.querySelectorAll('[data-routine-view]').forEach(function(button){button.onclick=function(){state.routineView=button.dataset.routineView;saveState();renderDashboard();};});
@@ -3564,7 +3519,6 @@
     var active=document.querySelector('.tabbtn.active').getAttribute('data-tab');
     if(active==='vida' && vidaScreen==='caderno' && journalUI.back())return;
     if(active==='vida' && vidaScreen==='plano-detail' && weeklyRouteUI.back())return;
-    if(active==='vida' && vidaScreen==='plano-detail' && currentPlano() && currentPlano().weeklyRouteVersion){goVida('planos');return;}
     if(active==='vida' && vidaScreen!=='hub'){goVida('hub');return;}
     if(active!=='inicio'){goTab('inicio');return;}
     if(window.ProtocoloNative)ProtocoloNative.exitApp();

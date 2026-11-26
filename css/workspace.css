@@ -180,3 +180,27 @@
 .analysis-panel .overview-controls{justify-content:flex-start}
 
 .phrase-heading{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;flex-wrap:wrap}.phrase-heading h1{font-size:32px;margin:0 0 8px}.phrase-heading p{font-size:14px;color:var(--ink-faint);margin:0}.phrase-notifications{margin:18px 0 24px;font-size:13px;color:var(--ink-soft)}.phrase-permissions{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}.phrase-permissions:has(>button:not([hidden])){margin-bottom:12px}.phrase-notifications small{font-size:12px;line-height:1.6;color:var(--ink-faint)}.phrase-form{max-width:760px}.phrase-form textarea{min-height:110px!important}.phrase-count{margin:28px 0 12px;font-size:12px;color:var(--ink-faint)}.phrase-row{display:flex;gap:16px;padding:18px 0;border-bottom:1px solid var(--line);align-items:flex-start}.phrase-row blockquote{flex:1;min-width:0;margin:0;white-space:pre-wrap;overflow-wrap:anywhere;font-size:16px;line-height:1.8}.phrase-row-actions{display:flex;gap:4px}.phrase-row-actions .iconbtn{border:0;background:transparent;color:var(--ink-faint);font-size:22px}.hicn.frases{color:var(--cat-fit)}
+
+.phrase-form fieldset{margin:16px 0;padding:12px;border:1px solid var(--line);border-radius:10px;min-width:0}
+.phrase-form legend{padding:0 6px;font-size:13px;color:var(--ink-soft)}
+.phrase-days,.phrase-times{display:flex;flex-wrap:wrap;gap:8px}
+.phrase-days label{display:flex;align-items:center;gap:4px;padding:6px 8px;border:1px solid var(--line);border-radius:8px}
+.phrase-days label:has(:checked){border-color:var(--accent-strong);background:var(--accent-soft)}
+.phrase-time{display:flex;align-items:center;gap:4px}
+.phrase-time input{padding:6px 8px;min-width:0}
+.phrase-form [data-add-time]{margin-top:8px}
+.phrase-row>div:first-child{flex:1;min-width:0}
+.phrase-row small{display:block;margin-top:4px;color:var(--ink-soft);overflow-wrap:anywhere}
+.study-chart-title{font-size:14px;margin:16px 0 0}
+.line-chart.study-chart{
+  --study-trend:#62e6ba;
+  --line:#28374a;
+  color-scheme:dark;
+  background:#101a28;
+  border-color:#28374a;
+  border-radius:10px;
+  margin-top:8px;
+}
+.study-chart text{fill:#b3c3d9;font:10px var(--font-mono)}
+.study-chart-guide{stroke:var(--line);stroke-dasharray:3 4}
+.study-chart circle:hover{stroke:#fff;stroke-width:2}
