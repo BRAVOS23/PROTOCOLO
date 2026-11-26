@@ -3024,7 +3024,6 @@
   }
   var phrasesUI=PhraseUI.create({root:document.getElementById('phraseRoot'),state:function(){return state;},save:saveState,toast:toast,confirm:showConfirm});
   var journalUI=JournalUI.create({root:document.getElementById('journalRoot'),getState:function(){return state;},save:saveState,toast:toast,openSettings:openNotebookSettings});
-  document.getElementById('openJournal').addEventListener('click',function(){goVida('caderno');});
   function goVida(screen){
     if(weeklyRouteUI && screen!=='plano-detail'){weeklyRouteUI.capture();weeklyRouteUI.suspend();}
     if(screen!=='plano-detail' && state.weeklyRouteTabId){delete state.weeklyRouteTabId;saveState();}
@@ -3041,7 +3040,7 @@
     btn.addEventListener('click', function(){if(btn.closest('#vida-plano-detail') && weeklyRouteUI.back())return;goVida(btn.getAttribute('data-vida-back') || 'hub'); });
   });
   // ao voltar à aba Vida a partir de outra aba, mostra sempre o hub primeiro
-  document.querySelector('.tabbtn[data-tab="vida"]').addEventListener('click', function(){var plan=state.planos.find(function(p){return p.id===state.weeklyRouteTabId && p.weeklyRouteVersion;});if(plan)openPlano(plan.id);else goVida('hub'); });
+  document.querySelector('.tabbtn[data-tab="vida"]').addEventListener('click', function(){goVida('hub'); });
 
   /* Histórico: os registos antigos mantêm-se; novas marcações guardam os nomes. */
   var progressPeriod = 'mes', progressView = 'calendario';
@@ -3109,10 +3108,7 @@
 
 
   /* ================= DASHBOARD ================= */
-  document.getElementById('dashOpenNotebooks').addEventListener('click',function(){goTab('vida');goVida('caderno');});
-  document.getElementById('dashOpenChina').addEventListener('click',function(){var p=state.planos.find(function(p){return p.id==='plano-rota-china';});goTab('vida');if(p)openPlano(p.id);else goVida('hub');});
   function renderDashboard(){
-    var books=state.notebooks||[],pages=books.reduce(function(n,b){return n+(b.notes||[]).filter(function(n){return !n.trashedAt;}).length;},0);document.getElementById('dashNotebookSummary').textContent=books.length?books.length+' cadernos · '+pages+' anotações':'Diário e anotações';
 
     renderProgressOverview();
     document.getElementById('dashDate').textContent = TODAY.toLocaleDateString('pt-PT',{ weekday:'long', day:'numeric', month:'long' });
@@ -3255,7 +3251,6 @@
 
   document.getElementById('btnSettings').addEventListener('click', function(){ openSheet(settingsSheet); });
   document.getElementById('railSettings').addEventListener('click',function(){openSheet(settingsSheet);});
-  document.getElementById('railNotebooks').addEventListener('click',function(){goTab('vida');goVida('caderno');});
   document.getElementById('btnCloseSheet').addEventListener('click', closeSheet);
   document.getElementById('btnCloseActivitySheet').addEventListener('click', closeSheet);
   document.getElementById('btnCloseItemDetail').addEventListener('click', closeSheet);
@@ -3474,7 +3469,7 @@
 
   applyTheme(state.theme);
   renderAll();
-  WorkspaceUI.create({state:function(){return state;},save:saveState,labels:function(){return state.tabLabels;},navigate:function(page){if(currentSheet)closeSheet();if(views[page]){goTab(page);if(page==='vida')goVida('hub');return;}goTab('vida');if(page==='china'){var plan=state.planos.find(function(p){return p.id==='plano-rota-china';});if(plan)openPlano(plan.id);else goVida('hub');}else goVida(page);}});
+  WorkspaceUI.create({state:function(){return state;},save:saveState,labels:function(){return state.tabLabels;},navigate:function(page){if(currentSheet)closeSheet();if(views[page]){goTab(page);if(page==='vida')goVida('hub');return;}goTab('vida');goVida(page);}});
   var dashboardLayout=DashboardLayout.create({state:function(){return state;},save:saveState});
   var pageBlocks=PageBlocks.create({state:function(){return state;},save:saveState,toast:toast,confirm:showConfirm,page:function(){var view=document.querySelector('.view.active'),sub=view.id==='view-vida'?view.querySelector('.subview.active'):null,root=sub||view,key=(sub||view).id;if(sub&&sub.id==='vida-plano-detail'){key+=':'+openPlanoId;var plan=currentPlano();if(plan&&plan.weeklyResume&&plan.weeklyResume.view==='mission')key+=':'+plan.weeklyResume.missionId;root=sub.querySelector('.weekly-route')||sub;}return {root:root,key:key};}});
   document.querySelectorAll('[data-routine-view]').forEach(function(button){button.onclick=function(){state.routineView=button.dataset.routineView;saveState();renderDashboard();};});

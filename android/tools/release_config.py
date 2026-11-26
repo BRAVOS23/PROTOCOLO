@@ -8,8 +8,8 @@ APPLICATION_ID = 'app.protocolo.personal'
 NAMESPACE = 'app.protocolo.android'
 ARTIFACT = 'Protocolo-Pessoal.apk'
 SEPARATE_APPLICATION_ID = 'app.protocolo.recomeco'
-SEPARATE_ARTIFACT = 'Protocolo-Recomeco.apk'
-SEPARATE_LABEL = 'Protocolo Recomeço'
+SEPARATE_ARTIFACT = 'PROTOCOLO.apk'
+SEPARATE_LABEL = 'PROTOCOLO'
 
 
 def load_version(path=None):

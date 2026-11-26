@@ -82,7 +82,7 @@ else:
     run(tools / 'apksigner', 'verify', '--verbose', output)
 if not args.debug:
     try:
-        previous = WEB / 'downloads' / artifact
+        previous = WEB / 'downloads' / ('Protocolo-Recomeco.apk' if args.separate else artifact)
         verify(output, sdk, unsigned=args.unsigned, previous=previous if previous.exists() else None, separate=args.separate)
     except (ValueError, subprocess.CalledProcessError):
         output.unlink(missing_ok=True)

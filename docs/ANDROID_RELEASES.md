@@ -67,10 +67,10 @@ Para preparar novamente os dois ficheiros de configuração do GitHub a partir d
 python3 android/tools/signing.py export-setup --output /caminho/fora-do-repositorio/Protocolo-Pessoal-configuracao-GitHub-privada.zip
 ```
 
-## Protocolo Recomeço
+## Instalação separada do PROTOCOLO
 
-O **Protocolo Recomeço** é uma instalação separada, com o identificador `app.protocolo.recomeco` e uma assinatura própria. Para transferir os dados, usa **Definições → Exportar dados** no app anterior e **Definições → Importar dados** no Recomeço. Confere a cópia com os dois apps instalados.
+O **PROTOCOLO**, antes chamado **Protocolo Recomeço**, é uma instalação separada, com o identificador `app.protocolo.recomeco` e uma assinatura própria. Para transferir os dados, usa **Definições → Exportar dados** no app anterior e **Definições → Importar dados** no PROTOCOLO. Confere a cópia com os dois apps instalados.
 
 A compilação do Recomeço usa `python3 android/tools/build.py --separate`. A assinatura precisa dos ficheiros `personal.p12` e `password.txt` na pasta privada `/workspace/.protocolo-recomeco-signing` ou na pasta indicada por `PROTOCOLO_RECOMECO_SIGNING_DIR`. Guarda um backup privado fora do repositório. Atualizações do Recomeço usam essa mesma chave e a impressão digital pública em `android/signing-certificate-recomeco.sha256`.
 
-O download independente é `downloads/Protocolo-Recomeco.apk`. Antes de atualizar esse ficheiro, verifica o novo APK com `python3 android/tools/verify_apk.py --separate --previous downloads/Protocolo-Recomeco.apk --require-newer android/dist/Protocolo-Recomeco.apk`. O workflow de assinatura da instalação Pessoal continua a usar a sua configuração original.
+O download independente é `downloads/android/PROTOCOLO.apk`. O endereço anterior `downloads/Protocolo-Recomeco.apk` aponta para o mesmo APK. Antes de atualizar esse ficheiro, verifica o novo APK com `python3 android/tools/verify_apk.py --separate --previous downloads/Protocolo-Recomeco.apk --require-newer android/dist/PROTOCOLO.apk`. O workflow de assinatura da instalação Pessoal continua a usar a sua configuração original.
